@@ -1,0 +1,3 @@
+[submodule "squall"]
+	path = squall
+	url = git@github.com:helena-project/squall.git
