@@ -21,14 +21,16 @@
 #define NON_CONNECTABLE_ADV_INTERVAL    MSEC_TO_UNITS(500, UNIT_0_625_MS)   /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
 
 
+
 // Insert manufacturing things into the advertisement
 #define APP_COMPANY_IDENTIFIER          0x11BB                            /**< Company identifier I made up */
 
-#define APP_BEACON_INFO_LENGTH          0x09                              /**< Total length of information advertised by the Beacon. */
-#define APP_ADV_DATA_LENGTH             0x07                              /**< Length of manufacturer specific data in the advertisement. */
+#define APP_BEACON_INFO_LENGTH          0x7                              /**< Total length of information advertised by the Beacon. */
+#define APP_ADV_DATA_LENGTH             0x5                              /**< Length of manufacturer specific data in the advertisement. */
 #define APP_DEVICE_TYPE                 0x01                              /**< Just chose 0x01 */
-#define APP_BEACON_DATA                 0x73, 0x71, 0x75, 0x61, \
-                                        0x6c, 0x6c                          // "squall"
+#define APP_BEACON_DATA                 70, 85, 90                      // Temp byte, humidity byte, light byte
+
+#define NEW_DEVICE_NAME                     "BLEES EECS 2334"               // 20 bytes between device name, beacon_data, and squall_id
 
 #ifndef APP_SQUALL_ID
 #define APP_SQUALL_ID                   0x42
@@ -102,8 +104,8 @@ static void gap_params_init(void)
 
     // Set the name of the device so its easier to find
     err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                          (const uint8_t *)DEVICE_NAME,
-                                          strlen(DEVICE_NAME));
+                                          (const uint8_t *) NEW_DEVICE_NAME,
+                                          strlen(NEW_DEVICE_NAME));
     APP_ERROR_CHECK(err_code);
 }
 
