@@ -1,6 +1,10 @@
 package com.jonesnl.bleesandroid;
 
 import android.app.ExpandableListActivity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -17,12 +21,31 @@ import java.util.Map;
 public class MainActivity extends ExpandableListActivity {
     private static final String NAME = "NAME";
     private static final String IS_EVEN = "IS_EVEN";
+    private static final int REQUEST_ENABLE_BT = 55;
 
     private ExpandableListAdapter mAdapter;
+
+    private BluetoothAdapter mBluetoothAdapter = null;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        final BluetoothManager bm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bm.getAdapter();
+
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            android.os.SystemClock.sleep(10000); // should do something different TODO
+        }
+
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+            System.exit(0);
+        }
+
+        // Still need to get data from Bluetooth and put it into lists
 
         List<Map<String, String>> groupData = new ArrayList<Map<String, String>>();
         List<List<Map<String, String>>> childData = new ArrayList<List<Map<String, String>>>();
@@ -77,5 +100,15 @@ public class MainActivity extends ExpandableListActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == REQUEST_ENABLE_BT) {
+            final BluetoothManager bm = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+            mBluetoothAdapter = bm.getAdapter();
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }
