@@ -137,9 +137,6 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         childData.add(children);
 
         setListAdapter(mAdapter);
-
-
-        Log.v(TAG, "Add to list view");
     }
 
     public void refreshBLEESList() {
@@ -156,9 +153,6 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         }
 
         startScan();
-        //mHandler.postDelayed(mStopRunnable, 2500);
-        //stopScan();
-        Log.v(TAG, "Finish refresh");
     }
 
     @Override

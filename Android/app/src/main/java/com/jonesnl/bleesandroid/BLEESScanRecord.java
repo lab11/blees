@@ -15,7 +15,7 @@ public class BLEESScanRecord {
 
     public BLEESScanRecord (byte[] scanRecord) {
         // get name
-        Log.d(TAG, "Getting scan record " + bytesToHex(scanRecord));
+        Log.d(TAG, "Parsing scanRecord " + bytesToHex(scanRecord));
         // Note that in Java, all types are signed!
         for (int i = 0; i < scanRecord.length; ++i) {
             int length = scanRecord[i] & 0xff;
@@ -43,11 +43,9 @@ public class BLEESScanRecord {
             int length = scanRecord[i] & 0xff;
             if (length == 0) break;
             int type = scanRecord[i+1] & 0xff;
-            Log.d(TAG, "Type: " + type);
             if (type != 0xff) {
                 i += length;
             } else {
-                Log.d(TAG, "Parsing manf. data");
                 // format 0xff, (manf_id 1, manf_id 2, app_dev_type, app_adv_data_length,
                 //  app_temp, app_humidity, app_light, squall_id)
                 temp = scanRecord[i + 1 + 5] & 0xff;
