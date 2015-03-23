@@ -1,16 +1,22 @@
 package com.jonesnl.bleesandroid;
 
+import com.jonesnl.bleesandroid.BLEESScanRecord;
+
 import android.app.ExpandableListActivity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
+import android.os.Handler;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ExpandableListAdapter;
 import android.widget.SimpleExpandableListAdapter;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,66 +24,131 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MainActivity extends ExpandableListActivity {
+public class MainActivity extends ExpandableListActivity implements BluetoothAdapter.LeScanCallback {
+    private static final String TAG = "MainActivity";
+
     private static final String NAME = "NAME";
-    private static final String IS_EVEN = "IS_EVEN";
+    private static final String VALUE = "VALUE";
     private static final int REQUEST_ENABLE_BT = 55;
 
     private ExpandableListAdapter mAdapter;
 
     private BluetoothAdapter mBluetoothAdapter = null;
 
+    private List<Map<String, String>> groupData;
+    private List<List<Map<String, String>>> childData;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_main);
+
         final BluetoothManager bm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bm.getAdapter();
+
+        //refreshBLEESList();
+
+        Toast.makeText(this, "After refresh", Toast.LENGTH_SHORT).show();
+        // Still need to get data from Bluetooth and put it into lists
+
+        groupData = new ArrayList<Map<String, String>>();
+        childData = new ArrayList<List<Map<String, String>>>();
+        // Set up our adapter
+//        mAdapter = new SimpleExpandableListAdapter(
+//                this,
+//                groupData,
+//                android.R.layout.simple_expandable_list_item_1,
+//                new String[] { NAME, VALUE },
+//                new int[] { android.R.id.text1, android.R.id.text2 },
+//                childData,
+//                android.R.layout.simple_expandable_list_item_2,
+//                new String[] { NAME, VALUE },
+//                new int[] { android.R.id.text1, android.R.id.text2 }
+//        );
+//        setListAdapter(mAdapter);
+    }
+
+    private Runnable mStopRunnable = new Runnable() {
+        @Override
+        public void run() {
+            stopScan();
+        }
+    };
+    private Runnable mStartRunnable = new Runnable() {
+        @Override
+        public void run() {
+            startScan();
+        }
+    };
+
+    private void startScan() {
+        Log.v(TAG, "StartLeScan");
+        mBluetoothAdapter.startLeScan(this);
+        mHandler.postDelayed(mStopRunnable, 2500);
+    }
+    private void stopScan() {
+        Log.v(TAG, "StopLeScan");
+        mBluetoothAdapter.stopLeScan(this);
+    }
+
+    private Handler mHandler = new Handler();
+
+
+    @Override
+    public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+        BLEESScanRecord record;
+        Log.v(TAG, "OnLeScan()");
+        try {
+            record = new BLEESScanRecord(scanRecord);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Caught exception");
+            return;
+        }
+
+        Map<String, String> curGroupMap = new HashMap<String, String>();
+        groupData.add(curGroupMap);
+        curGroupMap.put(NAME, record.devName);
+        curGroupMap.put(VALUE, record.devName);
+
+        List<Map<String, String>> children = new ArrayList<Map<String, String>>();
+
+        Map<String, String> tempChild = new HashMap<String, String>();
+        children.add(tempChild);
+        tempChild.put(NAME, "Temp: ");
+        tempChild.put(VALUE, record.temp.toString());
+
+        Map<String, String> humidityChild = new HashMap<String, String>();
+        children.add(humidityChild);
+        humidityChild.put(NAME, "Humidity: ");
+        humidityChild.put(VALUE, record.temp.toString());
+
+        Map<String, String> lightChild = new HashMap<String, String>();
+        children.add(lightChild);
+        lightChild.put(NAME, "Light: ");
+        lightChild.put(VALUE, record.temp.toString());
+
+        childData.add(children);
+        Log.v(TAG, "Add to list view");
+    }
+
+    public void refreshBLEESList() {
+        Log.v(TAG, "RefreshBLEESList()");
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            android.os.SystemClock.sleep(10000); // should do something different TODO
+            Toast.makeText(this, "Please enable Bluetooth", Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            final BluetoothManager bm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            mBluetoothAdapter = bm.getAdapter();
         }
 
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            System.exit(0);
-        }
-
-        // Still need to get data from Bluetooth and put it into lists
-
-        List<Map<String, String>> groupData = new ArrayList<Map<String, String>>();
-        List<List<Map<String, String>>> childData = new ArrayList<List<Map<String, String>>>();
-        for (int i = 0; i < 10; i++) {
-            Map<String, String> curGroupMap = new HashMap<String, String>();
-            groupData.add(curGroupMap);
-            curGroupMap.put(NAME, "Group " + i);
-            curGroupMap.put(IS_EVEN, (i % 2 == 0) ? "This group is even" : "This group is odd");
-
-            List<Map<String, String>> children = new ArrayList<Map<String, String>>();
-            for (int j = 0; j < 3; j++) {
-                Map<String, String> curChildMap = new HashMap<String, String>();
-                children.add(curChildMap);
-                curChildMap.put(NAME, "Child " + j);
-                curChildMap.put(IS_EVEN, (j % 2 == 0) ? "This child is even" : "This child is odd");
-            }
-            childData.add(children);
-        }
-
-        // Set up our adapter
-        mAdapter = new SimpleExpandableListAdapter(
-                this,
-                groupData,
-                android.R.layout.simple_expandable_list_item_1,
-                new String[] { NAME, IS_EVEN },
-                new int[] { android.R.id.text1, android.R.id.text2 },
-                childData,
-                android.R.layout.simple_expandable_list_item_2,
-                new String[] { NAME, IS_EVEN },
-                new int[] { android.R.id.text1, android.R.id.text2 }
-        );
-        setListAdapter(mAdapter);
+        startScan();
+        //mHandler.postDelayed(mStopRunnable, 2500);
+        //stopScan();
+        Log.v(TAG, "Finish refresh");
     }
 
     @Override
@@ -97,6 +168,9 @@ public class MainActivity extends ExpandableListActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.action_refresh) {
+            refreshBLEESList();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -111,4 +185,5 @@ public class MainActivity extends ExpandableListActivity {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
 }
