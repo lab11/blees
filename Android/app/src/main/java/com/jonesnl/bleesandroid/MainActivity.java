@@ -55,18 +55,18 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         groupData = new ArrayList<Map<String, String>>();
         childData = new ArrayList<List<Map<String, String>>>();
         // Set up our adapter
-//        mAdapter = new SimpleExpandableListAdapter(
-//                this,
-//                groupData,
-//                android.R.layout.simple_expandable_list_item_1,
-//                new String[] { NAME, VALUE },
-//                new int[] { android.R.id.text1, android.R.id.text2 },
-//                childData,
-//                android.R.layout.simple_expandable_list_item_2,
-//                new String[] { NAME, VALUE },
-//                new int[] { android.R.id.text1, android.R.id.text2 }
-//        );
-//        setListAdapter(mAdapter);
+        mAdapter = new SimpleExpandableListAdapter(
+                this,
+                groupData,
+                android.R.layout.simple_expandable_list_item_1,
+                new String[] { NAME, VALUE },
+                new int[] { android.R.id.text1, android.R.id.text2 },
+                childData,
+                android.R.layout.simple_expandable_list_item_2,
+                new String[] { NAME, VALUE },
+                new int[] { android.R.id.text1, android.R.id.text2 }
+        );
+        setListAdapter(mAdapter);
     }
 
     private Runnable mStopRunnable = new Runnable() {
@@ -99,11 +99,12 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
     public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
         BLEESScanRecord record;
         Log.v(TAG, "OnLeScan()");
-        try {
-            record = new BLEESScanRecord(scanRecord);
-        } catch (RuntimeException e) {
-            Log.e(TAG, "Caught exception");
-            return;
+        record = new BLEESScanRecord(scanRecord);
+
+        if (!record.valid) return;
+
+        for (Map<String, String> map : groupData) {
+            if (map.get(NAME).equals(record.devName)) return;
         }
 
         Map<String, String> curGroupMap = new HashMap<String, String>();
@@ -121,14 +122,23 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         Map<String, String> humidityChild = new HashMap<String, String>();
         children.add(humidityChild);
         humidityChild.put(NAME, "Humidity: ");
-        humidityChild.put(VALUE, record.temp.toString());
+        humidityChild.put(VALUE, record.humidity.toString());
 
         Map<String, String> lightChild = new HashMap<String, String>();
         children.add(lightChild);
         lightChild.put(NAME, "Light: ");
-        lightChild.put(VALUE, record.temp.toString());
+        lightChild.put(VALUE, record.light.toString());
+
+        Map<String, String> pressureChild = new HashMap<String, String>();
+        children.add(pressureChild);
+        pressureChild.put(NAME, "Pressure: ");
+        pressureChild.put(VALUE, record.pressure.toString());
 
         childData.add(children);
+
+        setListAdapter(mAdapter);
+
+
         Log.v(TAG, "Add to list view");
     }
 

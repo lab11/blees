@@ -28,7 +28,7 @@
 #define APP_BEACON_INFO_LENGTH          0x7                              /**< Total length of information advertised by the Beacon. */
 #define APP_ADV_DATA_LENGTH             0x5                              /**< Length of manufacturer specific data in the advertisement. */
 #define APP_DEVICE_TYPE                 0x01                              /**< Just chose 0x01 */
-#define APP_BEACON_DATA                 70, 85, 90                      // Temp byte, humidity byte, light byte
+#define APP_BEACON_DATA                 70, 85, 90, 66                      // Temp byte, humidity byte, light byte, pressure byte
 
 #define NEW_DEVICE_NAME                     "BLEES EECS 2334"               // 20 bytes between device name, beacon_data, and squall_id
 
@@ -44,8 +44,7 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Inf
 {
     APP_DEVICE_TYPE,
     APP_ADV_DATA_LENGTH,
-    APP_BEACON_DATA,
-    APP_SQUALL_ID
+    APP_BEACON_DATA
 };
 
 
