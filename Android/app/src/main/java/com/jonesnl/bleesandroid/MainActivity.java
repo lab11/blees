@@ -32,7 +32,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
     private static final String VALUE = "VALUE";
     private static final int REQUEST_ENABLE_BT = 55;
 
-    private ExpandableListAdapter mAdapter;
+    private SimpleExpandableListAdapter mAdapter;
 
     private BluetoothAdapter mBluetoothAdapter = null;
 
@@ -140,7 +140,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         childData.add(children);
 
-        mListView.invalidateViews();
+        mAdapter.notifyDataSetChanged();
     }
 
     public void refreshBLEESList() {
