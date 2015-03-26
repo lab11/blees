@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.Toast;
 
@@ -38,6 +39,8 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
     private List<Map<String, String>> groupData;
     private List<List<Map<String, String>>> childData;
 
+    private ExpandableListView mListView;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +52,6 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         //refreshBLEESList();
 
-        Toast.makeText(this, "After refresh", Toast.LENGTH_SHORT).show();
         // Still need to get data from Bluetooth and put it into lists
 
         groupData = new ArrayList<Map<String, String>>();
@@ -67,6 +69,8 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
                 new int[] { android.R.id.text1, android.R.id.text2 }
         );
         setListAdapter(mAdapter);
+
+        mListView = getExpandableListView();
     }
 
     private Runnable mStopRunnable = new Runnable() {
@@ -136,7 +140,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         childData.add(children);
 
-        setListAdapter(mAdapter);
+        mListView.invalidateViews();
     }
 
     public void refreshBLEESList() {
