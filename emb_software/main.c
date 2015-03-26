@@ -10,6 +10,7 @@
 #include "softdevice_handler.h"
 #include "ble_debug_assert_handler.h"
 #include "led.h"
+#include "twi_master.h"
 
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -36,6 +37,11 @@
 #define APP_SQUALL_ID                   0x42
 #endif
 
+// Sensor defines
+#define LIGHT_READ_ADDR                 0b01010010
+#define LIGHT_WRITE_ADDR                0b01010011
+
+
 // information about the advertisement
 ble_advdata_t                           advdata;
 static ble_gap_adv_params_t             m_adv_params;                     /**< Parameters to be passed to the stack when starting advertising. */
@@ -46,6 +52,13 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Inf
     APP_ADV_DATA_LENGTH,
     APP_BEACON_DATA
 };
+
+static struct {
+    uint8_t temp;
+    uint8_t humidity;
+    uint8_t light;
+    uint8_t pressure;
+} m_sensor_info;
 
 
 /**@brief Function for error handling, which is called when an error has occurred.
@@ -189,6 +202,48 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
+/**@brief init sensor data structures and sensors
+ */
+static void sensors_init(void) {
+    m_sensor_info.temp = 0;
+    m_sensor_info.humidity = 0;
+    m_sensor_info.pressure = 0;
+    m_sensor_info.light = 0;
+    
+    bool return = twi_master_init();
+    //if (return == false) {
+    //    //do something
+    //}
+    
+    // Init temp and humidity sensor
+    
+    // Init pressure sensor
+    
+    // Init light sensor
+
+    uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
+    // Turn on light sensor
+    twi_master_transfer(
+            LIGHT_WRITE_ADDR,
+            light_turn_on_cmd,
+            sizeof(light_turn_on_cmd),
+            TWI_ISSUE_STOP
+    );
+}
+
+/**@brief get sensor data and update m_sensor_info
+ */
+static void get_sensor_data() {
+    // get temperature and humidity
+    m_sensor_info.temp = 33;
+    m_sensor_info.humidity = 44;
+
+    // get pressure
+    m_sensor_info.pressure = 66;
+
+    // get light
+    m_sensor_info.light = 98;
+}
 
 /**
  * @brief Function for application main entry.
@@ -197,6 +252,8 @@ int main(void)
 {
     // Initialize.
     //platform_init();
+    
+    sensors_init();
 
     ble_stack_init();
 
@@ -206,6 +263,8 @@ int main(void)
 
     // Start execution.
     advertising_start();
+
+    get_sensor_data();
 
     while (1) {
         power_manage();
