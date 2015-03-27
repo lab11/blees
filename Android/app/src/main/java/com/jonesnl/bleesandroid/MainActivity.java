@@ -14,8 +14,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.Toast;
 
@@ -41,11 +43,16 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
     private ExpandableListView mListView;
 
+    private ProgressBar mProgress;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+
+        mProgress = (ProgressBar) findViewById(R.id.progress);
+        mProgress.setVisibility(ProgressBar.INVISIBLE);
 
         final BluetoothManager bm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bm.getAdapter();
@@ -88,11 +95,19 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
     private void startScan() {
         Log.v(TAG, "StartLeScan");
+        groupData.clear();
+        childData.clear();
+        mAdapter.notifyDataSetChanged();
+        mListView.invalidateViews();
+        mProgress.setVisibility(ProgressBar.VISIBLE);
         mBluetoothAdapter.startLeScan(this);
         mHandler.postDelayed(mStopRunnable, 2500);
     }
     private void stopScan() {
         Log.v(TAG, "StopLeScan");
+        mAdapter.notifyDataSetChanged();
+        mListView.invalidateViews();
+        mProgress.setVisibility(ProgressBar.INVISIBLE);
         mBluetoothAdapter.stopLeScan(this);
     }
 
@@ -108,7 +123,25 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         if (!record.valid) return;
 
         for (Map<String, String> map : groupData) {
-            if (map.get(NAME).equals(record.devName)) return;
+            if (map.get(NAME).equals(record.devName)) {
+                map.put(NAME, record.devName);
+                List<Map<String, String>> children = childData.get(0);
+                for (Map<String, String> childMap : children) {
+                    if (childMap.get(NAME).equals("Temp: ")) {
+                        childMap.put(VALUE, record.temp.toString());
+                    } else if (childMap.get(NAME).equals("Humidity: ")) {
+                        childMap.put(VALUE, record.humidity.toString());
+                    } else if (childMap.get(NAME).equals("Light: ")) {
+                        childMap.put(VALUE, record.light.toString());
+                    } else if (childMap.get(NAME).equals("Pressure: ")) {
+                        childMap.put(VALUE, record.pressure.toString());
+                    } else {
+                        Log.e(TAG, "Error parsing childMap");
+                        return;
+                    }
+                }
+                return;
+            }
         }
 
         Map<String, String> curGroupMap = new HashMap<String, String>();
@@ -139,8 +172,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         pressureChild.put(VALUE, record.pressure.toString());
 
         childData.add(children);
-
-        mAdapter.notifyDataSetChanged();
+        setProgressBarVisibility(true);
     }
 
     public void refreshBLEESList() {
