@@ -23,7 +23,8 @@ APPLICATION_SRCS += $(TARGET_LOWER).c
 USE_SOFTDEVICE = s110
 
 SDK_VERSION = 7
-SDK_PATH ?= $(HOME)/Classes/EECS373/nRF51_SDK_7.2.0_cf547b5/
+# CHANGE TO LOCATION OF SDK FOLDER WHEN COPYING TO Makefile
+SDK_PATH ?= $(HOME)/<SDK_PATH>
 TEMPLATE_PATH ?= ../squall/software/nrf51-pure-gcc-setup/template/
 
 LIBRARY_PATHS += ../squall/software/include
