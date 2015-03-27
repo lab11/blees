@@ -246,39 +246,72 @@ static void sensors_init(void) {
     m_sensor_info.light = 0;
     
     bool ret = twi_master_init();
-    //if (return == false) {
+    //if (ret == false) {
     //    //do something
     //}
     
     // Init temp and humidity sensor
+    uint8_t temp_hum_data = 0b11111110;
+    twi_master_transfer(
+            TEMP_HUM_ADDR | TWI_WRITE,
+            &temp_hum_data,
+            sizeof(uint8_t),
+            TWI_ISSUE_STOP
+    );
     
     // Init pressure sensor
+    uint8_t pressure_data[] = {0x20, 0b10010100};
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_data,
+            sizeof(pressure_data),
+            TWI_ISSUE_STOP
+    );
     
     // Init light sensor
-
-    //uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
-    // Turn on light sensor
-    // twi_master_transfer(
-    //         LIGHT_WRITE_ADDR,
-    //         light_turn_on_cmd,
-    //         sizeof(light_turn_on_cmd),
-    //         TWI_ISSUE_STOP
-    // );
+    uint8_t lux_data[] = {0b11000000, 0b00000011};
+    twi_master_transfer(
+            LUX_ADDR | TWI_WRITE,
+            lux_data,
+            sizeof(lux_data),
+            TWI_ISSUE_STOP
+    );
 }
 
 /**@brief get sensor data and update m_sensor_info
  */
-// static void get_sensor_data() {
-//     // get temperature and humidity
-//     m_sensor_info.temp = 33;
-//     m_sensor_info.humidity = 44;
-// 
-//     // get pressure
-//     m_sensor_info.pressure = 66;
-// 
-//     // get light
-//     m_sensor_info.light = 98;
-// }
+static void get_sensor_data() {
+    // get temperature and humidity
+
+    // get pressure
+    uint8_t pressure_write[] = {0xA8};
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_write,
+            sizeof(pressure_write),
+            TWI_DONT_ISSUE_STOP
+    );
+    uint8_t pressure_data[3];
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_READ,
+            pressure_data,
+            sizeof(pressure_data),
+            TWI_ISSUE_STOP
+    );
+   
+    m_sensor_info.temp = pressure_data[2];
+    m_sensor_info.humidity = pressure_data[1];
+    m_sensor_info.light = pressure_data[0];
+
+    float pressure =    ((pressure_data[2] << 16) |
+                        (pressure_data[1] << 8) |
+                        (pressure_data[0])) / 4096.0;
+    int int_pressure = (int) pressure;
+
+    m_sensor_info.pressure = (uint8_t) int_pressure;
+
+    // get light
+}
 
 /**
  * @brief Function for application main entry.
@@ -309,8 +342,7 @@ int main(void)
 
     while (1) {
         m_sensor_info.temp += 1;
-        // get_sensor_data();
-        // process sensor data
+        get_sensor_data();
         
         // Update information sent with beacon
         update_beacon_info();
