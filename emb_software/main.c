@@ -38,13 +38,24 @@
 #endif
 
 // Sensor defines
-#define LIGHT_READ_ADDR                 0b01010010
-#define LIGHT_WRITE_ADDR                0b01010011
+#define LUX_ADDR                        0b01010010
+#define TEMP_HUM_ADDR                   0b10000000
+#define PRESSURE_ADDR                   0b10111000
 
+// Read/Write def
+#define TWI_READ                        0b0
+#define TWI_WRITE                       0b1
 
 // information about the advertisement
 ble_advdata_t                           advdata;
 static ble_gap_adv_params_t             m_adv_params;                     /**< Parameters to be passed to the stack when starting advertising. */
+
+static struct {
+    uint8_t temp;
+    uint8_t humidity;
+    uint8_t light;
+    uint8_t pressure;
+} m_sensor_info;
 
 static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Information advertised by the Beacon. */
 {
@@ -53,13 +64,34 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Inf
     APP_BEACON_DATA
 };
 
-// static struct {
-//     uint8_t temp;
-//     uint8_t humidity;
-//     uint8_t light;
-//     uint8_t pressure;
-// } m_sensor_info;
+// Moves data from the m_sensor_info struct
+// into the m_beacon_info array
+// to set it up to send
+void update_beacon_info()
+{
+    m_beacon_info[2] = m_sensor_info.temp;
+    m_beacon_info[3] = m_sensor_info.humidity;
+    m_beacon_info[4] = m_sensor_info.light;
+    m_beacon_info[5] = m_sensor_info.pressure;
 
+    uint32_t                  err_code;
+
+    // Use the simplest send adv packets only mode
+    uint8_t                   flags = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+    // More manufacturing only stuff that might get added back in
+    ble_advdata_manuf_data_t  manuf_specific_data;
+
+    manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
+    manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
+    manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
+
+    advdata.p_manuf_specific_data   = &manuf_specific_data;
+    advdata.flags.size              = sizeof(flags);
+    advdata.flags.p_data            = &flags;
+
+    err_code = ble_advdata_set(&advdata, NULL);
+    APP_ERROR_CHECK(err_code);
+}
 
 /**@brief Function for error handling, which is called when an error has occurred.
  *
@@ -204,32 +236,32 @@ static void power_manage(void)
 
 /**@brief init sensor data structures and sensors
  */
-// static void sensors_init(void) {
-//     m_sensor_info.temp = 0;
-//     m_sensor_info.humidity = 0;
-//     m_sensor_info.pressure = 0;
-//     m_sensor_info.light = 0;
-//     
-//     bool return = twi_master_init();
-//     //if (return == false) {
-//     //    //do something
-//     //}
-//     
-//     // Init temp and humidity sensor
-//     
-//     // Init pressure sensor
-//     
-//     // Init light sensor
-// 
-//     uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
-//     // Turn on light sensor
-//     // twi_master_transfer(
-//     //         LIGHT_WRITE_ADDR,
-//     //         light_turn_on_cmd,
-//     //         sizeof(light_turn_on_cmd),
-//     //         TWI_ISSUE_STOP
-//     // );
-// }
+static void sensors_init(void) {
+    m_sensor_info.temp = 0;
+    m_sensor_info.humidity = 0;
+    m_sensor_info.pressure = 0;
+    m_sensor_info.light = 0;
+    
+    bool ret = twi_master_init();
+    //if (return == false) {
+    //    //do something
+    //}
+    
+    // Init temp and humidity sensor
+    
+    // Init pressure sensor
+    
+    // Init light sensor
+
+    //uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
+    // Turn on light sensor
+    // twi_master_transfer(
+    //         LIGHT_WRITE_ADDR,
+    //         light_turn_on_cmd,
+    //         sizeof(light_turn_on_cmd),
+    //         TWI_ISSUE_STOP
+    // );
+}
 
 /**@brief get sensor data and update m_sensor_info
  */
@@ -253,7 +285,7 @@ int main(void)
     // Initialize.
     //platform_init();
     
-    // sensors_init();
+    sensors_init();
 
     ble_stack_init();
 
@@ -264,10 +296,17 @@ int main(void)
     // Start execution.
     advertising_start();
 
-    // get_sensor_data();
-
     while (1) {
-        power_manage();
+        m_sensor_info.temp += 1;
+        // get_sensor_data();
+        // process sensor data
+        
+        // Update information sent with beacon
+        update_beacon_info();
+
+        // Reset beacon
+
+        power_manage(); //sleep
     }
 }
 
