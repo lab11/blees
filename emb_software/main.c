@@ -53,12 +53,12 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Inf
     APP_BEACON_DATA
 };
 
-static struct {
-    uint8_t temp;
-    uint8_t humidity;
-    uint8_t light;
-    uint8_t pressure;
-} m_sensor_info;
+// static struct {
+//     uint8_t temp;
+//     uint8_t humidity;
+//     uint8_t light;
+//     uint8_t pressure;
+// } m_sensor_info;
 
 
 /**@brief Function for error handling, which is called when an error has occurred.
@@ -204,46 +204,46 @@ static void power_manage(void)
 
 /**@brief init sensor data structures and sensors
  */
-static void sensors_init(void) {
-    m_sensor_info.temp = 0;
-    m_sensor_info.humidity = 0;
-    m_sensor_info.pressure = 0;
-    m_sensor_info.light = 0;
-    
-    bool return = twi_master_init();
-    //if (return == false) {
-    //    //do something
-    //}
-    
-    // Init temp and humidity sensor
-    
-    // Init pressure sensor
-    
-    // Init light sensor
-
-    uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
-    // Turn on light sensor
-    twi_master_transfer(
-            LIGHT_WRITE_ADDR,
-            light_turn_on_cmd,
-            sizeof(light_turn_on_cmd),
-            TWI_ISSUE_STOP
-    );
-}
+// static void sensors_init(void) {
+//     m_sensor_info.temp = 0;
+//     m_sensor_info.humidity = 0;
+//     m_sensor_info.pressure = 0;
+//     m_sensor_info.light = 0;
+//     
+//     bool return = twi_master_init();
+//     //if (return == false) {
+//     //    //do something
+//     //}
+//     
+//     // Init temp and humidity sensor
+//     
+//     // Init pressure sensor
+//     
+//     // Init light sensor
+// 
+//     uint8_t light_turn_on_cmd[] = {0b11000000, 0b00000011};
+//     // Turn on light sensor
+//     // twi_master_transfer(
+//     //         LIGHT_WRITE_ADDR,
+//     //         light_turn_on_cmd,
+//     //         sizeof(light_turn_on_cmd),
+//     //         TWI_ISSUE_STOP
+//     // );
+// }
 
 /**@brief get sensor data and update m_sensor_info
  */
-static void get_sensor_data() {
-    // get temperature and humidity
-    m_sensor_info.temp = 33;
-    m_sensor_info.humidity = 44;
-
-    // get pressure
-    m_sensor_info.pressure = 66;
-
-    // get light
-    m_sensor_info.light = 98;
-}
+// static void get_sensor_data() {
+//     // get temperature and humidity
+//     m_sensor_info.temp = 33;
+//     m_sensor_info.humidity = 44;
+// 
+//     // get pressure
+//     m_sensor_info.pressure = 66;
+// 
+//     // get light
+//     m_sensor_info.light = 98;
+// }
 
 /**
  * @brief Function for application main entry.
@@ -253,7 +253,7 @@ int main(void)
     // Initialize.
     //platform_init();
     
-    sensors_init();
+    // sensors_init();
 
     ble_stack_init();
 
@@ -264,7 +264,7 @@ int main(void)
     // Start execution.
     advertising_start();
 
-    get_sensor_data();
+    // get_sensor_data();
 
     while (1) {
         power_manage();
