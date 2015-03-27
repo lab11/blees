@@ -3,13 +3,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "nrf_gpio.h"
+#include "app_timer.h"
 #include "ble_advdata.h"
-#include "boards.h"
-#include "nordic_common.h"
-#include "softdevice_handler.h"
 #include "ble_debug_assert_handler.h"
+#include "boards.h"
 #include "led.h"
+#include "nordic_common.h"
+#include "nrf_gpio.h"
+#include "softdevice_handler.h"
 #include "twi_master.h"
 
 
@@ -92,6 +93,8 @@ void update_beacon_info()
     err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
+
+void run_after_timer() {}
 
 /**@brief Function for error handling, which is called when an error has occurred.
  *
@@ -285,6 +288,9 @@ int main(void)
     // Initialize.
     //platform_init();
     
+    // Init timers
+    APP_TIMER_INIT(0, 1, 1, 0);
+    
     sensors_init();
 
     ble_stack_init();
@@ -295,6 +301,11 @@ int main(void)
 
     // Start execution.
     advertising_start();
+
+    //10-Sec Timer
+    app_timer_id_t timer;
+    app_timer_create(&timer, APP_TIMER_MODE_REPEATED, run_after_timer);
+    app_timer_start(timer, APP_TIMER_TICKS(10000, 0), NULL);
 
     while (1) {
         m_sensor_info.temp += 1;
