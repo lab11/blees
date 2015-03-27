@@ -44,8 +44,8 @@
 #define PRESSURE_ADDR                   0b10111000
 
 // Read/Write def
-#define TWI_READ                        0b0
-#define TWI_WRITE                       0b1
+#define TWI_READ                        0b1
+#define TWI_WRITE                       0b0
 
 // information about the advertisement
 ble_advdata_t                           advdata;
@@ -281,9 +281,46 @@ static void sensors_init(void) {
 /**@brief get sensor data and update m_sensor_info
  */
 static void get_sensor_data() {
-    // get temperature and humidity
+    //Temperature
+    uint8_t temp_hum_write[] = {0xE3};
+    twi_master_transfer(
+            TEMP_HUM_ADDR | TWI_WRITE,
+            temp_hum_write,
+            sizeof(temp_hum_write),
+            TWI_DONT_ISSUE_STOP
+    );
+    uint8_t temp_hum_data[3];
+    twi_master_transfer(
+            TEMP_HUM_ADDR | TWI_READ,
+            temp_hum_data,
+            sizeof(temp_hum_data),
+            TWI_ISSUE_STOP
+    );
 
-    // get pressure
+    float temperature = -46.85 + (175.72 * ((temp_hum_data[1] << 8) | (temp_hum_data[0] & 0xfc)) / (1 << 16));
+    int int_temperature = (int) temperature;
+    m_sensor_info.temp = (uint8_t) int_temperature;
+
+    //Humidity
+    temp_hum_write[0] = 0xE5;
+    twi_master_transfer(
+            TEMP_HUM_ADDR | TWI_WRITE,
+            temp_hum_write,
+            sizeof(temp_hum_write),
+            TWI_DONT_ISSUE_STOP
+    );
+    twi_master_transfer(
+            TEMP_HUM_ADDR | TWI_READ,
+            temp_hum_data,
+            sizeof(temp_hum_data),
+            TWI_ISSUE_STOP
+    );
+
+    float humidity = -6.0 + ((125.0 / (1 << 16)) * ((temp_hum_data[1] << 8) | (temp_hum_data[0] & 0xf0)));
+    int int_humidity = (int) humidity;
+    m_sensor_info.humidity = (uint8_t) int_humidity;
+
+    //Pressure
     uint8_t pressure_write[] = {0xA8};
     twi_master_transfer(
             PRESSURE_ADDR | TWI_WRITE,
@@ -299,18 +336,28 @@ static void get_sensor_data() {
             TWI_ISSUE_STOP
     );
    
-    m_sensor_info.temp = pressure_data[2];
-    m_sensor_info.humidity = pressure_data[1];
-    m_sensor_info.light = pressure_data[0];
-
     float pressure =    ((pressure_data[2] << 16) |
                         (pressure_data[1] << 8) |
-                        (pressure_data[0])) / 4096.0;
+                        (pressure_data[0])) / 40960.0;
     int int_pressure = (int) pressure;
 
     m_sensor_info.pressure = (uint8_t) int_pressure;
 
     // get light
+    //uint8_t lux_write[] = {0xA8};
+    //twi_master_transfer(
+    //        LUX_ADDR | TWI_WRITE,
+    //        pressure_write,
+    //        sizeof(pressure_write),
+    //        TWI_DONT_ISSUE_STOP
+    //);
+    //uint8_t lux_data[3];
+    //twi_master_transfer(
+    //        PRESSURE_ADDR | TWI_READ,
+    //        pressure_data,
+    //        sizeof(pressure_data),
+    //        TWI_ISSUE_STOP
+    //);
 }
 
 /**
@@ -338,7 +385,7 @@ int main(void)
     //10-Sec Timer
     app_timer_id_t timer;
     app_timer_create(&timer, APP_TIMER_MODE_REPEATED, run_after_timer);
-    app_timer_start(timer, APP_TIMER_TICKS(10000, 0), NULL);
+    app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
 
     while (1) {
         m_sensor_info.temp += 1;
