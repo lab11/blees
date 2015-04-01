@@ -5,8 +5,9 @@ APPLICATION_SRCS += softdevice_handler.c
 APPLICATION_SRCS += ble_advdata.c
 APPLICATION_SRCS += ble_debug_assert_handler.c
 APPLICATION_SRCS += ble_srv_common.c
-APPLICATION_SRCS += twi_hw_master.c
+APPLICATION_SRCS += twi_sw_master.c
 APPLICATION_SRCS += led.c
+APPLICATION_SRCS += app_timer.c
 
 DEVICE = NRF51
 
@@ -30,7 +31,7 @@ TEMPLATE_PATH ?= ../squall/software/nrf51-pure-gcc-setup/template/
 LIBRARY_PATHS += ../squall/software/include
 SOURCE_PATHS += ../squall/software/src
 
-CFLAGS = -Os
+CFLAGS = -O0
 CFLAGS += $(MFLAGS)
 GDB_PORT_NUMBER = 2331
 

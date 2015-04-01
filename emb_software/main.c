@@ -365,8 +365,8 @@ static void get_sensor_data() {
     twi_master_transfer
     (
         LUX_ADDR | TWI_READ,
-        chan0_output,
-        sizeof(chan0_output),
+        chan0_output_low,
+        sizeof(chan0_output_low),
         TWI_ISSUE_STOP
     );
     
@@ -388,8 +388,8 @@ static void get_sensor_data() {
         TWI_ISSUE_STOP
     );
 
-    //chan0_output[1] = chan0_output_low[0];
-    //chan0_output[0] = chan0_output_high[0];
+    chan0_output[1] = chan0_output_low[0];
+    chan0_output[0] = chan0_output_high[0];
 
     uint8_t chan1_low_byte[] = {0b10101110};
     uint8_t chan1_output[] = {0x00, 0x00};
@@ -407,31 +407,31 @@ static void get_sensor_data() {
     twi_master_transfer
     (
         LUX_ADDR | TWI_READ,
-        chan1_output,
-        sizeof(chan1_output),
+        chan1_output_low,
+        sizeof(chan1_output_low),
         TWI_ISSUE_STOP
     );
     
-    //uint8_t chan1_high_byte[] = {0b10101111};
-    //
-    //twi_master_transfer
-    //(
-    //    LUX_ADDR | TWI_WRITE,
-    //    chan1_high_byte,
-    //    sizeof(chan1_high_byte),
-    //    TWI_DONT_ISSUE_STOP
-    //);
-    //
-    //twi_master_transfer
-    //(
-    //    LUX_ADDR | TWI_READ,
-    //    chan1_output_high,
-    //    sizeof(chan1_output_high),
-    //    TWI_ISSUE_STOP
-    //);
+    uint8_t chan1_high_byte[] = {0b10101111};
+    
+    twi_master_transfer
+    (
+        LUX_ADDR | TWI_WRITE,
+        chan1_high_byte,
+        sizeof(chan1_high_byte),
+        TWI_DONT_ISSUE_STOP
+    );
+    
+    twi_master_transfer
+    (
+        LUX_ADDR | TWI_READ,
+        chan1_output_high,
+        sizeof(chan1_output_high),
+        TWI_ISSUE_STOP
+    );
 
-    //chan1_output[1] = chan1_output_low[0];
-    //chan1_output[0] = chan1_output_high[0];
+    chan1_output[1] = chan1_output_low[0];
+    chan1_output[0] = chan1_output_high[0];
 
     // Conversion
 
