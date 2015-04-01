@@ -1,3 +1,6 @@
 [submodule "squall"]
 	path = squall
 	url = git@github.com:helena-project/squall.git
+[submodule "lab11_libs"]
+	path = lab11_libs
+	url = git@github.com:lab11/eagle.git
