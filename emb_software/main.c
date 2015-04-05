@@ -28,10 +28,19 @@
 // Insert manufacturing things into the advertisement
 #define APP_COMPANY_IDENTIFIER          0x11BB                            /**< Company identifier I made up */
 
-#define APP_BEACON_INFO_LENGTH          0x7                              /**< Total length of information advertised by the Beacon. */
-#define APP_ADV_DATA_LENGTH             0x5                              /**< Length of manufacturer specific data in the advertisement. */
+#define APP_BEACON_INFO_LENGTH          0x13                              /**< Total length of information advertised by the Beacon. */
+#define APP_ADV_DATA_LENGTH             0x11                              /**< Length of manufacturer specific data in the advertisement. */
 #define APP_DEVICE_TYPE                 0x01                              /**< Just chose 0x01 */
-#define APP_BEACON_DATA                 70, 85, 90, 66                      // Temp byte, humidity byte, light byte, pressure byte
+
+#define TEMP_FLOAT                      1.0f
+#define HUMIDITY_FLOAT                  2.0f
+#define LIGHT_FLOAT                     3.0f
+#define PRESSURE_FLOAT                  4.0f
+
+#define TEMP_DATA                       1, 2, 3, 4
+#define HUMIDITY_DATA                   5, 6, 7, 8
+#define LIGHT_DATA                      9, 0xA, 0xB, 0xC
+#define PRESSURE_DATA                   0xD, 0xE, 0xF, 0x10
 
 #define NEW_DEVICE_NAME                     "BLEES EECS 2334"               // 20 bytes between device name, beacon_data, and squall_id
 
@@ -50,36 +59,51 @@
 
 // information about the advertisement
 ble_advdata_t                           advdata;
+ble_advdata_t                           srdata;
 static ble_gap_adv_params_t             m_adv_params;                     /**< Parameters to be passed to the stack when starting advertising. */
 
 static struct {
-    uint8_t temp;
-    uint8_t humidity;
-    uint8_t light;
-    uint8_t pressure;
-} m_sensor_info;
+    float temp;
+    float humidity;
+    float light;
+    float pressure;
+} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f};
 
 static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                  /**< Information advertised by the Beacon. */
 {
     APP_DEVICE_TYPE,
     APP_ADV_DATA_LENGTH,
-    APP_BEACON_DATA
+    TEMP_DATA,
+    HUMIDITY_DATA,
+    LIGHT_DATA,
+    PRESSURE_DATA
 };
+
+static float *temp_beacon_info = (float *) m_beacon_info + 2;
+static float *humidity_beacon_info = (float *) m_beacon_info + 6;
+static float *light_beacon_info = (float *) m_beacon_info + 10;
+static float *pressure_beacon_info = (float *) m_beacon_info + 14;
 
 // Moves data from the m_sensor_info struct
 // into the m_beacon_info array
 // to set it up to send
 void update_beacon_info()
 {
-    m_beacon_info[2] = m_sensor_info.temp;
-    m_beacon_info[3] = m_sensor_info.humidity;
-    m_beacon_info[4] = m_sensor_info.light;
-    m_beacon_info[5] = m_sensor_info.pressure;
+    memcpy(&m_beacon_info[2], &m_sensor_info.temp, 4);
+    memcpy(&m_beacon_info[6], &m_sensor_info.humidity, 4);
+    memcpy(&m_beacon_info[10], &m_sensor_info.light, 4);
+    memcpy(&m_beacon_info[14], &m_sensor_info.pressure, 4);
+
+    // m_beacon_info[2] = m_sensor_info.temp;
+    // m_beacon_info[3] = m_sensor_info.humidity;
+    // m_beacon_info[4] = m_sensor_info.light;
+    // m_beacon_info[5] = m_sensor_info.pressure;
 
     uint32_t                  err_code;
 
     // Use the simplest send adv packets only mode
     uint8_t                   flags = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+
     // More manufacturing only stuff that might get added back in
     ble_advdata_manuf_data_t  manuf_specific_data;
 
@@ -87,11 +111,19 @@ void update_beacon_info()
     manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
     manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
 
-    advdata.p_manuf_specific_data   = &manuf_specific_data;
+    // Build and set advertising data.
+    memset(&advdata, 0, sizeof(advdata));
+
+    advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.flags.size              = sizeof(flags);
     advdata.flags.p_data            = &flags;
 
-    err_code = ble_advdata_set(&advdata, NULL);
+    // Build and set scan response data
+    memset(&srdata, 0, sizeof(srdata));
+
+    srdata.p_manuf_specific_data   = &manuf_specific_data;
+
+    err_code = ble_advdata_set(&advdata, &srdata);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -183,15 +215,19 @@ static void advertising_init(void)
     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.flags.size              = sizeof(flags);
     advdata.flags.p_data            = &flags;
-    advdata.p_manuf_specific_data   = &manuf_specific_data;
 
-    err_code = ble_advdata_set(&advdata, NULL);
+    // Build and set scan response data
+    memset(&srdata, 0, sizeof(srdata));
+
+    srdata.p_manuf_specific_data   = &manuf_specific_data;
+
+    err_code = ble_advdata_set(&advdata, &srdata);
     APP_ERROR_CHECK(err_code);
 
     // Initialize advertising parameters (used when starting advertising).
     memset(&m_adv_params, 0, sizeof(m_adv_params));
 
-    m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
+    m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_SCAN_IND;
     m_adv_params.p_peer_addr = NULL;                             // Undirected advertisement.
     m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
     m_adv_params.interval    = NON_CONNECTABLE_ADV_INTERVAL;
@@ -470,8 +506,11 @@ int main(void)
     
     // Init timers
     APP_TIMER_INIT(0, 1, 1, 0);
+
     
-    sensors_init();
+
+    
+    //sensors_init();
 
     ble_stack_init();
 
@@ -488,8 +527,8 @@ int main(void)
     app_timer_start(timer, APP_TIMER_TICKS(2000, 0), NULL);
 
     while (1) {
-        m_sensor_info.temp += 1;
-        get_sensor_data();
+        // m_sensor_info.temp += 1;
+        //get_sensor_data();
         
         // Update information sent with beacon
         update_beacon_info();

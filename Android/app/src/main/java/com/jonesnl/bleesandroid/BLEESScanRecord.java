@@ -2,16 +2,19 @@ package com.jonesnl.bleesandroid;
 
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 public class BLEESScanRecord {
     private static final String TAG = "BLEESScanRecord";
 
     public Boolean valid = false;
 
     public String devName = "";
-    public Integer temp = -1;
-    public Integer humidity = -1;
-    public Integer light = -1;
-    public Integer pressure = -1;
+    public Float temp = -1f;
+    public Float humidity = -1f;
+    public Float light = -1f;
+    public Float pressure = -1f;
 
     public BLEESScanRecord (byte[] scanRecord) {
         // get name
@@ -48,10 +51,10 @@ public class BLEESScanRecord {
             } else {
                 // format 0xff, (manf_id 1, manf_id 2, app_dev_type, app_adv_data_length,
                 //  app_temp, app_humidity, app_light, squall_id)
-                temp = scanRecord[i + 1 + 5] & 0xff;
-                humidity = scanRecord[i + 1 + 6] & 0xff;
-                light = scanRecord[i + 1 + 7] & 0xff;
-                pressure = scanRecord[i + 1 + 8] & 0xff;
+                temp = ByteBuffer.wrap(scanRecord, i+6, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                humidity = ByteBuffer.wrap(scanRecord, i+10, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                light = ByteBuffer.wrap(scanRecord, i+14, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                pressure = ByteBuffer.wrap(scanRecord, i+18, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                 break;
             }
         }

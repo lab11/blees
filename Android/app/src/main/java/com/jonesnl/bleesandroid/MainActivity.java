@@ -21,6 +21,7 @@ import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -128,13 +129,17 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
                 List<Map<String, String>> children = childData.get(0);
                 for (Map<String, String> childMap : children) {
                     if (childMap.get(NAME).equals("Temp: ")) {
-                        childMap.put(VALUE, record.temp.toString());
+                        childMap.put(VALUE, new DecimalFormat("#.#").format(record.temp));
+                        // childMap.put(VALUE, String.format("%.1f", record.temp));
                     } else if (childMap.get(NAME).equals("Humidity: ")) {
-                        childMap.put(VALUE, record.humidity.toString());
+                        childMap.put(VALUE, new DecimalFormat("#").format(record.humidity));
+                        // childMap.put(VALUE, String.format("%.0f", record.humidity));
                     } else if (childMap.get(NAME).equals("Light: ")) {
-                        childMap.put(VALUE, record.light.toString());
+                        childMap.put(VALUE, new DecimalFormat("#.#").format(record.light));
+                        //childMap.put(VALUE, String.format("%.0f", record.light));
                     } else if (childMap.get(NAME).equals("Pressure: ")) {
-                        childMap.put(VALUE, record.pressure.toString());
+                        childMap.put(VALUE, new DecimalFormat("#").format(record.pressure));
+                        //childMap.put(VALUE, String.format("%.1f", record.pressure));
                     } else {
                         Log.e(TAG, "Error parsing childMap");
                         return;
