@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.6.0">
+<eagle version="7.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.05" altunitdist="mm" altunit="mm"/>
+<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="yes" active="yes"/>
@@ -137,7 +137,7 @@
 <wire x1="-1.6" y1="-1.2" x2="1.6" y2="-1.2" width="0.205" layer="21"/>
 <wire x1="1.6" y1="-1.2" x2="1.6" y2="1.6" width="0.205" layer="21"/>
 <wire x1="1.6" y1="1.6" x2="-1.6" y2="1.6" width="0.205" layer="21"/>
-<circle x="-1.2" y="1.2" radius="0.2" width="0.205" layer="21"/>
+<circle x="-1.835" y="1.835" radius="0.2" width="0.205" layer="21"/>
 <text x="-1.6" y="1.8" size="0.6096" layer="27" font="vector" ratio="15">&gt;Value</text>
 <text x="-1.5" y="-2.185" size="0.6096" layer="25" font="vector" ratio="15">&gt;Name</text>
 </package>

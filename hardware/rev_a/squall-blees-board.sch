@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.6.0">
+<eagle version="7.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -202,7 +202,7 @@ LETTER landscape</description>
 <wire x1="-8.725" y1="0.74" x2="-10.325" y2="0.74" width="0.127" layer="52"/>
 <wire x1="-10.325" y1="0.74" x2="-10.325" y2="4.34" width="0.127" layer="52"/>
 <wire x1="-10.325" y1="4.34" x2="-8.725" y2="4.34" width="0.127" layer="52"/>
-<text x="0" y="0" size="1.016" layer="25" font="vector" ratio="12" align="center">&gt;NAME</text>
+<text x="0" y="0" size="1.016" layer="26" font="vector" ratio="12" rot="MR0" align="center">&gt;NAME</text>
 <wire x1="10.965" y1="-0.24" x2="10.965" y2="-1.54" width="0.127" layer="22"/>
 <wire x1="10.965" y1="-3.54" x2="10.965" y2="-4.84" width="0.127" layer="22"/>
 <wire x1="10.965" y1="-4.84" x2="8.085" y2="-4.84" width="0.127" layer="22"/>
@@ -469,7 +469,7 @@ Requires two DF40C-10DS-0.4V(51).</description>
 <wire x1="-1.6" y1="-1.2" x2="1.6" y2="-1.2" width="0.205" layer="21"/>
 <wire x1="1.6" y1="-1.2" x2="1.6" y2="1.6" width="0.205" layer="21"/>
 <wire x1="1.6" y1="1.6" x2="-1.6" y2="1.6" width="0.205" layer="21"/>
-<circle x="-1.2" y="1.2" radius="0.2" width="0.205" layer="21"/>
+<circle x="-1.835" y="1.835" radius="0.2" width="0.205" layer="21"/>
 <text x="-1.6" y="1.8" size="0.6096" layer="27" font="vector" ratio="15">&gt;Value</text>
 <text x="-1.5" y="-2.185" size="0.6096" layer="25" font="vector" ratio="15">&gt;Name</text>
 </package>
