@@ -336,8 +336,7 @@ static void get_sensor_data() {
         )) {for(int i = 0; i < 10000; ++i) {}}
 
     float temperature = -46.85 + (175.72 * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xfc)) / (1 << 16));
-    int int_temperature = (int) temperature;
-    m_sensor_info.temp = (uint8_t) int_temperature;
+    m_sensor_info.temp = temperature;
 
     //Humidity
     temp_hum_write[0] = 0xF5;
@@ -355,8 +354,7 @@ static void get_sensor_data() {
     )) {for (int i = 0; i < 10000; ++i) {}}
 
     float humidity = -6.0 + ((125.0 / (1 << 16)) * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xf0)));
-    int int_humidity = (int) humidity;
-    m_sensor_info.humidity = (uint8_t) int_humidity;
+    m_sensor_info.humidity = humidity;
 
     //Pressure
     uint8_t pressure_write[] = {0xA8};
@@ -377,12 +375,7 @@ static void get_sensor_data() {
     float pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
                         ((uint32_t) pressure_data[1] << 8) |
                         ((uint32_t) pressure_data[0]))) / 40960.0;
-//    m_sensor_info.temp = pressure_data[2];
-//    m_sensor_info.humidity = pressure_data[1];
-//    m_sensor_info.light = pressure_data[0];
-    int int_pressure = (int) pressure;
-
-    m_sensor_info.pressure = (uint8_t) int_pressure;
+    m_sensor_info.pressure = pressure;
 
     // LIGHT
     uint8_t chan0_low_byte[] = {0b10101100};
@@ -493,7 +486,7 @@ static void get_sensor_data() {
         lux = (0.00338 * chan0) - (0.00260 * chan1); 
     } 
 
-    m_sensor_info.light = (uint8_t) (lux / 10.0);
+    m_sensor_info.light = lux;
 }
 
 /**
@@ -510,7 +503,7 @@ int main(void)
     
 
     
-    //sensors_init();
+    sensors_init();
 
     ble_stack_init();
 
@@ -528,7 +521,7 @@ int main(void)
 
     while (1) {
         // m_sensor_info.temp += 1;
-        //get_sensor_data();
+        get_sensor_data();
         
         // Update information sent with beacon
         update_beacon_info();
