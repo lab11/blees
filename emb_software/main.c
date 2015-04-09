@@ -374,7 +374,7 @@ static void get_sensor_data() {
    
     float pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
                         ((uint32_t) pressure_data[1] << 8) |
-                        ((uint32_t) pressure_data[0]))) / 40960.0;
+                        ((uint32_t) pressure_data[0]))) / 4096.0;
     m_sensor_info.pressure = pressure;
 
     // LIGHT
@@ -517,7 +517,7 @@ int main(void)
     //10-Sec Timer
     app_timer_id_t timer;
     app_timer_create(&timer, APP_TIMER_MODE_REPEATED, run_after_timer);
-    app_timer_start(timer, APP_TIMER_TICKS(2000, 0), NULL);
+    app_timer_start(timer, APP_TIMER_TICKS(10000, 0), NULL);
 
     while (1) {
         // m_sensor_info.temp += 1;
