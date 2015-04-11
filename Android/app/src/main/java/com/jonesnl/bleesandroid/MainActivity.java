@@ -8,8 +8,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.http.AndroidHttpClient;
 import android.os.Handler;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +24,15 @@ import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.Toast;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,22 +135,27 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         if (!record.valid) return;
 
+        DecimalFormat twoDecimal = new DecimalFormat("##");
+        DecimalFormat fourDecimal = new DecimalFormat("");
+
+        // Update existing record if it exists
         for (Map<String, String> map : groupData) {
             if (map.get(NAME).equals(record.devName)) {
                 map.put(NAME, record.devName);
                 List<Map<String, String>> children = childData.get(0);
                 for (Map<String, String> childMap : children) {
                     if (childMap.get(NAME).equals("Temp: ")) {
-                        childMap.put(VALUE, new DecimalFormat("#.#").format(record.temp));
+                        float tempF = record.temp * (9.0f/5.0f) + 32;
+                        childMap.put(VALUE, twoDecimal.format(tempF));
                         // childMap.put(VALUE, String.format("%.1f", record.temp));
                     } else if (childMap.get(NAME).equals("Humidity: ")) {
-                        childMap.put(VALUE, new DecimalFormat("#").format(record.humidity));
+                        childMap.put(VALUE, twoDecimal.format(record.humidity));
                         // childMap.put(VALUE, String.format("%.0f", record.humidity));
                     } else if (childMap.get(NAME).equals("Light: ")) {
-                        childMap.put(VALUE, new DecimalFormat("#.#").format(record.light));
+                        childMap.put(VALUE, twoDecimal.format(record.light));
                         //childMap.put(VALUE, String.format("%.0f", record.light));
                     } else if (childMap.get(NAME).equals("Pressure: ")) {
-                        childMap.put(VALUE, new DecimalFormat("#").format(record.pressure));
+                        childMap.put(VALUE, fourDecimal.format(record.pressure));
                         //childMap.put(VALUE, String.format("%.1f", record.pressure));
                     } else {
                         Log.e(TAG, "Error parsing childMap");
@@ -149,6 +166,13 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
             }
         }
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean push = sharedPref.getBoolean(SettingsActivity.KEY_PUSH_DATA, false);
+        if (push) {
+            new BLEESServerConn().execute(record);
+        }
+
+        // Create new record otherwise
         Map<String, String> curGroupMap = new HashMap<String, String>();
         groupData.add(curGroupMap);
         curGroupMap.put(NAME, record.devName);
@@ -159,22 +183,23 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         Map<String, String> tempChild = new HashMap<String, String>();
         children.add(tempChild);
         tempChild.put(NAME, "Temp: ");
-        tempChild.put(VALUE, record.temp.toString());
+        float tempF = record.temp * (9.0f/5.0f) + 32;
+        tempChild.put(VALUE, twoDecimal.format(tempF));
 
         Map<String, String> humidityChild = new HashMap<String, String>();
         children.add(humidityChild);
         humidityChild.put(NAME, "Humidity: ");
-        humidityChild.put(VALUE, record.humidity.toString());
+        humidityChild.put(VALUE, twoDecimal.format(record.humidity));
 
         Map<String, String> lightChild = new HashMap<String, String>();
         children.add(lightChild);
         lightChild.put(NAME, "Light: ");
-        lightChild.put(VALUE, record.light.toString());
+        lightChild.put(VALUE, twoDecimal.format(record.light));
 
         Map<String, String> pressureChild = new HashMap<String, String>();
         children.add(pressureChild);
         pressureChild.put(NAME, "Pressure: ");
-        pressureChild.put(VALUE, record.pressure.toString());
+        pressureChild.put(VALUE, fourDecimal.format(record.pressure));
 
         childData.add(children);
         setProgressBarVisibility(true);
@@ -212,6 +237,8 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
             return true;
         } else if (id == R.id.action_refresh) {
             refreshBLEESList();
@@ -230,5 +257,4 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-
 }
