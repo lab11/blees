@@ -479,22 +479,22 @@ Requires two DF40C-10DS-0.4V(51).</description>
 <wire x1="1.5" y1="1.5" x2="1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="1.5" y1="-1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1.5" x2="-1.5" y2="1.5" width="0.1" layer="51"/>
-<smd name="13" x="1.1" y="1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="12" x="1.1" y="0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="11" x="1.1" y="0" dx="0.5" dy="0.35" layer="1"/>
-<smd name="10" x="1.1" y="-0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="9" x="1.1" y="-1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="6" x="-0.5" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="8" x="0.5" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="7" x="0" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="5" x="-1.1" y="-1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="4" x="-1.1" y="-0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="3" x="-1.1" y="0" dx="0.5" dy="0.35" layer="1"/>
-<smd name="2" x="-1.1" y="0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="1" x="-1.1" y="1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="16" x="-0.5" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="15" x="0" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="14" x="0.5" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
+<smd name="13" x="1.25" y="1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="12" x="1.25" y="0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="11" x="1.25" y="0" dx="0.8" dy="0.35" layer="1"/>
+<smd name="10" x="1.25" y="-0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="9" x="1.25" y="-1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="6" x="-0.5" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="8" x="0.5" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="7" x="0" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="5" x="-1.25" y="-1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="4" x="-1.25" y="-0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="3" x="-1.25" y="0" dx="0.8" dy="0.35" layer="1"/>
+<smd name="2" x="-1.25" y="0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="1" x="-1.25" y="1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="16" x="-0.5" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="15" x="0" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="14" x="0.5" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
 <circle x="-1.9" y="2" radius="0.22360625" width="0.21" layer="21"/>
 <wire x1="-1.6" y1="-1.65" x2="1.65" y2="-1.65" width="0.21" layer="21"/>
 <wire x1="1.65" y1="-1.65" x2="1.65" y2="1.65" width="0.21" layer="21"/>

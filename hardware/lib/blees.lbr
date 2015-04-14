@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.05" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="yes" active="yes"/>
@@ -28,8 +28,8 @@
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="21" name="tPlace" color="15" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
@@ -76,22 +76,22 @@
 <wire x1="1.5" y1="1.5" x2="1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="1.5" y1="-1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1.5" x2="-1.5" y2="1.5" width="0.1" layer="51"/>
-<smd name="13" x="1.1" y="1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="12" x="1.1" y="0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="11" x="1.1" y="0" dx="0.5" dy="0.35" layer="1"/>
-<smd name="10" x="1.1" y="-0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="9" x="1.1" y="-1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="6" x="-0.5" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="8" x="0.5" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="7" x="0" y="-1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="5" x="-1.1" y="-1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="4" x="-1.1" y="-0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="3" x="-1.1" y="0" dx="0.5" dy="0.35" layer="1"/>
-<smd name="2" x="-1.1" y="0.5" dx="0.5" dy="0.35" layer="1"/>
-<smd name="1" x="-1.1" y="1" dx="0.5" dy="0.35" layer="1"/>
-<smd name="16" x="-0.5" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="15" x="0" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
-<smd name="14" x="0.5" y="1.1" dx="0.5" dy="0.35" layer="1" rot="R90"/>
+<smd name="13" x="1.25" y="1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="12" x="1.25" y="0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="11" x="1.25" y="0" dx="0.8" dy="0.35" layer="1"/>
+<smd name="10" x="1.25" y="-0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="9" x="1.25" y="-1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="6" x="-0.5" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="8" x="0.5" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="7" x="0" y="-1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="5" x="-1.25" y="-1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="4" x="-1.25" y="-0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="3" x="-1.25" y="0" dx="0.8" dy="0.35" layer="1"/>
+<smd name="2" x="-1.25" y="0.5" dx="0.8" dy="0.35" layer="1"/>
+<smd name="1" x="-1.25" y="1" dx="0.8" dy="0.35" layer="1"/>
+<smd name="16" x="-0.5" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="15" x="0" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
+<smd name="14" x="0.5" y="1.25" dx="0.8" dy="0.35" layer="1" rot="R90"/>
 <circle x="-1.9" y="2" radius="0.22360625" width="0.21" layer="21"/>
 <wire x1="-1.6" y1="-1.65" x2="1.65" y2="-1.65" width="0.21" layer="21"/>
 <wire x1="1.65" y1="-1.65" x2="1.65" y2="1.65" width="0.21" layer="21"/>
