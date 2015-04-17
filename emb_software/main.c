@@ -476,14 +476,14 @@ static void get_sensor_data() {
 
     float lux = 0.0;
 
-    if (ratio <= 0.52) {
-        lux = (0.0315 * chan0) - (0.0593 * chan0 * (pow(ratio, 1.4))); 
-    } else if (ratio <= 0.65) {
-        lux = (0.0229 * chan0) - (0.0291 * chan1); 
+    if (ratio <= 0.50) {
+        lux = (0.0304 * chan0) - (0.062 * chan0 * (pow(ratio, 1.4))); 
+    } else if (ratio <= 0.61) {
+        lux = (0.0224 * chan0) - (0.031 * chan1); 
     } else if (ratio <= 0.80) {
-        lux = (0.0157 * chan0) - (0.0180 * chan1); 
+        lux = (0.0128 * chan0) - (0.0153 * chan1); 
     } else if (ratio <= 1.3) {
-        lux = (0.00338 * chan0) - (0.00260 * chan1); 
+        lux = (0.00146 * chan0) - (0.00112 * chan1); 
     } 
 
     m_sensor_info.light = lux;
