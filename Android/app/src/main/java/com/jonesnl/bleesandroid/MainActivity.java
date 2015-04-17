@@ -136,7 +136,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         if (!record.valid) return;
 
         DecimalFormat twoDecimal = new DecimalFormat("##");
-        DecimalFormat fourDecimal = new DecimalFormat("");
+        DecimalFormat fourDecimal = new DecimalFormat("####");
 
         // Update existing record if it exists
         for (Map<String, String> map : groupData) {
