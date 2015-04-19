@@ -42,7 +42,7 @@
 #define LIGHT_DATA                      9, 0xA, 0xB, 0xC
 #define PRESSURE_DATA                   0xD, 0xE, 0xF, 0x10
 
-#define NEW_DEVICE_NAME                     "BLEES EECS 2334"               // 20 bytes between device name, beacon_data, and squall_id
+#define NEW_DEVICE_NAME                 "BLEES EECS 1337"               // 20 bytes between device name, beacon_data, and squall_id
 
 #ifndef APP_SQUALL_ID
 #define APP_SQUALL_ID                   0x42
@@ -318,6 +318,17 @@ static void sensors_init(void) {
 /**@brief get sensor data and update m_sensor_info
  */
 static void get_sensor_data() {
+    //*** TURN ON SLEEPING SENSORS ***//
+    // Init pressure sensor
+    uint8_t pressure_config_data[] = {0x20, 0b10010100};
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_config_data,
+            sizeof(pressure_config_data),
+            TWI_ISSUE_STOP
+    );
+    
+    //*** TAKE MEASUREMENTS ***//
     //Temperature
     uint8_t temp_hum_write[] = {0xF3};
     twi_master_transfer(
@@ -462,13 +473,18 @@ static void get_sensor_data() {
     chan1_output[1] = chan1_output_low[0];
     chan1_output[0] = chan1_output_high[0];
 
-    // Conversion
-
-    //m_sensor_info.temp = chan1_output[1];
-    //m_sensor_info.humidity = chan1_output[0];
-    //m_sensor_info.pressure = chan0_output[1];
-    //m_sensor_info.light = chan0_output[0];
-
+    //*** TURN OFF SLEEPABLE SENSORS ***//
+    // Shut off pressure sensor
+    pressure_config_data[0] = 0x20;
+    pressure_config_data[1] = 0b00010100;
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_config_data,
+            sizeof(pressure_config_data),
+            TWI_ISSUE_STOP
+    );
+    
+    //*** Conversion ***//
     uint16_t chan1 = ((((uint16_t) chan1_output[0]) << 8) | (0x00FF & (uint16_t) chan1_output[1]))/0.034;
     uint16_t chan0 = ((((uint16_t) chan0_output[0]) << 8) | (0x00FF & (uint16_t) chan0_output[1]))/0.034;
 
