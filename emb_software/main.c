@@ -318,6 +318,26 @@ static void sensors_init(void) {
 /**@brief get sensor data and update m_sensor_info
  */
 static void get_sensor_data() {
+    //*** TURN ON SLEEPING SENSORS ***//
+    // Init pressure sensor
+    uint8_t pressure_config_data[] = {0x20, 0b10010100};
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_config_data,
+            sizeof(pressure_config_data),
+            TWI_ISSUE_STOP
+    );
+    
+    // Init light sensor
+    uint8_t lux_config_data[] = {0b11000000, 0b00000011};
+    twi_master_transfer(
+            LUX_ADDR | TWI_WRITE,
+            lux_config_data,
+            sizeof(lux_config_data),
+            TWI_ISSUE_STOP
+    );
+
+    //*** TAKE MEASUREMENTS ***//
     //Temperature
     uint8_t temp_hum_write[] = {0xF3};
     twi_master_transfer(
@@ -462,13 +482,28 @@ static void get_sensor_data() {
     chan1_output[1] = chan1_output_low[0];
     chan1_output[0] = chan1_output_high[0];
 
-    // Conversion
+    //*** TURN OFF SLEEPING SENSORS ***//
+    // Shut off pressure sensor
+    pressure_config_data[0] = 0x20;
+    pressure_config_data[1] = 0b00010100;
+    twi_master_transfer(
+            PRESSURE_ADDR | TWI_WRITE,
+            pressure_config_data,
+            sizeof(pressure_config_data),
+            TWI_ISSUE_STOP
+    );
+    
+    // Shut off light sensor
+    lux_config_data[0] = 0b11000000;
+    lux_config_data[1] = 0b00000000;
+    twi_master_transfer(
+            LUX_ADDR | TWI_WRITE,
+            lux_config_data,
+            sizeof(lux_config_data),
+            TWI_ISSUE_STOP
+    );
 
-    //m_sensor_info.temp = chan1_output[1];
-    //m_sensor_info.humidity = chan1_output[0];
-    //m_sensor_info.pressure = chan0_output[1];
-    //m_sensor_info.light = chan0_output[0];
-
+    //*** Conversion ***//
     uint16_t chan1 = ((((uint16_t) chan1_output[0]) << 8) | (0x00FF & (uint16_t) chan1_output[1]))/0.034;
     uint16_t chan0 = ((((uint16_t) chan0_output[0]) << 8) | (0x00FF & (uint16_t) chan0_output[1]))/0.034;
 
