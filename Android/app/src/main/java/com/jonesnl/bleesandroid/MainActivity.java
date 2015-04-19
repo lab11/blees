@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 
+
 public class MainActivity extends ExpandableListActivity implements BluetoothAdapter.LeScanCallback {
     private static final String TAG = "MainActivity";
 
@@ -51,8 +52,8 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
     private BluetoothAdapter mBluetoothAdapter = null;
 
-    private List<Map<String, String>> groupData;
-    private List<List<Map<String, String>>> childData;
+    private ArrayList<HashMap<String, String>> groupData;
+    private ArrayList<ArrayList<HashMap<String, String>>> childData;
 
     private ExpandableListView mListView;
 
@@ -74,8 +75,8 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         // Still need to get data from Bluetooth and put it into lists
 
-        groupData = new ArrayList<Map<String, String>>();
-        childData = new ArrayList<List<Map<String, String>>>();
+        groupData = new ArrayList<HashMap<String, String>>();
+        childData = new ArrayList<ArrayList<HashMap<String, String>>>();
         // Set up our adapter
         mAdapter = new SimpleExpandableListAdapter(
                 this,
@@ -92,6 +93,14 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
         mListView = getExpandableListView();
     }
+
+//    @Override
+//    public void onRestoreInstanceState(Bundle savedBundle) {
+//        super.onRestoreInstanceState(savedBundle);
+//
+//        groupData = (ArrayList<HashMap<String, String>>) savedBundle.getSerializable("GroupData");
+//        childData = (ArrayList<ArrayList<HashMap<String, String>>>) savedBundle.getSerializable("ChildData");
+//    }
 
     private Runnable mStopRunnable = new Runnable() {
         @Override
@@ -128,7 +137,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
 
 
     @Override
-    public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+    public synchronized void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
         BLEESScanRecord record;
         Log.v(TAG, "OnLeScan()");
         record = new BLEESScanRecord(scanRecord);
@@ -139,11 +148,12 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         DecimalFormat fourDecimal = new DecimalFormat("####");
 
         // Update existing record if it exists
-        for (Map<String, String> map : groupData) {
+        for (int i = 0; i < groupData.size(); ++i) {
+            HashMap<String, String> map = groupData.get(i);
             if (map.get(NAME).equals(record.devName)) {
                 map.put(NAME, record.devName);
-                List<Map<String, String>> children = childData.get(0);
-                for (Map<String, String> childMap : children) {
+                ArrayList<HashMap<String, String>> children = childData.get(i);
+                for (HashMap<String, String> childMap : children) {
                     if (childMap.get(NAME).equals("Temp: ")) {
                         float tempF = record.temp * (9.0f/5.0f) + 32;
                         childMap.put(VALUE, twoDecimal.format(tempF));
@@ -173,30 +183,30 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         }
 
         // Create new record otherwise
-        Map<String, String> curGroupMap = new HashMap<String, String>();
+        HashMap<String, String> curGroupMap = new HashMap<String, String>();
         groupData.add(curGroupMap);
         curGroupMap.put(NAME, record.devName);
         curGroupMap.put(VALUE, record.devName);
 
-        List<Map<String, String>> children = new ArrayList<Map<String, String>>();
+        ArrayList<HashMap<String, String>> children = new ArrayList<HashMap<String, String>>();
 
-        Map<String, String> tempChild = new HashMap<String, String>();
+        HashMap<String, String> tempChild = new HashMap<String, String>();
         children.add(tempChild);
         tempChild.put(NAME, "Temp: ");
         float tempF = record.temp * (9.0f/5.0f) + 32;
         tempChild.put(VALUE, twoDecimal.format(tempF));
 
-        Map<String, String> humidityChild = new HashMap<String, String>();
+        HashMap<String, String> humidityChild = new HashMap<String, String>();
         children.add(humidityChild);
         humidityChild.put(NAME, "Humidity: ");
         humidityChild.put(VALUE, twoDecimal.format(record.humidity));
 
-        Map<String, String> lightChild = new HashMap<String, String>();
+        HashMap<String, String> lightChild = new HashMap<String, String>();
         children.add(lightChild);
         lightChild.put(NAME, "Light: ");
         lightChild.put(VALUE, twoDecimal.format(record.light));
 
-        Map<String, String> pressureChild = new HashMap<String, String>();
+        HashMap<String, String> pressureChild = new HashMap<String, String>();
         children.add(pressureChild);
         pressureChild.put(NAME, "Pressure: ");
         pressureChild.put(VALUE, fourDecimal.format(record.pressure));
@@ -257,4 +267,12 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
+//    @Override
+//    public void onSaveInstanceState(Bundle savedInstanceState) {
+//        savedInstanceState.putSerializable("GroupData", groupData);
+//        savedInstanceState.putSerializable("ChildData", childData);
+//
+//        super.onSaveInstanceState(savedInstanceState);
+//    }
 }
