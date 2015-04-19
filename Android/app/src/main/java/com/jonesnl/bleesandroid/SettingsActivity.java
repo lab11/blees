@@ -8,6 +8,7 @@ import android.os.Bundle;
  */
 public class SettingsActivity extends Activity {
     public static final String KEY_PUSH_DATA = "pref_push_data";
+    public static final String KEY_TEMP_TYPE = "pref_temp_type";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

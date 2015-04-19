@@ -147,6 +147,10 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         DecimalFormat twoDecimal = new DecimalFormat("##");
         DecimalFormat fourDecimal = new DecimalFormat("####");
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean push = sharedPref.getBoolean(SettingsActivity.KEY_PUSH_DATA, false);
+        String f_or_c = sharedPref.getString(SettingsActivity.KEY_TEMP_TYPE, "F");
+
         // Update existing record if it exists
         for (int i = 0; i < groupData.size(); ++i) {
             HashMap<String, String> map = groupData.get(i);
@@ -155,17 +159,21 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
                 ArrayList<HashMap<String, String>> children = childData.get(i);
                 for (HashMap<String, String> childMap : children) {
                     if (childMap.get(NAME).equals("Temp: ")) {
-                        float tempF = record.temp * (9.0f/5.0f) + 32;
-                        childMap.put(VALUE, twoDecimal.format(tempF));
+                        if (f_or_c.equals("F")) {
+                            float tempF = record.temp * (9.0f/5.0f) + 32;
+                            childMap.put(VALUE, twoDecimal.format(tempF) + "\u2109");
+                        } else {
+                            childMap.put(VALUE, twoDecimal.format(record.temp) + "\u2103");
+                        }
                         // childMap.put(VALUE, String.format("%.1f", record.temp));
                     } else if (childMap.get(NAME).equals("Humidity: ")) {
-                        childMap.put(VALUE, twoDecimal.format(record.humidity));
+                        childMap.put(VALUE, twoDecimal.format(record.humidity) + "%");
                         // childMap.put(VALUE, String.format("%.0f", record.humidity));
                     } else if (childMap.get(NAME).equals("Light: ")) {
-                        childMap.put(VALUE, twoDecimal.format(record.light));
+                        childMap.put(VALUE, twoDecimal.format(record.light) + " lx");
                         //childMap.put(VALUE, String.format("%.0f", record.light));
                     } else if (childMap.get(NAME).equals("Pressure: ")) {
-                        childMap.put(VALUE, fourDecimal.format(record.pressure));
+                        childMap.put(VALUE, fourDecimal.format(record.pressure) + " mbars");
                         //childMap.put(VALUE, String.format("%.1f", record.pressure));
                     } else {
                         Log.e(TAG, "Error parsing childMap");
@@ -176,8 +184,7 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
             }
         }
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean push = sharedPref.getBoolean(SettingsActivity.KEY_PUSH_DATA, false);
+
         if (push) {
             new BLEESServerConn().execute(record);
         }
@@ -193,23 +200,27 @@ public class MainActivity extends ExpandableListActivity implements BluetoothAda
         HashMap<String, String> tempChild = new HashMap<String, String>();
         children.add(tempChild);
         tempChild.put(NAME, "Temp: ");
-        float tempF = record.temp * (9.0f/5.0f) + 32;
-        tempChild.put(VALUE, twoDecimal.format(tempF));
+        if (f_or_c.equals("F")) {
+            float tempF = record.temp * (9.0f/5.0f) + 32;
+            tempChild.put(VALUE, twoDecimal.format(tempF) + "\u2109");
+        } else {
+            tempChild.put(VALUE, twoDecimal.format(record.temp) + "\u2103");
+        }
 
         HashMap<String, String> humidityChild = new HashMap<String, String>();
         children.add(humidityChild);
         humidityChild.put(NAME, "Humidity: ");
-        humidityChild.put(VALUE, twoDecimal.format(record.humidity));
+        humidityChild.put(VALUE, twoDecimal.format(record.humidity) + "%");
 
         HashMap<String, String> lightChild = new HashMap<String, String>();
         children.add(lightChild);
         lightChild.put(NAME, "Light: ");
-        lightChild.put(VALUE, twoDecimal.format(record.light));
+        lightChild.put(VALUE, twoDecimal.format(record.light) + " lx");
 
         HashMap<String, String> pressureChild = new HashMap<String, String>();
         children.add(pressureChild);
         pressureChild.put(NAME, "Pressure: ");
-        pressureChild.put(VALUE, fourDecimal.format(record.pressure));
+        pressureChild.put(VALUE, fourDecimal.format(record.pressure) + " mbars");
 
         childData.add(children);
         setProgressBarVisibility(true);

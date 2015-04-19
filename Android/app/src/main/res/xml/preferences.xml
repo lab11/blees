@@ -5,4 +5,11 @@
         android:title="@string/pref_push_data"
         android:defaultValue="false"
     />
+    <ListPreference
+        android:key="pref_temp_type"
+        android:title="@string/pref_temp_type"
+        android:entries="@array/temp_types"
+        android:entryValues="@array/temp_values"
+        android:defaultValue="F"
+    />
 </PreferenceScreen>

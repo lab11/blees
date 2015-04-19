@@ -6,6 +6,7 @@
     <string name="action_refresh">Refresh</string>
 
     <string name="pref_push_data">Push Room Data to Server</string>
+    <string name="pref_temp_type">Temperature Units</string>
 
     <color name="Black">#000000</color>
     <color name="ExpandChildBackground">#FFAFABAB</color>
