@@ -1,0 +1,9 @@
+Human Readable Name,Manufacturer,Manufacturer Part Num,Digikey Part Num,QTY
+Light Sensor,AMS-TAOS,TSL2561,TSL2561-FNCT-ND,1
+Pressure Sensor,STMicroelectronics,LPS331APTR,497-12927-1-ND,1
+Temperature & Humidity Sensor,TE Connectivity Measurement Specialties,HTU21D,223-1144-1-ND,1
+Top Header,Hirose Electric Co Ltd,DF40C-10DP-0.4V(51),H11617CT-ND,2
+Bottom Header,Hirose Electric Co Ltd,DF40C-10DS-0.4V(51),H11616CT-ND,2
+100nF 0402,Yageo,CC0402KRX5R6BB104,311-1336-1-ND,3
+10uF 0603,Murata Electronics North America,GRM188C80G106KE47D,490-10469-1-ND,1
+2 kOhm Resistor 0402,,,,2
