@@ -49,12 +49,12 @@ public class BLEESScanRecord {
             if (type != 0xff) {
                 i += length;
             } else {
-                // format 0xff, (manf_id 1, manf_id 2, app_dev_type, app_adv_data_length,
-                //  app_temp, app_humidity, app_light, squall_id)
-                temp = ByteBuffer.wrap(scanRecord, i+6, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                humidity = ByteBuffer.wrap(scanRecord, i+10, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                light = ByteBuffer.wrap(scanRecord, i+14, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                pressure = ByteBuffer.wrap(scanRecord, i+18, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                // format 0xff, (manf_id 1, manf_id 2,
+                //  app_temp, app_humidity, app_light)
+                temp = ByteBuffer.wrap(scanRecord, i+4, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                humidity = ByteBuffer.wrap(scanRecord, i+8, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                light = ByteBuffer.wrap(scanRecord, i+12, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                pressure = ByteBuffer.wrap(scanRecord, i+16, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
                 break;
             }
         }
