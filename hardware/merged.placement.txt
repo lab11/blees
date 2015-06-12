@@ -1,6 +1,0 @@
-blees_left 0.100 0.100
-blees_right 2.225 0.100
-blees_mid 1.145 0.100
-blees_left*rotated180 2.227 0.970
-blees_right*rotated180 0.102 0.970
-blees_mid*rotated180 1.147 0.970
