@@ -432,27 +432,6 @@ Requires two DF40C-10DS-0.4V(51).</description>
 </library>
 <library name="blees">
 <packages>
-<package name="DFN">
-<description>DFN Package for HTU21D Temp/Humidity sensor.</description>
-<wire x1="-1.5" y1="1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
-<wire x1="-1.5" y1="-1.5" x2="1.5" y2="-1.5" width="0.127" layer="51"/>
-<wire x1="1.5" y1="-1.5" x2="1.5" y2="1.5" width="0.127" layer="51"/>
-<wire x1="1.5" y1="1.5" x2="-1.5" y2="1.5" width="0.127" layer="51"/>
-<smd name="3" x="-1.35" y="1" dx="0.4" dy="0.6" layer="1" rot="R90"/>
-<smd name="2" x="-1.35" y="0" dx="0.4" dy="0.6" layer="1" rot="R270"/>
-<smd name="1" x="-1.35" y="-1" dx="0.4" dy="0.6" layer="1" rot="R90"/>
-<smd name="4" x="1.35" y="1" dx="0.4" dy="0.6" layer="1" rot="R90"/>
-<smd name="5" x="1.35" y="0" dx="0.4" dy="0.6" layer="1" rot="R90"/>
-<smd name="6" x="1.35" y="-1" dx="0.4" dy="0.6" layer="1" rot="R90"/>
-<smd name="PAD" x="0" y="0" dx="1.5" dy="2.4" layer="1" rot="R180"/>
-<circle x="-1.15" y="-1.9" radius="0.22360625" width="0.205" layer="21"/>
-<wire x1="-0.9" y1="1.7" x2="-0.9" y2="-1.7" width="0.205" layer="21"/>
-<wire x1="-0.9" y1="-1.7" x2="0.9" y2="-1.7" width="0.205" layer="21"/>
-<wire x1="0.9" y1="-1.7" x2="0.9" y2="1.7" width="0.205" layer="21"/>
-<wire x1="0.9" y1="1.7" x2="-0.9" y2="1.7" width="0.205" layer="21"/>
-<text x="-1.85" y="-2.98" size="0.6096" layer="27" font="vector" ratio="15">&gt;Value</text>
-<text x="-1.7" y="1.945" size="0.6096" layer="25" font="vector" ratio="15">&gt;Name</text>
-</package>
 <package name="DFN2">
 <description>Package for the DFN TSL2560 Light Sensor.</description>
 <wire x1="-1" y1="1" x2="-1" y2="-1" width="0.127" layer="51"/>
@@ -505,20 +484,6 @@ Requires two DF40C-10DS-0.4V(51).</description>
 </package>
 </packages>
 <symbols>
-<symbol name="HTU21D">
-<description>Symbol for HTU21D Temp/Humidity sensor.</description>
-<wire x1="-7.62" y1="7.62" x2="-7.62" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-7.62" x2="7.62" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-7.62" x2="7.62" y2="7.62" width="0.254" layer="94"/>
-<wire x1="7.62" y1="7.62" x2="-7.62" y2="7.62" width="0.254" layer="94"/>
-<pin name="SDA" x="12.7" y="2.54" visible="pin" length="middle" rot="R180"/>
-<pin name="SCK" x="12.7" y="-2.54" visible="pin" length="middle" rot="R180"/>
-<pin name="VDD" x="-12.7" y="2.54" visible="pin" length="middle" direction="pwr"/>
-<pin name="GND" x="-12.7" y="0" visible="pin" length="middle" direction="pwr"/>
-<pin name="PAD" x="-12.7" y="-2.54" visible="pin" length="middle" direction="pwr"/>
-<text x="-7.62" y="-10.16" size="1.27" layer="96">&gt;Value</text>
-<text x="-6.604" y="8.382" size="1.27" layer="95">&gt;Name</text>
-</symbol>
 <symbol name="TSL2560">
 <description>Symbol for DFN TSL2560 light sensor.</description>
 <wire x1="-7.62" y1="7.62" x2="-7.62" y2="-7.62" width="0.254" layer="94"/>
@@ -559,26 +524,6 @@ Requires two DF40C-10DS-0.4V(51).</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="HTU21D" prefix="U">
-<description>This is the HTU21D Temp/Humidity sensor made by BLEES EECS 373.</description>
-<gates>
-<gate name="U1" symbol="HTU21D" x="0" y="0"/>
-</gates>
-<devices>
-<device name="DFN" package="DFN">
-<connects>
-<connect gate="U1" pin="GND" pad="5"/>
-<connect gate="U1" pin="PAD" pad="PAD"/>
-<connect gate="U1" pin="SCK" pad="1"/>
-<connect gate="U1" pin="SDA" pad="6"/>
-<connect gate="U1" pin="VDD" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TSL2560">
 <description>TSL2560 light to digital converter, written by BLEES EECS 373.</description>
 <gates>
@@ -1158,6 +1103,73 @@ We've spent an enormous amount of time creating and checking these footprints an
 </deviceset>
 </devicesets>
 </library>
+<library name="chips">
+<description>&lt;b&gt;LAB11&lt;/b&gt; - ICs and other digital/analog chips.</description>
+<packages>
+<package name="DFN-6/3MM">
+<smd name="1" x="-1.45" y="1" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<smd name="2" x="-1.45" y="0" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<smd name="3" x="-1.45" y="-1" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<smd name="4" x="1.45" y="-1" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<smd name="5" x="1.45" y="0" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<smd name="6" x="1.45" y="1" dx="0.85" dy="0.45" layer="1" roundness="100"/>
+<wire x1="-1.5" y1="1.5" x2="-1.5" y2="1.3" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-1.3" x2="-1.5" y2="-1.5" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-1.5" x2="1.5" y2="-1.5" width="0.127" layer="21"/>
+<wire x1="1.5" y1="-1.5" x2="1.5" y2="-1.3" width="0.127" layer="21"/>
+<wire x1="1.5" y1="1.3" x2="1.5" y2="1.5" width="0.127" layer="21"/>
+<wire x1="1.5" y1="1.5" x2="-1.5" y2="1.5" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="0.7" x2="-1.5" y2="0.3" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-0.3" x2="-1.5" y2="-0.7" width="0.127" layer="21"/>
+<wire x1="1.5" y1="-0.3" x2="1.5" y2="-0.7" width="0.127" layer="21"/>
+<wire x1="1.5" y1="0.7" x2="1.5" y2="0.3" width="0.127" layer="21"/>
+<text x="0" y="1.7" size="1.016" layer="25" font="vector" ratio="12" align="bottom-center">&gt;NAME</text>
+<circle x="-1.7" y="1.7" radius="0.2" width="0" layer="25"/>
+<smd name="P$1" x="0" y="0" dx="1.6" dy="2.5" layer="1" cream="no"/>
+<rectangle x1="-0.6" y1="0.1" x2="-0.1" y2="1" layer="31"/>
+<rectangle x1="0.1" y1="0.1" x2="0.6" y2="1" layer="31"/>
+<rectangle x1="0.1" y1="-1" x2="0.6" y2="-0.1" layer="31"/>
+<rectangle x1="-0.6" y1="-1" x2="-0.1" y2="-0.1" layer="31"/>
+</package>
+</packages>
+<symbols>
+<symbol name="SI7021">
+<pin name="VCC" x="-10.16" y="2.54" visible="pin" length="short"/>
+<pin name="GND" x="-10.16" y="-2.54" visible="pin" length="short"/>
+<pin name="SDA" x="10.16" y="2.54" visible="pin" length="short" rot="R180"/>
+<pin name="SCL" x="10.16" y="-2.54" visible="pin" length="short" rot="R180"/>
+<wire x1="-7.62" y1="5.08" x2="-7.62" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-5.08" x2="7.62" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-5.08" x2="7.62" y2="5.08" width="0.254" layer="94"/>
+<wire x1="7.62" y1="5.08" x2="-7.62" y2="5.08" width="0.254" layer="94"/>
+<text x="-7.62" y="5.588" size="1.778" layer="95" ratio="12">&gt;NAME</text>
+<text x="-7.62" y="-7.366" size="1.778" layer="96" ratio="12">&gt;VALUE</text>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="SI7021" prefix="U">
+<description>IC TEMP SENSOR RH 2% DFN</description>
+<gates>
+<gate name="G$1" symbol="SI7021" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="DFN-6/3MM">
+<connects>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="SCL" pad="6"/>
+<connect gate="G$1" pin="SDA" pad="1"/>
+<connect gate="G$1" pin="VCC" pad="5"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="DIGIKEY" value="336-2542-1-ND" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 <attribute name="AUTHOR" value="BLEES Dev Team"/>
@@ -1180,7 +1192,6 @@ We've spent an enormous amount of time creating and checking these footprints an
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="P+4" library="supply1" deviceset="VCC" device=""/>
 <part name="GND9" library="supply1" deviceset="GND" device=""/>
-<part name="U3" library="blees" deviceset="HTU21D" device="DFN"/>
 <part name="U2" library="blees" deviceset="TSL2560" device="DFN"/>
 <part name="GND2" library="umich" deviceset="GND" device=""/>
 <part name="P+2" library="supply1" deviceset="VCC" device=""/>
@@ -1194,9 +1205,9 @@ We've spent an enormous amount of time creating and checking these footprints an
 <part name="C1" library="passives" deviceset="CAPACITOR" device="" value="100nF"/>
 <part name="C3" library="passives" deviceset="CAPACITOR" device="" value="100nF"/>
 <part name="C2" library="passives" deviceset="CAPACITOR" device="" value="100nF"/>
-<part name="R3" library="passives" deviceset="RESISTOR" device="0402_RES" value="2kΩ"/>
+<part name="R3" library="passives" deviceset="RESISTOR" device="0402_RES" value="10k"/>
 <part name="P+6" library="supply1" deviceset="VCC" device=""/>
-<part name="R2" library="passives" deviceset="RESISTOR" device="0402_RES" value="2kΩ"/>
+<part name="R2" library="passives" deviceset="RESISTOR" device="0402_RES" value="10k"/>
 <part name="D1" library="SparkFun-LED" deviceset="LED" device="0603" value="BLUE"/>
 <part name="R1" library="passives" deviceset="RESISTOR" device="0402_RES" value="1kΩ"/>
 <part name="P+9" library="supply1" deviceset="VCC" device=""/>
@@ -1204,9 +1215,10 @@ We've spent an enormous amount of time creating and checking these footprints an
 <part name="GND14" library="umich" deviceset="GND" device=""/>
 <part name="GND15" library="umich" deviceset="GND" device=""/>
 <part name="P+11" library="supply1" deviceset="VCC" device=""/>
-<part name="C4" library="passives" deviceset="CAPACITOR" device="" value="0.1uF"/>
-<part name="C5" library="passives" deviceset="CAPACITOR" device="" value="0.1uF"/>
+<part name="C4" library="passives" deviceset="CAPACITOR" device="" value="100nF"/>
+<part name="C5" library="passives" deviceset="CAPACITOR" device="" value="100nF"/>
 <part name="GND16" library="umich" deviceset="GND" device=""/>
+<part name="U3" library="chips" deviceset="SI7021" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -1230,10 +1242,9 @@ We've spent an enormous amount of time creating and checking these footprints an
 <instance part="GND5" gate="1" x="81.28" y="142.24"/>
 <instance part="P+4" gate="VCC" x="81.28" y="170.18"/>
 <instance part="GND9" gate="1" x="104.14" y="142.24"/>
-<instance part="U3" gate="U1" x="50.8" y="78.74"/>
 <instance part="U2" gate="U1" x="53.34" y="38.1"/>
-<instance part="GND2" gate="1" x="33.02" y="68.58"/>
-<instance part="P+2" gate="VCC" x="33.02" y="88.9"/>
+<instance part="GND2" gate="1" x="40.64" y="71.12"/>
+<instance part="P+2" gate="VCC" x="40.64" y="91.44"/>
 <instance part="P+3" gate="VCC" x="33.02" y="50.8"/>
 <instance part="P+5" gate="VCC" x="195.58" y="101.6"/>
 <instance part="GND3" gate="1" x="193.04" y="58.42"/>
@@ -1242,7 +1253,7 @@ We've spent an enormous amount of time creating and checking these footprints an
 <instance part="U1" gate="U1" x="213.36" y="78.74"/>
 <instance part="C6" gate="G$1" x="185.42" y="81.28"/>
 <instance part="C1" gate="G$1" x="175.26" y="81.28"/>
-<instance part="C3" gate="G$1" x="25.4" y="81.28"/>
+<instance part="C3" gate="G$1" x="33.02" y="83.82"/>
 <instance part="C2" gate="G$1" x="25.4" y="40.64"/>
 <instance part="R3" gate="G$1" x="208.28" y="157.48" rot="R90"/>
 <instance part="P+6" gate="VCC" x="215.9" y="175.26"/>
@@ -1257,6 +1268,7 @@ We've spent an enormous amount of time creating and checking these footprints an
 <instance part="C4" gate="G$1" x="144.78" y="91.44"/>
 <instance part="C5" gate="G$1" x="157.48" y="91.44"/>
 <instance part="GND16" gate="1" x="144.78" y="58.42"/>
+<instance part="U3" gate="G$1" x="53.34" y="81.28"/>
 </instances>
 <busses>
 </busses>
@@ -1314,14 +1326,14 @@ We've spent an enormous amount of time creating and checking these footprints an
 <junction x="185.42" y="86.36"/>
 </segment>
 <segment>
-<pinref part="U3" gate="U1" pin="VDD"/>
 <pinref part="P+2" gate="VCC" pin="VCC"/>
-<wire x1="38.1" y1="81.28" x2="33.02" y2="81.28" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="81.28" x2="33.02" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="83.82" x2="40.64" y2="86.36" width="0.1524" layer="91"/>
 <pinref part="C3" gate="G$1" pin="1"/>
-<wire x1="33.02" y1="83.82" x2="33.02" y2="86.36" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="83.82" x2="33.02" y2="83.82" width="0.1524" layer="91"/>
-<junction x="33.02" y="83.82"/>
+<wire x1="40.64" y1="86.36" x2="40.64" y2="88.9" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="86.36" x2="40.64" y2="86.36" width="0.1524" layer="91"/>
+<junction x="40.64" y="86.36"/>
+<pinref part="U3" gate="G$1" pin="VCC"/>
+<wire x1="40.64" y1="83.82" x2="43.18" y2="83.82" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="2"/>
@@ -1429,16 +1441,13 @@ We've spent an enormous amount of time creating and checking these footprints an
 <junction x="185.42" y="73.66"/>
 </segment>
 <segment>
-<pinref part="U3" gate="U1" pin="GND"/>
 <pinref part="GND2" gate="1" pin="GND"/>
-<wire x1="38.1" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="78.74" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="U3" gate="U1" pin="PAD"/>
-<wire x1="33.02" y1="76.2" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
-<wire x1="38.1" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<junction x="33.02" y="76.2"/>
+<wire x1="40.64" y1="78.74" x2="40.64" y2="73.66" width="0.1524" layer="91"/>
 <pinref part="C3" gate="G$1" pin="2"/>
-<wire x1="25.4" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="78.74" x2="40.64" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="U3" gate="G$1" pin="GND"/>
+<wire x1="40.64" y1="78.74" x2="43.18" y2="78.74" width="0.1524" layer="91"/>
+<junction x="40.64" y="78.74"/>
 </segment>
 <segment>
 <pinref part="C4" gate="G$1" pin="2"/>
@@ -1597,9 +1606,9 @@ We've spent an enormous amount of time creating and checking these footprints an
 <label x="124.46" y="162.56" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U3" gate="U1" pin="SDA"/>
-<wire x1="63.5" y1="81.28" x2="68.58" y2="81.28" width="0.1524" layer="91"/>
-<label x="68.58" y="81.28" size="1.778" layer="95" xref="yes"/>
+<label x="66.04" y="83.82" size="1.778" layer="95" xref="yes"/>
+<pinref part="U3" gate="G$1" pin="SDA"/>
+<wire x1="63.5" y1="83.82" x2="66.04" y2="83.82" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U2" gate="U1" pin="SDA"/>
@@ -1633,9 +1642,9 @@ We've spent an enormous amount of time creating and checking these footprints an
 <label x="124.46" y="160.02" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U3" gate="U1" pin="SCK"/>
-<wire x1="63.5" y1="76.2" x2="68.58" y2="76.2" width="0.1524" layer="91"/>
-<label x="68.58" y="76.2" size="1.778" layer="95" xref="yes"/>
+<label x="66.04" y="78.74" size="1.778" layer="95" xref="yes"/>
+<pinref part="U3" gate="G$1" pin="SCL"/>
+<wire x1="63.5" y1="78.74" x2="66.04" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U2" gate="U1" pin="SCL"/>
