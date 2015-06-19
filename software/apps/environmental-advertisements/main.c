@@ -51,6 +51,9 @@
 #define TWI_READ                        0b1
 #define TWI_WRITE                       0b0
 
+// GPIO Output pin to LED
+#define LED_PIN 25
+
 // Address for this node
 uint8_t BLEES_ADDR[6] = {0x00, 0x00, 0x30, 0xe5, 0x98, 0xc0};
 
@@ -296,7 +299,7 @@ static void get_sensor_data() {
             sizeof(temp_hum_write),
             TWI_DONT_ISSUE_STOP
     );
-    uint8_t temp_hum_data[3];
+    uint8_t temp_hum_data[3] = {0, 0, 0};
     while (
         !twi_master_transfer(
                 TEMP_HUM_ADDR | TWI_READ,
@@ -353,6 +356,7 @@ static void get_sensor_data() {
     uint8_t chan0_output_high[] = {0x00};
     uint8_t chan0_output_low[] = {0x00};
 
+    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -368,9 +372,11 @@ static void get_sensor_data() {
         sizeof(chan0_output_low),
         TWI_ISSUE_STOP
     );
+    */
 
     uint8_t chan0_high_byte[] = {0b10101101};
 
+    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -386,6 +392,7 @@ static void get_sensor_data() {
         sizeof(chan0_output_high),
         TWI_ISSUE_STOP
     );
+    */
 
     chan0_output[1] = chan0_output_low[0];
     chan0_output[0] = chan0_output_high[0];
@@ -395,6 +402,7 @@ static void get_sensor_data() {
     uint8_t chan1_output_high[] = {0x00};
     uint8_t chan1_output_low[] = {0x00};
 
+    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -410,9 +418,11 @@ static void get_sensor_data() {
         sizeof(chan1_output_low),
         TWI_ISSUE_STOP
     );
+    */
 
     uint8_t chan1_high_byte[] = {0b10101111};
 
+    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -428,6 +438,7 @@ static void get_sensor_data() {
         sizeof(chan1_output_high),
         TWI_ISSUE_STOP
     );
+    */
 
     chan1_output[1] = chan1_output_low[0];
     chan1_output[0] = chan1_output_high[0];
@@ -466,6 +477,7 @@ static void get_sensor_data() {
 
 void run_after_timer() {
     get_sensor_data();
+    nrf_gpio_pin_toggle(LED_PIN);
 
     // Update information sent with beacon
     update_beacon_info();
@@ -483,7 +495,8 @@ int main(void)
     // Init timers
     APP_TIMER_INIT(0, 1, 1, 0);
 
-    led_init(LED_0);
+    nrf_gpio_pin_clear(LED_PIN);
+    nrf_gpio_cfg_output(LED_PIN);
 
     sensors_init();
 
@@ -502,6 +515,7 @@ int main(void)
     app_timer_id_t timer;
     app_timer_create(&timer, APP_TIMER_MODE_REPEATED, run_after_timer);
     app_timer_start(timer, APP_TIMER_TICKS(10000, 0), NULL);
+
 
     while (1) {
         power_manage(); //sleep
