@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "app_timer.h"
+#include "app_util_platform.h"
 #include "ble_advdata.h"
 #include "ble_debug_assert_handler.h"
 #include "boards.h"
@@ -28,17 +29,19 @@
 // Insert manufacturing things into the advertisement
 #define APP_COMPANY_IDENTIFIER          0xB1EE                            /**< Company identifier I made up that looks like BLEES */
 
-#define APP_BEACON_INFO_LENGTH          16                                /**< Four sensors, four bytes each. */
+#define APP_BEACON_INFO_LENGTH          16                                /**< Five sensors, four bytes each. */
 
 #define TEMP_FLOAT                      1.0f
 #define HUMIDITY_FLOAT                  2.0f
 #define LIGHT_FLOAT                     3.0f
 #define PRESSURE_FLOAT                  4.0f
+#define ACCELRATION_FLOAT               5
 
 #define TEMP_DATA                       1,   2,   3,   4
 #define HUMIDITY_DATA                   5,   6,   7,   8
 #define LIGHT_DATA                      9,   0xA, 0xB, 0xC
 #define PRESSURE_DATA                   0xD, 0xE, 0xF, 0x10
+#define ACCELERATION_DATA               0x11, 0x12
 
 #define THIS_DEVICE_NAME                "BLEES"
 
@@ -51,8 +54,16 @@
 #define TWI_READ                        0b1
 #define TWI_WRITE                       0b0
 
-// GPIO Output pin to LED
+// Pin selections
 #define LED_PIN 25
+#define SPI_SCK_PIN 9
+#define SPI_MISO_PIN 10
+#define SPI_MOSI_PIN 11
+#define SPI_SS_PIN 4
+#define NRF_SPI NRF_SPI0
+
+app_timer_id_t timer;
+uint32_t test_data = 0xDEADBEEF;
 
 // Address for this node
 uint8_t BLEES_ADDR[6] = {0x00, 0x00, 0x30, 0xe5, 0x98, 0xc0};
@@ -67,14 +78,16 @@ static struct {
     float humidity;
     float light;
     float pressure;
-} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f};
+    float acceleration;
+} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 5};
 
 static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                   /**< Information advertised by the Beacon. */
 {
     TEMP_DATA,
     HUMIDITY_DATA,
     LIGHT_DATA,
-    PRESSURE_DATA
+    PRESSURE_DATA,
+   // ACCELERATION_DATA,
 };
 
 // Moves data from the m_sensor_info struct
@@ -94,6 +107,7 @@ void update_beacon_info()
     memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 4);
     memcpy(&m_beacon_info[8],  &m_sensor_info.light, 4);
     memcpy(&m_beacon_info[12], &m_sensor_info.pressure, 4);
+    //memcpy(&m_beacon_info[16], &m_sensor_info.acceleration, 2);
 
     manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
     manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
@@ -236,6 +250,35 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
+static void spi_write(uint8_t buf) {
+    //clear the ready event
+    NRF_SPI->EVENTS_READY = 0;
+
+    NRF_SPI->TXD = buf;
+
+    //wait until byte has transmitted
+    while(NRF_SPI->EVENTS_READY == 0);
+
+    uint8_t throw = NRF_SPI->RXD;
+
+    NRF_SPI->EVENTS_READY = 0;
+}
+
+static void spi_read(uint8_t* buf) {
+
+    //clear ready event
+    NRF_SPI->EVENTS_READY = 0;
+
+    NRF_SPI->TXD = 0x00;
+
+    //wait until byte has been received
+    while(NRF_SPI->EVENTS_READY == 0);
+
+    buf[0] = NRF_SPI->RXD;
+
+    NRF_SPI->EVENTS_READY = 0;
+}
+
 /**@brief init sensor data structures and sensors
  */
 static void sensors_init(void) {
@@ -243,6 +286,7 @@ static void sensors_init(void) {
     m_sensor_info.humidity = 0;
     m_sensor_info.pressure = 0;
     m_sensor_info.light = 0;
+    m_sensor_info.acceleration = 0;
 
     bool ret = twi_master_init();
     //if (ret == false) {
@@ -275,6 +319,44 @@ static void sensors_init(void) {
             sizeof(lux_data),
             TWI_ISSUE_STOP
     );
+
+    // initialize spi
+    nrf_gpio_cfg_output(SPI_SS_PIN);
+    nrf_gpio_pin_set(SPI_SS_PIN);
+	NRF_SPI->PSELSCK 	= 	SPI_SCK_PIN;
+	NRF_SPI->PSELMOSI 	= 	SPI_MOSI_PIN;
+	NRF_SPI->PSELMISO 	= 	SPI_MISO_PIN;
+	NRF_SPI->FREQUENCY	= 	SPI_FREQUENCY_FREQUENCY_M1;
+	NRF_SPI->CONFIG	= 	(uint32_t)(SPI_CONFIG_CPHA_Leading << SPI_CONFIG_CPHA_Pos) |
+						(SPI_CONFIG_CPOL_ActiveHigh << SPI_CONFIG_CPOL_Pos) |
+						(SPI_CONFIG_ORDER_MsbFirst << SPI_CONFIG_ORDER_Pos);
+	NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
+	NRF_SPI->EVENTS_READY = 0;
+
+    // send a soft reset to the accelerometer
+    uint8_t accel_cmd[3] = {0x0A, 0x1F, 0x52};
+    nrf_gpio_pin_clear(SPI_SS_PIN);
+    for(int i=0; i<3; i++) {
+        spi_write(accel_cmd[i]);
+    }
+    nrf_gpio_pin_set(SPI_SS_PIN);
+    accel_cmd[1] = 0x2D;
+    accel_cmd[2] = 0x02;
+    nrf_gpio_pin_clear(SPI_SS_PIN);
+    for(int i=0; i<3; i++) {
+        spi_write(accel_cmd[i]);
+    }
+    nrf_gpio_pin_set(SPI_SS_PIN);
+}
+
+static void sample_accel() {
+    nrf_gpio_pin_clear(SPI_SS_PIN);
+    spi_write(0x0B);
+    spi_write(0x0E);
+    uint8_t device_id = 42;
+    spi_read(&device_id);
+    nrf_gpio_pin_set(SPI_SS_PIN);
+    //m_sensor_info.pressure = device_id;
 }
 
 /**@brief get sensor data and update m_sensor_info
@@ -356,7 +438,6 @@ static void get_sensor_data() {
     uint8_t chan0_output_high[] = {0x00};
     uint8_t chan0_output_low[] = {0x00};
 
-    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -372,11 +453,9 @@ static void get_sensor_data() {
         sizeof(chan0_output_low),
         TWI_ISSUE_STOP
     );
-    */
 
     uint8_t chan0_high_byte[] = {0b10101101};
 
-    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -392,7 +471,6 @@ static void get_sensor_data() {
         sizeof(chan0_output_high),
         TWI_ISSUE_STOP
     );
-    */
 
     chan0_output[1] = chan0_output_low[0];
     chan0_output[0] = chan0_output_high[0];
@@ -402,7 +480,6 @@ static void get_sensor_data() {
     uint8_t chan1_output_high[] = {0x00};
     uint8_t chan1_output_low[] = {0x00};
 
-    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -418,11 +495,9 @@ static void get_sensor_data() {
         sizeof(chan1_output_low),
         TWI_ISSUE_STOP
     );
-    */
 
     uint8_t chan1_high_byte[] = {0b10101111};
 
-    /*
     twi_master_transfer
     (
         LUX_ADDR | TWI_WRITE,
@@ -438,7 +513,6 @@ static void get_sensor_data() {
         sizeof(chan1_output_high),
         TWI_ISSUE_STOP
     );
-    */
 
     chan1_output[1] = chan1_output_low[0];
     chan1_output[0] = chan1_output_high[0];
@@ -473,30 +547,41 @@ static void get_sensor_data() {
     }
 
     m_sensor_info.light = lux;
+
+
+    // get spi data from accelerometer
+    // reading device ID
+    nrf_gpio_pin_clear(SPI_SS_PIN);
+    spi_write(0x0B);
+    spi_write(0x00);
+    uint8_t device_id = 42;
+    spi_read(&device_id);
+    nrf_gpio_pin_set(SPI_SS_PIN);
+    //m_sensor_info.pressure = device_id;
 }
 
 void run_after_timer() {
     get_sensor_data();
+    sample_accel();
     nrf_gpio_pin_toggle(LED_PIN);
 
     // Update information sent with beacon
     update_beacon_info();
+    app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
 }
-
 
 /**
  * @brief Function for application main entry.
  */
 int main(void)
 {
-    // Initialize.
-    //platform_init();
-
     // Init timers
     APP_TIMER_INIT(0, 1, 1, 0);
 
     nrf_gpio_pin_clear(LED_PIN);
+    nrf_gpio_pin_set(SPI_SS_PIN);
     nrf_gpio_cfg_output(LED_PIN);
+    nrf_gpio_cfg_output(SPI_SS_PIN);
 
     sensors_init();
 
@@ -506,15 +591,15 @@ int main(void)
 
     // Initialize this
     get_sensor_data();
+    sample_accel();
     update_beacon_info();
 
     // Start execution.
     advertising_start();
 
     //10-Sec Timer
-    app_timer_id_t timer;
-    app_timer_create(&timer, APP_TIMER_MODE_REPEATED, run_after_timer);
-    app_timer_start(timer, APP_TIMER_TICKS(10000, 0), NULL);
+    app_timer_create(&timer, APP_TIMER_MODE_SINGLE_SHOT, run_after_timer);
+    app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
 
 
     while (1) {
