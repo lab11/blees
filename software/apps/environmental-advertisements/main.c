@@ -356,7 +356,7 @@ static void sample_accel() {
     uint8_t device_id = 42;
     spi_read(&device_id);
     nrf_gpio_pin_set(SPI_SS_PIN);
-    //m_sensor_info.pressure = device_id;
+    m_sensor_info.pressure = device_id;
 }
 
 /**@brief get sensor data and update m_sensor_info
@@ -547,17 +547,6 @@ static void get_sensor_data() {
     }
 
     m_sensor_info.light = lux;
-
-
-    // get spi data from accelerometer
-    // reading device ID
-    nrf_gpio_pin_clear(SPI_SS_PIN);
-    spi_write(0x0B);
-    spi_write(0x00);
-    uint8_t device_id = 42;
-    spi_read(&device_id);
-    nrf_gpio_pin_set(SPI_SS_PIN);
-    //m_sensor_info.pressure = device_id;
 }
 
 void run_after_timer() {
