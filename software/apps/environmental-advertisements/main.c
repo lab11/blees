@@ -340,6 +340,7 @@ static void sensors_init(void) {
         spi_write(accel_cmd[i]);
     }
     nrf_gpio_pin_set(SPI_SS_PIN);
+    for(volatile int j=0; j<1000000; j++);
     accel_cmd[1] = 0x2D;
     accel_cmd[2] = 0x02;
     nrf_gpio_pin_clear(SPI_SS_PIN);
@@ -352,11 +353,15 @@ static void sensors_init(void) {
 static void sample_accel() {
     nrf_gpio_pin_clear(SPI_SS_PIN);
     spi_write(0x0B);
-    spi_write(0x0E);
+    //spi_write(0x0E); // XDATA_L
+    //spi_write(0x2D); // POWER_CTL
+    spi_write(0x40); // STATUS
+    //spi_write(0x27); // ACTIVITY/INACTIVITY
+    //spi_write(0x29);
     uint8_t device_id = 42;
     spi_read(&device_id);
     nrf_gpio_pin_set(SPI_SS_PIN);
-    m_sensor_info.pressure = device_id;
+    //m_sensor_info.pressure = device_id;
 }
 
 /**@brief get sensor data and update m_sensor_info
@@ -586,7 +591,7 @@ int main(void)
     // Start execution.
     advertising_start();
 
-    //10-Sec Timer
+    //1-Sec Timer
     app_timer_create(&timer, APP_TIMER_MODE_SINGLE_SHOT, run_after_timer);
     app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
 
