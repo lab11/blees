@@ -13,7 +13,9 @@ void sleep(unsigned int mseconds)
     while (goal > clock());
 }
 
-#define SLAVE_FLOAT_ADDR 	0x39
+//#define SENSOR_GND_ADDR 	0x52
+
+#define SENSOR_GND_ADDR 0b01010010
 
 #define COMMAND_REG			0x80
 #define CLEAR_INTERRUPT		0x40
@@ -44,30 +46,40 @@ void sleep(unsigned int mseconds)
 #define	INTERRUPT_OUTPUT_DISABLED	0x00
 #define INTERRUPT_LEVEL_INTERRUPT	0x10
 
-#define TWI_READ 0b0
-#define TWI_WRITE 0b1
+#define TWI_READ 0b1
+#define TWI_WRITE 0b0
+
+	command = COMMAND_REG | BLOCK_PROTOCOL | TIMING_REG_ADDR;
+
 
 // Read ADC Channels Using Read Word Protocol
 void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 
-	//bool error;
-	uint8_t data_low, data_high;
+	bool error = false;
+	uint8_t data_low = 0;
+	uint8_t data_high = 0;
 	uint8_t command;
+
+	uint8_t address;
 
 	//read byte from Ch0 lower data register
 	command = COMMAND_REG| BLOCK_PROTOCOL | CH0_LOW;
 
-	//error = 
+	address = SENSOR_GND_ADDR | TWI_WRITE;
+
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		address, 
 		&command, 
 		sizeof(command), 
-		TWI_ISSUE_STOP
+		TWI_DONT_ISSUE_STOP
 	);
 
-	//error = 
+	printf("hey");
+
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_READ,
+		SENSOR_GND_ADDR | TWI_READ,
 		&data_low,
 		sizeof(data_low),
 		TWI_ISSUE_STOP
@@ -76,17 +88,17 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 	//read byte from Ch0 higher data register
 	command = COMMAND_REG | WORD_PROTOCOL | CH0_HIGH;
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
 	);
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_READ,
+		SENSOR_GND_ADDR | TWI_READ,
 		&data_high,
 		sizeof(data_high),
 		TWI_ISSUE_STOP
@@ -98,17 +110,17 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 	//read byte from Ch1 lower data register
 	command = COMMAND_REG | WORD_PROTOCOL | CH1_LOW;
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
 	);
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_READ,
+		SENSOR_GND_ADDR | TWI_READ,
 		&data_low,
 		sizeof(data_low),
 		TWI_ISSUE_STOP
@@ -117,17 +129,17 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 	//read byte from Ch1 higher data register
 	command = COMMAND_REG | WORD_PROTOCOL | CH1_HIGH;
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
 	);
 
-	//error = 
+	error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_READ,
+		SENSOR_GND_ADDR | TWI_READ,
 		&data_high,
 		sizeof(data_high),
 		TWI_ISSUE_STOP
@@ -140,13 +152,22 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 
 }
 
-
-float tsl2561_readLux(void){
+//currently doesn't work for manual integration
+float tsl2561_readLux(tsl2561_integration_time_mode_t int_mode){
 
 	uint16_t chan0, chan1;
-	float lux;
+	float lux = 0.0;
 
 	tsl2561_readADC(&chan0, &chan1);
+
+	if (int_mode == tsl2561_MODE0){
+		chan0 = chan0 / 0.034;
+		chan1 = chan1 / 0.034;
+	}
+	else if (int_mode == tsl2561_MODE1){
+		chan0 = chan0 / 0.252;
+		chan1 = chan1 / 0.252;
+	}
 
 	float ratio = ((float) chan1) / chan0;
 
@@ -166,25 +187,76 @@ float tsl2561_readLux(void){
 
 void tsl2561_on(void){
 
-	uint8_t control = POWER_ON;
+	bool error = false;
 
-   	twi_master_transfer(
-            CONTROL_REG_ADDR,
-            &control,
-            sizeof(control),
+	//uint8_t command[] = {0xC0};
+
+	uint8_t command = COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR;
+
+	//uint8_t lux_data[] = {0b11000000, 0b00000011};
+
+    printf("hi");
+
+    
+   	error = twi_master_transfer(
+            SENSOR_GND_ADDR | TWI_WRITE,
+            &command,
+            sizeof(command),
+            TWI_DONT_ISSUE_STOP
+    );
+    
+
+	//int a = 5;
+
+   	
+    printf("hey");
+
+    
+    uint8_t data = POWER_ON;
+
+   	error = twi_master_transfer(
+            SENSOR_GND_ADDR | TWI_WRITE,
+            &data,
+            sizeof(data),
             TWI_ISSUE_STOP
     );
+    
 
 }
 
 void tsl2561_off(void){
 
-	uint8_t control = POWER_OFF;
+	bool error = false;
 
-   	twi_master_transfer(
-            CONTROL_REG_ADDR,
-            &control,
-            sizeof(control),
+	//uint8_t command[] = {0xC0};
+
+	uint8_t command = COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR;
+
+	//uint8_t lux_data[] = {0b11000000, 0b00000011};
+
+    printf("hi");
+
+    
+   	error = twi_master_transfer(
+            SENSOR_GND_ADDR | TWI_WRITE,
+            &command,
+            sizeof(command),
+            TWI_DONT_ISSUE_STOP
+    );
+    
+
+	//int a = 5;
+
+   	
+    printf("hey");
+
+    
+    uint8_t data = POWER_OFF;
+
+   	error = twi_master_transfer(
+            SENSOR_GND_ADDR | TWI_WRITE,
+            &data,
+            sizeof(data),
             TWI_ISSUE_STOP
     );
 
@@ -202,7 +274,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE, 
+			SENSOR_GND_ADDR | TWI_WRITE, 
 			&command, 
 			sizeof(command), 
 			TWI_ISSUE_STOP
@@ -210,7 +282,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE,
+			SENSOR_GND_ADDR | TWI_WRITE,
 			&data,
 			sizeof(data),
 			TWI_ISSUE_STOP
@@ -221,7 +293,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE, 
+			SENSOR_GND_ADDR | TWI_WRITE, 
 			&command, 
 			sizeof(command), 
 			TWI_ISSUE_STOP
@@ -229,7 +301,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE,
+			SENSOR_GND_ADDR | TWI_WRITE,
 			&data,
 			sizeof(data),
 			TWI_ISSUE_STOP
@@ -244,7 +316,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE, 
+			SENSOR_GND_ADDR | TWI_WRITE, 
 			&command, 
 			sizeof(command), 
 			TWI_ISSUE_STOP
@@ -252,7 +324,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE,
+			SENSOR_GND_ADDR | TWI_WRITE,
 			&data,
 			sizeof(data),
 			TWI_ISSUE_STOP
@@ -263,7 +335,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE, 
+			SENSOR_GND_ADDR | TWI_WRITE, 
 			&command, 
 			sizeof(command), 
 			TWI_ISSUE_STOP
@@ -271,7 +343,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE,
+			SENSOR_GND_ADDR | TWI_WRITE,
 			&data,
 			sizeof(data),
 			TWI_ISSUE_STOP
@@ -286,7 +358,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE, 
+			SENSOR_GND_ADDR | TWI_WRITE, 
 			&command, 
 			sizeof(command), 
 			TWI_ISSUE_STOP
@@ -294,7 +366,7 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 		//error = 
 		twi_master_transfer(
-			SLAVE_FLOAT_ADDR | TWI_WRITE,
+			SENSOR_GND_ADDR | TWI_WRITE,
 			&data,
 			sizeof(data),
 			TWI_ISSUE_STOP
@@ -311,7 +383,7 @@ void tsl2561_interrupt_disable(void){
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
@@ -319,7 +391,7 @@ void tsl2561_interrupt_disable(void){
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE,
+		SENSOR_GND_ADDR | TWI_WRITE,
 		&data,
 		sizeof(data),
 		TWI_ISSUE_STOP
@@ -332,7 +404,7 @@ void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode
 	uint8_t data;
 	uint8_t command;
 
-	if (mode_gain){
+	if (mode_gain == tsl2561_HIGH){
 
 		data = HIGH_GAIN_MODE; // high gain mode (16x)
 
@@ -350,7 +422,7 @@ void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
@@ -358,7 +430,7 @@ void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE,
+		SENSOR_GND_ADDR | TWI_WRITE,
 		&data,
 		sizeof(data),
 		TWI_ISSUE_STOP
@@ -372,7 +444,7 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 	uint8_t data;
 	uint8_t command;
 
-	if (mode_gain){
+	if (mode_gain == tsl2561_HIGH){
 
 		data = HIGH_GAIN_MODE; // high gain mode (16x)
 
@@ -390,7 +462,7 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
@@ -398,7 +470,7 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE,
+		SENSOR_GND_ADDR | TWI_WRITE,
 		&data,
 		sizeof(data),
 		TWI_ISSUE_STOP
@@ -411,7 +483,7 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 	//is this one necessary??
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE, 
+		SENSOR_GND_ADDR | TWI_WRITE, 
 		&command, 
 		sizeof(command), 
 		TWI_ISSUE_STOP
@@ -419,7 +491,7 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 
 	//error = 
 	twi_master_transfer(
-		SLAVE_FLOAT_ADDR | TWI_WRITE,
+		SENSOR_GND_ADDR | TWI_WRITE,
 		&data,
 		sizeof(data),
 		TWI_ISSUE_STOP
