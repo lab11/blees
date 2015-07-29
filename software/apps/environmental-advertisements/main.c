@@ -1,129 +1,76 @@
-/* Send an advertisement periodically
- */
+/*
 
-#include <stdbool.h>
+UWB Localization Tag
+
+*/
+
 #include <stdint.h>
-#include <math.h>
-#include "app_timer.h"
-#include "app_util_platform.h"
-#include "ble_advdata.h"
-#include "ble_debug_assert_handler.h"
-#include "boards.h"
-#include "led.h"
+#include <stdio.h>
+#include <string.h>
 #include "nordic_common.h"
-#include "nrf_gpio.h"
+#include "nrf.h"
+#include "nrf_sdm.h"
+#include "ble.h"
+#include "ble_db_discovery.h"
 #include "softdevice_handler.h"
-#include "twi_master.h"
+#include "app_util.h"
+#include "app_error.h"
+#include "ble_advdata_parser.h"
+#include "ble_conn_params.h"
+#include "ble_hci.h"
+#include "nrf_gpio.h"
+#include "pstorage.h"
+// #include "device_manager.h"
+#include "app_trace.h"
+#include "ble_hrs_c.h"
+#include "ble_bas_c.h"
+#include "app_util.h"
+#include "app_timer.h"
+
+#include "led.h"
+
+#include "blees.h"
+
+// #include "bcp_spi_slave.h"
+#include "ble_config.h"
+// #include "interrupt_event_queue.h"
 
 
-#define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
-#define ADVERTISING_LED                 LED_0                             /**< Is on when device is advertising. */
-
-#define USE_LEDS                        1
-
-#define APP_CFG_NON_CONN_ADV_TIMEOUT    0                                   /**< Time for which the device must be advertising in non-connectable mode (in seconds). 0 disables timeout. */
-#define NON_CONNECTABLE_ADV_INTERVAL    MSEC_TO_UNITS(1600, UNIT_0_625_MS)  /**< The advertising interval is 1s. This value can vary between 100ms to 10.24s). */
+bool bcp_irq_advertisements = false;
 
 
+#define TRITAG_SHORT_UUID                  0x3152
+#define TRITAG_CHAR_LOCATION_SHORT_UUID    0x3153
 
-// Insert manufacturing things into the advertisement
-#define APP_COMPANY_IDENTIFIER          0xB1EE                            /**< Company identifier I made up that looks like BLEES */
-
-#define APP_BEACON_INFO_LENGTH          16                                /**< Five sensors, four bytes each. */
-
-#define TEMP_FLOAT                      1.0f
-#define HUMIDITY_FLOAT                  2.0f
-#define LIGHT_FLOAT                     3.0f
-#define PRESSURE_FLOAT                  4.0f
-#define ACCELRATION_FLOAT               5
-
-#define TEMP_DATA                       1,   2,   3,   4
-#define HUMIDITY_DATA                   5,   6,   7,   8
-#define LIGHT_DATA                      9,   0xA, 0xB, 0xC
-#define PRESSURE_DATA                   0xD, 0xE, 0xF, 0x10
-#define ACCELERATION_DATA               0x11, 0x12
-
-#define THIS_DEVICE_NAME                "BLEES"
-
-// Sensor defines
-#define LUX_ADDR                        0b01010010
-#define TEMP_HUM_ADDR                   0b10000000
-#define PRESSURE_ADDR                   0b10111000
-
-// Read/Write def
-#define TWI_READ                        0b1
-#define TWI_WRITE                       0b0
-
-// Pin selections
-#define LED_PIN 25
-#define SPI_SCK_PIN 9
-#define SPI_MISO_PIN 10
-#define SPI_MOSI_PIN 11
-#define SPI_SS_PIN 4
-#define NRF_SPI NRF_SPI0
-
-app_timer_id_t timer;
-uint32_t test_data = 0xDEADBEEF;
-
-// Address for this node
-uint8_t BLEES_ADDR[6] = {0x00, 0x00, 0x30, 0xe5, 0x98, 0xc0};
-
-// information about the advertisement
-ble_advdata_t                           advdata;
-//ble_advdata_t                           srdata;
-static ble_gap_adv_params_t             m_adv_params;                     /**< Parameters to be passed to the stack when starting advertising. */
-
-static struct {
-    float temp;
-    float humidity;
-    float light;
-    float pressure;
-    float acceleration;
-} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 5};
-
-static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH] =                   /**< Information advertised by the Beacon. */
-{
-    TEMP_DATA,
-    HUMIDITY_DATA,
-    LIGHT_DATA,
-    PRESSURE_DATA,
-   // ACCELERATION_DATA,
+// Randomly generated UUID
+const ble_uuid128_t tritag_uuid128 = {
+    {0x2e, 0x5d, 0x5e, 0x39, 0x31, 0x52, 0x45, 0x0c,
+     0x90, 0xee, 0x3f, 0xa2, 0x9c, 0x86, 0x8c, 0xd6}
 };
 
-// Moves data from the m_sensor_info struct
-// into the m_beacon_info array
-// to set it up to send
-void update_beacon_info()
-{
-    uint32_t                  err_code;
+uint8_t MAC_ADDR[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-    // Use the simplest send adv packets only mode
-    uint8_t                   flags = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+ble_uuid_t tritag_uuid;
 
-    // More manufacturing only stuff that might get added back in
-    ble_advdata_manuf_data_t  manuf_specific_data;
+// Security requirements for this application.
+static ble_gap_sec_params_t m_sec_params = {
+    SEC_PARAM_BOND,
+    SEC_PARAM_MITM,
+    SEC_PARAM_IO_CAPABILITIES,
+    SEC_PARAM_OOB,
+    SEC_PARAM_MIN_KEY_SIZE,
+    SEC_PARAM_MAX_KEY_SIZE,
+};
 
-    memcpy(&m_beacon_info[0],  &m_sensor_info.temp, 4);
-    memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 4);
-    memcpy(&m_beacon_info[8],  &m_sensor_info.light, 4);
-    memcpy(&m_beacon_info[12], &m_sensor_info.pressure, 4);
-    //memcpy(&m_beacon_info[16], &m_sensor_info.acceleration, 2);
+// State for this application
+static ble_app_t app;
 
-    manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
-    manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
-    manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
+static ble_gap_adv_params_t m_adv_params;
 
-    // Build and set advertising data.
-    memset(&advdata, 0, sizeof(advdata));
+static app_timer_id_t  test_timer;
 
-    advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-    advdata.flags.size              = sizeof(flags);
-    advdata.flags.p_data            = &flags;
-    advdata.p_manuf_specific_data   = &manuf_specific_data;
 
-    err_code = ble_advdata_set(&advdata, NULL);
-    APP_ERROR_CHECK(err_code);
-}
+
 
 
 /**@brief Function for error handling, which is called when an error has occurred.
@@ -137,7 +84,10 @@ void update_beacon_info()
  */
 void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
 {
-    // This call can be used for debug purposes during application development.
+    // APPL_LOG("[APPL]: ASSERT: %s, %d, error 0x%08x\r\n", p_file_name, line_num, error_code);
+    // nrf_gpio_pin_set(ASSERT_LED_PIN_NO);
+
+    // This call can be used for debug purposes during development of an application.
     // @note CAUTION: Activating this code will write the stack to flash on an error.
     //                This function should NOT be used in a final product.
     //                It is intended STRICTLY for development/debugging purposes.
@@ -146,12 +96,12 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     //                Use with care. Un-comment the line below to use.
     // ble_debug_assert_handler(error_code, line_num, p_file_name);
 
-    // On assert, the system can only recover on reset.
+    // On assert, the system can only recover with a reset.
     NVIC_SystemReset();
 }
 
 
-/**@brief Callback function for asserts in the SoftDevice.
+/**@brief Function for asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
  *
@@ -159,51 +109,369 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
  *          how your product is supposed to react in case of Assert.
  * @warning On assert from the SoftDevice, the system can only recover on reset.
  *
- * @param[in]   line_num   Line number of the failing ASSERT call.
- * @param[in]   file_name  File name of the failing ASSERT call.
+ * @param[in] line_num     Line number of the failing ASSERT call.
+ * @param[in] p_file_name  File name of the failing ASSERT call.
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
-// Setup TX power and the device name
-static void gap_params_init(void)
-{
-    uint32_t                err_code;
-    ble_gap_conn_sec_mode_t sec_mode;
 
-    // Set the power. Using really low (-30) doesn't really work
-    sd_ble_gap_tx_power_set(4);
+static void advertising_start(void) {
 
-    // Make the connection open (no security)
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
+    //start advertising
+    uint32_t err_code;
+    err_code = sd_ble_gap_adv_start(&m_adv_params);
+    APP_ERROR_CHECK(err_code);
+}
 
-    // Set the name of the device so its easier to find
-    err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                          (const uint8_t *) THIS_DEVICE_NAME,
-                                          strlen(THIS_DEVICE_NAME));
+static void advertising_stop(void) {
+    //start advertising
+    uint32_t err_code;
+    err_code = sd_ble_gap_adv_stop();
     APP_ERROR_CHECK(err_code);
 }
 
 
-/**@brief Function for starting advertising.
- */
-static void advertising_start(void)
-{
+//service error callback
+static void service_error_handler(uint32_t nrf_error) {
+    APP_ERROR_HANDLER(nrf_error);
+}
+
+
+// /**@brief Function for handling the WRITE event.
+//  */
+// static void on_write (ble_evt_t* p_ble_evt)
+// {
+//     ble_gatts_evt_write_t* p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+//     if (p_evt_write->handle == app.char_led_handles.value_handle) {
+//         app.led_state = p_evt_write->data[0];
+
+//         // Notify the CC2538 that the LED characteristic was written to
+//         interrupt_event_queue_add(BCP_RSP_LED, 1, p_evt_write->data);
+//     }
+// }
+
+
+//connection parameters event handler callback
+static void on_conn_params_evt(ble_conn_params_evt_t * p_evt) {
     uint32_t err_code;
 
-    // Initialize advertising parameters (used when starting advertising).
+    if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED) {
+        err_code = sd_ble_gap_disconnect(app.conn_handle,
+                                         BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
+        APP_ERROR_CHECK(err_code);
+    }
+}
+
+//connection parameters error callback
+static void conn_params_error_handler(uint32_t nrf_error) {
+    APP_ERROR_HANDLER(nrf_error);
+}
+
+
+
+
+
+/**@brief Function for handling the Application's BLE Stack events.
+ *
+ * @param[in]   p_ble_evt   Bluetooth stack event.
+ */
+static void on_ble_evt(ble_evt_t * p_ble_evt) {
+    uint32_t                         err_code;
+    static ble_gap_evt_auth_status_t m_auth_status;
+
+    switch (p_ble_evt->header.evt_id) {
+        case BLE_GAP_EVT_CONNECTED:
+            app.conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            //advertising_stop();
+            break;
+
+        case BLE_GAP_EVT_DISCONNECTED:
+            app.conn_handle = BLE_CONN_HANDLE_INVALID;
+            advertising_start();
+            break;
+
+        case BLE_GATTS_EVT_WRITE:
+            // on_write(p_ble_evt);
+            break;
+
+        case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
+            err_code = sd_ble_gap_sec_params_reply(app.conn_handle,
+                                                   BLE_GAP_SEC_STATUS_SUCCESS,
+                                                   &m_sec_params,
+                                                   NULL);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+            err_code = sd_ble_gatts_sys_attr_set(app.conn_handle, NULL, 0, 0);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GAP_EVT_AUTH_STATUS:
+            m_auth_status = p_ble_evt->evt.gap_evt.params.auth_status;
+            break;
+
+        case BLE_GAP_EVT_SEC_INFO_REQUEST:
+            // No keys found for this device.
+            err_code = sd_ble_gap_sec_info_reply(app.conn_handle, NULL, NULL, NULL);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GAP_EVT_TIMEOUT:
+            if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING) {
+                err_code = sd_power_system_off();
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
+// /**@brief Function for handling the Application's system events.
+//  *
+//  * @param[in]   sys_evt   system event.
+//  */
+// static void on_sys_evt(uint32_t sys_evt)
+// {
+//     switch(sys_evt)
+//     {
+//         case NRF_EVT_FLASH_OPERATION_SUCCESS:
+//         case NRF_EVT_FLASH_OPERATION_ERROR:
+//             if (m_memory_access_in_progress)
+//             {
+//                 m_memory_access_in_progress = false;
+//                 scan_start();
+//             }
+//             break;
+//         default:
+//             // No implementation needed.
+//             break;
+//     }
+// }
+
+
+/**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
+ *
+ * @details This function is called from the scheduler in the main loop after a BLE stack event has
+ *  been received.
+ *
+ * @param[in]   p_ble_evt   Bluetooth stack event.
+ */
+static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
+{
+   // dm_ble_evt_handler(p_ble_evt);
+   // ble_db_discovery_on_ble_evt(&m_ble_db_discovery, p_ble_evt);
+   // ble_hrs_c_on_ble_evt(&m_ble_hrs_c, p_ble_evt);
+   // ble_bas_c_on_ble_evt(&m_ble_bas_c, p_ble_evt);
+    on_ble_evt(p_ble_evt);
+    ble_conn_params_on_ble_evt(p_ble_evt);
+}
+
+
+/**@brief Function for dispatching a system event to interested modules.
+ *
+ * @details This function is called from the System event interrupt handler after a system
+ *          event has been received.
+ *
+ * @param[in]   sys_evt   System stack event.
+ */
+static void sys_evt_dispatch(uint32_t sys_evt)
+{
+    // pstorage_sys_event_handler(sys_evt);
+    // on_sys_evt(sys_evt);
+}
+
+
+static void timer_handler (void* p_context) {
+}
+
+
+/*******************************************************************************
+ *   INIT FUNCTIONS
+ ******************************************************************************/
+
+// Initialize connection parameters
+static void conn_params_init(void) {
+    uint32_t               err_code;
+    ble_conn_params_init_t cp_init;
+
+    memset(&cp_init, 0, sizeof(cp_init));
+
+    cp_init.p_conn_params                  = NULL;
+    cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
+    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
+    cp_init.disconnect_on_fail             = false;
+    cp_init.evt_handler                    = on_conn_params_evt;
+    cp_init.error_handler                  = conn_params_error_handler;
+
+    err_code = ble_conn_params_init(&cp_init);
+    APP_ERROR_CHECK(err_code);
+}
+
+static void timers_init(void) {
+    uint32_t err_code;
+
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
+
+    err_code = app_timer_create(&test_timer,
+                                APP_TIMER_MODE_REPEATED,
+                                timer_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_start(test_timer, UPDATE_RATE, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+// initialize advertising
+static void advertising_init(void) {
+    uint32_t      err_code;
+    ble_advdata_t advdata;
+    ble_advdata_t srdata;
+    uint8_t       flags =  BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+
+    // Advertise our custom service
+    ble_uuid_t adv_uuids[] = {tritag_uuid};
+
+    // Build and set advertising data
+    memset(&advdata, 0, sizeof(advdata));
+    memset(&srdata, 0, sizeof(srdata));
+
+    advdata.name_type               = BLE_ADVDATA_NO_NAME;
+    advdata.include_appearance      = true;
+    advdata.flags                   = flags;
+    advdata.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
+    advdata.uuids_complete.p_uuids  = adv_uuids;
+
+    // Put the name in the SCAN RESPONSE data
+    srdata.name_type                = BLE_ADVDATA_FULL_NAME;
+
+    err_code = ble_advdata_set(&advdata, &srdata);
+    APP_ERROR_CHECK(err_code);
+
     memset(&m_adv_params, 0, sizeof(m_adv_params));
 
-    // m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_SCAN_IND;
-    m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
-    m_adv_params.p_peer_addr = NULL;                             // Undirected advertisement.
-    m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
-    m_adv_params.interval    = NON_CONNECTABLE_ADV_INTERVAL;
-    m_adv_params.timeout     = APP_CFG_NON_CONN_ADV_TIMEOUT;
+    m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_IND;
+    m_adv_params.p_peer_addr        = NULL;
+    m_adv_params.fp                 = BLE_GAP_ADV_FP_ANY;
+    m_adv_params.interval           = APP_ADV_INTERVAL;
+    m_adv_params.timeout            = APP_ADV_TIMEOUT_IN_SECONDS;
+}
 
-    err_code = sd_ble_gap_adv_start(&m_adv_params);
+//init services
+static void services_init (void)
+{
+    /*
+    uint32_t err_code;
+
+    // Setup our long UUID so that nRF recognizes it. This is done by
+    // storing the full UUID and essentially using `tritag_uuid`
+    // as a handle.
+    tritag_uuid.uuid = TRITAG_SHORT_UUID;
+    err_code = sd_ble_uuid_vs_add(&tritag_uuid128, &(tritag_uuid.type));
+    APP_ERROR_CHECK(err_code);
+    app.uuid_type = tritag_uuid.type;
+
+    // Add the custom service to the system
+    err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY,
+                                        &tritag_uuid,
+                                        &(app.service_handle));
+    APP_ERROR_CHECK(err_code);
+
+    // Add the LOCATION characteristic to the service
+    {
+        ble_gatts_char_md_t char_md;
+        ble_gatts_attr_t    attr_char_value;
+        ble_uuid_t          char_uuid;
+        ble_gatts_attr_md_t attr_md;
+
+        // Init value
+        app.current_location[0] = 0;
+        app.current_location[1] = 1;
+        app.current_location[2] = 2;
+        app.current_location[3] = 3;
+        app.current_location[4] = 4;
+        app.current_location[5] = 5;
+
+        memset(&char_md, 0, sizeof(char_md));
+
+        // This characteristic is a read & write
+        char_md.char_props.read          = 1;
+        char_md.char_props.write         = 0;
+        char_md.p_char_user_desc         = NULL;
+        char_md.p_char_pf                = NULL;
+        char_md.p_user_desc_md           = NULL;
+        char_md.p_cccd_md                = NULL;
+        char_md.p_sccd_md                = NULL;
+
+        char_uuid.type = app.uuid_type;
+        char_uuid.uuid = TRITAG_CHAR_LOCATION_SHORT_UUID;
+
+        memset(&attr_md, 0, sizeof(attr_md));
+
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+        // BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+
+        attr_md.vloc    = BLE_GATTS_VLOC_USER;
+        attr_md.rd_auth = 0;
+        attr_md.wr_auth = 0;
+        attr_md.vlen    = 0;
+
+        memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+        attr_char_value.p_uuid    = &char_uuid;
+        attr_char_value.p_attr_md = &attr_md;
+        attr_char_value.init_len  = 1;
+        attr_char_value.init_offs = 0;
+        attr_char_value.max_len   = 6;
+        attr_char_value.p_value   = app.current_location;
+
+        err_code = sd_ble_gatts_characteristic_add(app.service_handle,
+                                                   &char_md,
+                                                   &attr_char_value,
+                                                   &app.char_location_handles);
+        APP_ERROR_CHECK(err_code);
+    }
+    */
+
+}
+
+
+// gap name/appearance/connection parameters
+static void gap_params_init (void) {
+    uint32_t                err_code;
+    ble_gap_conn_params_t   gap_conn_params;
+    ble_gap_conn_sec_mode_t sec_mode;
+
+    // Full strength signal
+    sd_ble_gap_tx_power_set(4);
+
+    // Let anyone connect and set the name given the platform
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
+    err_code = sd_ble_gap_device_name_set(&sec_mode,
+                                          (const uint8_t *)DEVICE_NAME,
+                                          strlen(DEVICE_NAME));
+    APP_ERROR_CHECK(err_code);
+
+    // Not sure what this is useful for, but why not set it
+    err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_GENERIC_COMPUTER);
+    APP_ERROR_CHECK(err_code);
+
+    // Specify parameters for a connection
+    memset(&gap_conn_params, 0, sizeof(gap_conn_params));
+    gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
+    gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
+    gap_conn_params.slave_latency     = SLAVE_LATENCY;
+    gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
+
+    err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -212,22 +480,30 @@ static void advertising_start(void)
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
  */
-static void ble_stack_init(void)
-{
+static void ble_stack_init (void) {
+    uint32_t err_code;
 
     // Initialize the SoftDevice handler module.
-    // Use a really crappy clock because we want fast start
-    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION, false);
+    SOFTDEVICE_HANDLER_INIT(
+        NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION, false);
 
     // Enable BLE stack
-    uint32_t err_code;
     ble_enable_params_t ble_enable_params;
     memset(&ble_enable_params, 0, sizeof(ble_enable_params));
-    ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
+    ble_enable_params.gatts_enable_params.service_changed =
+                                            IS_SRVC_CHANGED_CHARACT_PRESENT;
     err_code = sd_ble_enable(&ble_enable_params);
     APP_ERROR_CHECK(err_code);
 
-    // Set the address of this BLEES / squall
+    //Register with the SoftDevice handler module for BLE events.
+    err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
+    APP_ERROR_CHECK(err_code);
+
+    // Register with the SoftDevice handler module for BLE events.
+    err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
+    APP_ERROR_CHECK(err_code);
+
+    // Set the MAC address of the device
     {
         ble_gap_addr_t gap_addr;
 
@@ -236,368 +512,44 @@ static void ble_stack_init(void)
 
         // Set the new BLE address with the Michigan OUI
         gap_addr.addr_type = BLE_GAP_ADDR_TYPE_PUBLIC;
-        memcpy(gap_addr.addr+2, BLEES_ADDR+2, sizeof(gap_addr.addr)-2);
+        memcpy(gap_addr.addr+2, MAC_ADDR+2, sizeof(gap_addr.addr)-2);
         err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE, &gap_addr);
         APP_ERROR_CHECK(err_code);
     }
 }
 
-/**@brief Function for doing power management.
+/** @brief Function for the Power manager.
  */
-static void power_manage(void)
-{
+static void power_manage (void) {
     uint32_t err_code = sd_app_evt_wait();
     APP_ERROR_CHECK(err_code);
 }
 
-static void spi_write(uint8_t buf) {
-    //clear the ready event
-    NRF_SPI->EVENTS_READY = 0;
 
-    NRF_SPI->TXD = buf;
+int main(void) {
+    uint32_t err_code;
 
-    //wait until byte has transmitted
-    while(NRF_SPI->EVENTS_READY == 0);
+    //
+    // Initialization
+    //
+    led_init(SQUALL_LED_PIN);
+    led_init(BLEES_LED_PIN);
+    led_on(SQUALL_LED_PIN);
+    led_on(BLEES_LED_PIN);
 
-    uint8_t throw = NRF_SPI->RXD;
 
-    NRF_SPI->EVENTS_READY = 0;
-}
-
-static void spi_read(uint8_t* buf) {
-
-    //clear ready event
-    NRF_SPI->EVENTS_READY = 0;
-
-    NRF_SPI->TXD = 0x00;
-
-    //wait until byte has been received
-    while(NRF_SPI->EVENTS_READY == 0);
-
-    buf[0] = NRF_SPI->RXD;
-
-    NRF_SPI->EVENTS_READY = 0;
-}
-
-/**@brief init sensor data structures and sensors
- */
-static void sensors_init(void) {
-    m_sensor_info.temp = 0;
-    m_sensor_info.humidity = 0;
-    m_sensor_info.pressure = 0;
-    m_sensor_info.light = 0;
-    m_sensor_info.acceleration = 0;
-
-    bool ret = twi_master_init();
-    //if (ret == false) {
-    //    //do something
-    //}
-
-    // Init temp and humidity sensor
-    uint8_t temp_hum_data = 0b11111110;
-    twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_WRITE,
-            &temp_hum_data,
-            sizeof(uint8_t),
-            TWI_ISSUE_STOP
-    );
-
-    // Init pressure sensor
-    uint8_t pressure_data[] = {0x20, 0b10010100};
-    twi_master_transfer(
-            PRESSURE_ADDR | TWI_WRITE,
-            pressure_data,
-            sizeof(pressure_data),
-            TWI_ISSUE_STOP
-    );
-
-    // Init light sensor
-    uint8_t lux_data[] = {0b11000000, 0b00000011};
-    twi_master_transfer(
-            LUX_ADDR | TWI_WRITE,
-            lux_data,
-            sizeof(lux_data),
-            TWI_ISSUE_STOP
-    );
-
-    // initialize spi
-    nrf_gpio_cfg_output(SPI_SS_PIN);
-    nrf_gpio_pin_set(SPI_SS_PIN);
-	NRF_SPI->PSELSCK 	= 	SPI_SCK_PIN;
-	NRF_SPI->PSELMOSI 	= 	SPI_MOSI_PIN;
-	NRF_SPI->PSELMISO 	= 	SPI_MISO_PIN;
-	NRF_SPI->FREQUENCY	= 	SPI_FREQUENCY_FREQUENCY_M1;
-	NRF_SPI->CONFIG	= 	(uint32_t)(SPI_CONFIG_CPHA_Leading << SPI_CONFIG_CPHA_Pos) |
-						(SPI_CONFIG_CPOL_ActiveHigh << SPI_CONFIG_CPOL_Pos) |
-						(SPI_CONFIG_ORDER_MsbFirst << SPI_CONFIG_ORDER_Pos);
-	NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
-	NRF_SPI->EVENTS_READY = 0;
-
-    // send a soft reset to the accelerometer
-    uint8_t accel_cmd[3] = {0x0A, 0x1F, 0x52};
-    nrf_gpio_pin_clear(SPI_SS_PIN);
-    for(int i=0; i<3; i++) {
-        spi_write(accel_cmd[i]);
-    }
-    nrf_gpio_pin_set(SPI_SS_PIN);
-    for(volatile int j=0; j<1000000; j++);
-    accel_cmd[1] = 0x2D;
-    accel_cmd[2] = 0x02;
-    nrf_gpio_pin_clear(SPI_SS_PIN);
-    for(int i=0; i<3; i++) {
-        spi_write(accel_cmd[i]);
-    }
-    nrf_gpio_pin_set(SPI_SS_PIN);
-}
-
-static void sample_accel() {
-    nrf_gpio_pin_clear(SPI_SS_PIN);
-    spi_write(0x0B);
-    //spi_write(0x0E); // XDATA_L
-    //spi_write(0x2D); // POWER_CTL
-    spi_write(0x40); // STATUS
-    //spi_write(0x27); // ACTIVITY/INACTIVITY
-    //spi_write(0x29);
-    uint8_t device_id = 42;
-    spi_read(&device_id);
-    nrf_gpio_pin_set(SPI_SS_PIN);
-    //m_sensor_info.pressure = device_id;
-}
-
-/**@brief get sensor data and update m_sensor_info
- */
-static void get_sensor_data() {
-    //*** TURN ON SLEEPING SENSORS ***//
-    // Init pressure sensor
-    uint8_t pressure_config_data[] = {0x20, 0b10010100};
-    twi_master_transfer(
-            PRESSURE_ADDR | TWI_WRITE,
-            pressure_config_data,
-            sizeof(pressure_config_data),
-            TWI_ISSUE_STOP
-    );
-
-    //*** TAKE MEASUREMENTS ***//
-    //Temperature
-    uint8_t temp_hum_write[] = {0xF3};
-    twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_WRITE,
-            temp_hum_write,
-            sizeof(temp_hum_write),
-            TWI_DONT_ISSUE_STOP
-    );
-    uint8_t temp_hum_data[3] = {0, 0, 0};
-    while (
-        !twi_master_transfer(
-                TEMP_HUM_ADDR | TWI_READ,
-                temp_hum_data,
-                sizeof(temp_hum_data),
-                TWI_ISSUE_STOP
-        )) {for(int i = 0; i < 10000; ++i) {}}
-
-    float temperature = -46.85 + (175.72 * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xfc)) / (1 << 16));
-    m_sensor_info.temp = temperature;
-
-    //Humidity
-    temp_hum_write[0] = 0xF5;
-    twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_WRITE,
-            temp_hum_write,
-            sizeof(temp_hum_write),
-            TWI_DONT_ISSUE_STOP
-    );
-    while (!twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_READ,
-            temp_hum_data,
-            sizeof(temp_hum_data),
-            TWI_ISSUE_STOP
-    )) {for (int i = 0; i < 10000; ++i) {}}
-
-    float humidity = -6.0 + ((125.0 / (1 << 16)) * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xf0)));
-    m_sensor_info.humidity = humidity;
-
-    //Pressure
-    uint8_t pressure_write[] = {0xA8};
-    twi_master_transfer(
-            PRESSURE_ADDR | TWI_WRITE,
-            pressure_write,
-            sizeof(pressure_write),
-            TWI_DONT_ISSUE_STOP
-    );
-    uint8_t pressure_data[3];
-    twi_master_transfer(
-            PRESSURE_ADDR | TWI_READ,
-            pressure_data,
-            sizeof(pressure_data),
-            TWI_ISSUE_STOP
-    );
-
-    float pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
-                        ((uint32_t) pressure_data[1] << 8) |
-                        ((uint32_t) pressure_data[0]))) / 4096.0;
-    m_sensor_info.pressure = pressure;
-
-    // LIGHT
-    uint8_t chan0_low_byte[] = {0b10101100};
-    uint8_t chan0_output[] = {0x00, 0x00};
-    uint8_t chan0_output_high[] = {0x00};
-    uint8_t chan0_output_low[] = {0x00};
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_WRITE,
-        chan0_low_byte,
-        sizeof(chan0_low_byte),
-        TWI_DONT_ISSUE_STOP
-    );
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_READ,
-        chan0_output_low,
-        sizeof(chan0_output_low),
-        TWI_ISSUE_STOP
-    );
-
-    uint8_t chan0_high_byte[] = {0b10101101};
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_WRITE,
-        chan0_high_byte,
-        sizeof(chan0_high_byte),
-        TWI_DONT_ISSUE_STOP
-    );
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_READ,
-        chan0_output_high,
-        sizeof(chan0_output_high),
-        TWI_ISSUE_STOP
-    );
-
-    chan0_output[1] = chan0_output_low[0];
-    chan0_output[0] = chan0_output_high[0];
-
-    uint8_t chan1_low_byte[] = {0b10101110};
-    uint8_t chan1_output[] = {0x00, 0x00};
-    uint8_t chan1_output_high[] = {0x00};
-    uint8_t chan1_output_low[] = {0x00};
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_WRITE,
-        chan1_low_byte,
-        sizeof(chan1_low_byte),
-        TWI_DONT_ISSUE_STOP
-    );
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_READ,
-        chan1_output_low,
-        sizeof(chan1_output_low),
-        TWI_ISSUE_STOP
-    );
-
-    uint8_t chan1_high_byte[] = {0b10101111};
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_WRITE,
-        chan1_high_byte,
-        sizeof(chan1_high_byte),
-        TWI_DONT_ISSUE_STOP
-    );
-
-    twi_master_transfer
-    (
-        LUX_ADDR | TWI_READ,
-        chan1_output_high,
-        sizeof(chan1_output_high),
-        TWI_ISSUE_STOP
-    );
-
-    chan1_output[1] = chan1_output_low[0];
-    chan1_output[0] = chan1_output_high[0];
-
-    //*** TURN OFF SLEEPABLE SENSORS ***//
-    // Shut off pressure sensor
-    pressure_config_data[0] = 0x20;
-    pressure_config_data[1] = 0b00010100;
-    twi_master_transfer(
-            PRESSURE_ADDR | TWI_WRITE,
-            pressure_config_data,
-            sizeof(pressure_config_data),
-            TWI_ISSUE_STOP
-    );
-
-    //*** Conversion ***//
-    uint16_t chan1 = ((((uint16_t) chan1_output[0]) << 8) | (0x00FF & (uint16_t) chan1_output[1]))/0.034;
-    uint16_t chan0 = ((((uint16_t) chan0_output[0]) << 8) | (0x00FF & (uint16_t) chan0_output[1]))/0.034;
-
-    float ratio = ((float) chan1) / chan0;
-
-    float lux = 0.0;
-
-    if (ratio <= 0.50) {
-        lux = (0.0304 * chan0) - (0.062 * chan0 * (pow(ratio, 1.4)));
-    } else if (ratio <= 0.61) {
-        lux = (0.0224 * chan0) - (0.031 * chan1);
-    } else if (ratio <= 0.80) {
-        lux = (0.0128 * chan0) - (0.0153 * chan1);
-    } else if (ratio <= 1.3) {
-        lux = (0.00146 * chan0) - (0.00112 * chan1);
-    }
-
-    m_sensor_info.light = lux;
-}
-
-void run_after_timer() {
-    get_sensor_data();
-    sample_accel();
-    nrf_gpio_pin_toggle(LED_PIN);
-
-    // Update information sent with beacon
-    update_beacon_info();
-    app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
-}
-
-/**
- * @brief Function for application main entry.
- */
-int main(void)
-{
-    // Init timers
-    APP_TIMER_INIT(0, 1, 1, 0);
-
-    nrf_gpio_pin_clear(LED_PIN);
-    nrf_gpio_pin_set(SPI_SS_PIN);
-    nrf_gpio_cfg_output(LED_PIN);
-    nrf_gpio_cfg_output(SPI_SS_PIN);
-
-    sensors_init();
-
+    // Setup BLE and services
     ble_stack_init();
-
     gap_params_init();
+    services_init();
+    advertising_init();
+    timers_init();
+    conn_params_init();
 
-    // Initialize this
-    get_sensor_data();
-    sample_accel();
-    update_beacon_info();
-
-    // Start execution.
+    // Advertise that we are a TORCH board
     advertising_start();
 
-    //1-Sec Timer
-    app_timer_create(&timer, APP_TIMER_MODE_SINGLE_SHOT, run_after_timer);
-    app_timer_start(timer, APP_TIMER_TICKS(1000, 0), NULL);
-
-
     while (1) {
-        power_manage(); //sleep
+        power_manage();
     }
 }
-
