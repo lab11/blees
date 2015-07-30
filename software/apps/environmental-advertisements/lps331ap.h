@@ -28,4 +28,5 @@ void lps331ap_power_on();
 
 void lps331ap_one_shot();
 
+
 #endif //SI7021_H

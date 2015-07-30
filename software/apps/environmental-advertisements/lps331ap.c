@@ -51,24 +51,23 @@
 #define AUTO_INCR	0x80
 
 
-
 static lps331ap_data_rate_t data_rate_g;
 
-
+// must only be called after lps331ap_on has been called
 void lps331ap_readPressure(float *pres){
 
-	bool error = false;
-
     uint8_t command = PRESS_OUT_XL | AUTO_INCR;
-    error = 
+    
     twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
-            &command,
+           	&command,
             sizeof(command),
             TWI_DONT_ISSUE_STOP
     );
-    uint8_t pressure_data[3] = {0x00, 0x00, 0x00};
-    error = 
+
+
+    uint8_t pressure_data[3];
+
     twi_master_transfer(
             SENSOR_ADDR | TWI_READ,
             pressure_data,
@@ -76,33 +75,29 @@ void lps331ap_readPressure(float *pres){
             TWI_ISSUE_STOP
     );
 
-    float pressure = (pressure_data[2] << 16) | (pressure_data[1] << 8) | (pressure_data[0]);
-
-    pressure = pressure / 4096.0;
-
-
-    pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
+    float pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
                         ((uint32_t) pressure_data[1] << 8) |
                         ((uint32_t) pressure_data[0]))) / 4096.0;
+
     *pres = pressure;
 
 }
 
+//does not return correct temperature
 void lps331ap_readTemp (float *temp){
 
-	bool error = false;
 
     uint8_t command = TEMP_OUT_L | AUTO_INCR;
-    error =
+
     twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
             &command,
             sizeof(command),
             TWI_DONT_ISSUE_STOP
     );
-    uint8_t temp_data[2] = {0x00, 0x00};
 
-    error =
+    uint8_t temp_data[2];
+
     twi_master_transfer(
             SENSOR_ADDR | TWI_READ,
             temp_data,
@@ -110,66 +105,32 @@ void lps331ap_readTemp (float *temp){
             TWI_ISSUE_STOP
     );
 
-    float temperature =   ( (0x0000FFFF & (
-                        ((uint32_t) temp_data[1] << 8) |
-                        ((uint32_t) temp_data[0]))) / 480.0 ) + 42.5;
+
+    float temperature = (( 0x0000FFFF & (  ( (uint32_t) temp_data[1] << 8) |  ((uint32_t) temp_data[0]) ) ) / 480.0 ) + 42.5;
+
+
     *temp = temperature;
 
 }
 
+
 //resets everything
 void lps331ap_power_off(){
 
-	bool error = false;
+	
+	uint8_t command[] = {
+		CTRL_REG1, 
+		POWER_OFF
+	};
 
-	uint8_t command = CTRL_REG1;
-	error =
     twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
-            &command,
+            command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
-    );
-
-    uint8_t data = POWER_OFF;
-
-    error =
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
             TWI_ISSUE_STOP
     );
 
 }
-
-
-/*
-void lps331ap_power_on_config(lps331ap_data_rate_t data_rate){
-
-
-	lps331ap_power_off(); // it is necessary to turn off sensor before updating data rate
-
-	uint8_t command = CTRL_REG1;
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
-            &command,
-            sizeof(command),
-            TWI_DONT_ISSUE_STOP
-    );
-
-	uint8_t data = (data_rate << 4) | BLOCK_UPDATE_ENABLE | POWER_ON;
-
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
-            TWI_ISSUE_STOP
-    );
-
-
-}
-*/
 
 
 void lps331ap_init(lps331ap_data_rate_t data_rate){
@@ -182,51 +143,101 @@ void lps331ap_init(lps331ap_data_rate_t data_rate){
 
 }
 
-// must only be called after init
+// must only be called after lps331ap_init has been called
 void lps331ap_power_on(){
 
-	bool error = false;
+	uint8_t command[] = {
+		CTRL_REG1, 
+		(data_rate_g << 4) |  POWER_ON | BLOCK_UPDATE_ENABLE
+	};
 
-	uint8_t command = CTRL_REG1;
-	error =
     twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
-            &command,
+            command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
-    );
-
-	uint8_t data = (data_rate_g << 4) | BLOCK_UPDATE_ENABLE | POWER_ON;
-
-	error =
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
             TWI_ISSUE_STOP
     );
 
-
 }
 
-
+//need to test this
 void lps331ap_one_shot(){
 
-	bool error = false;
 
-	uint8_t command = CTRL_REG2;
-	error =
+	uint8_t command[] = 
+    {
+        CTRL_REG2,
+        ONE_SHOT_ENABLE
+
+    };
+
 	twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
             &command,
             sizeof(command),
+            TWI_ISSUE_STOP
+    );
+
+}
+
+/*
+void test_something(){
+
+	uint8_t command = CTRL_REG2;
+
+    twi_master_transfer(
+            SENSOR_ADDR | TWI_WRITE,
+            &command,
+            sizeof(command),
             TWI_DONT_ISSUE_STOP
     );
 
-	uint8_t data = ONE_SHOT_ENABLE;
-	error =
+    uint8_t data = 0x84;
+
+    twi_master_transfer(
+           	SENSOR_ADDR | TWI_WRITE,
+            &data,
+            sizeof(data),
+            TWI_ISSUE_STOP
+    );
+
+    while(1){
+		command = CTRL_REG2;
+
+		    twi_master_transfer(
+		            SENSOR_ADDR | TWI_WRITE,
+		            &command,
+		            sizeof(command),
+		            TWI_DONT_ISSUE_STOP
+		    );
+
+		   	uint8_t reg_2;
+
+		    twi_master_transfer(
+		           	SENSOR_ADDR | TWI_READ,
+		            &reg_2,
+		            sizeof(reg_2),
+		            TWI_ISSUE_STOP
+		    );
+
+		    if (!(reg_2 & 0x80) ){
+		    	break;
+		    }
+
+    }
+	command = CTRL_REG1;
+
     twi_master_transfer(
             SENSOR_ADDR | TWI_WRITE,
+            &command,
+            sizeof(command),
+            TWI_DONT_ISSUE_STOP
+    );
+
+    data = 0x84;
+
+    twi_master_transfer(
+           	SENSOR_ADDR | TWI_WRITE,
             &data,
             sizeof(data),
             TWI_ISSUE_STOP
@@ -234,3 +245,4 @@ void lps331ap_one_shot(){
 
 
 }
+*/
