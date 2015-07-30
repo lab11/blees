@@ -22,7 +22,7 @@ void lps331ap_readTemp (float *temp);
 
 void lps331ap_power_off();
 
-void lps331ap_init(lps331ap_data_rate_t data_rate);
+void lps331ap_init(lps331ap_data_rate_t data_rate, nrf_drv_twi_t * p_instance);
 
 void lps331ap_power_on();
 

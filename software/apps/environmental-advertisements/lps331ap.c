@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "twi_master.h"
+#include "nrf_drv_twi.h"
 #include <stdbool.h>
 #include <math.h>
 #include "lps331ap.h"
@@ -46,9 +46,11 @@
 #define TWI_READ                        0b1
 #define TWI_WRITE                       0b0
 
-#define SENSOR_ADDR	0xB8
+#define SENSOR_ADDR	0x5C
 
 #define AUTO_INCR	0x80
+
+static nrf_drv_twi_t * m_instance;
 
 
 static lps331ap_data_rate_t data_rate_g;
@@ -58,21 +60,23 @@ void lps331ap_readPressure(float *pres){
 
     uint8_t command = PRESS_OUT_XL | AUTO_INCR;
     
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
            	&command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
+            true
     );
 
 
     uint8_t pressure_data[3];
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
             pressure_data,
             sizeof(pressure_data),
-            TWI_ISSUE_STOP
+            false
     );
 
     float pressure =    (0x00FFFFFF & (((uint32_t)pressure_data[2] << 16) |
@@ -89,20 +93,22 @@ void lps331ap_readTemp (float *temp){
 
     uint8_t command = TEMP_OUT_L | AUTO_INCR;
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             &command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
+            true
     );
 
     uint8_t temp_data[2];
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
             temp_data,
             sizeof(temp_data),
-            TWI_ISSUE_STOP
+            false
     );
 
 
@@ -123,22 +129,25 @@ void lps331ap_power_off(){
 		POWER_OFF
 	};
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             command,
             sizeof(command),
-            TWI_ISSUE_STOP
+            false
     );
 
 }
 
 
-void lps331ap_init(lps331ap_data_rate_t data_rate){
+void lps331ap_init(lps331ap_data_rate_t data_rate, nrf_drv_twi_t * p_instance){
 
 
 	lps331ap_power_off(); // it is necessary to turn off sensor before updating data rate
 
 	data_rate_g = data_rate; 
+
+    m_instance = p_instance;
 
 
 }
@@ -151,11 +160,12 @@ void lps331ap_power_on(){
 		(data_rate_g << 4) |  POWER_ON | BLOCK_UPDATE_ENABLE
 	};
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             command,
             sizeof(command),
-            TWI_ISSUE_STOP
+            false
     );
 
 }
@@ -171,11 +181,12 @@ void lps331ap_one_shot(){
 
     };
 
-	twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+	 nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             &command,
             sizeof(command),
-            TWI_ISSUE_STOP
+            false
     );
 
 }
@@ -185,11 +196,12 @@ void test_something(){
 
 	uint8_t command = CTRL_REG2;
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             &command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
+            true
     );
 
     uint8_t data = 0x84;
@@ -198,7 +210,7 @@ void test_something(){
            	SENSOR_ADDR | TWI_WRITE,
             &data,
             sizeof(data),
-            TWI_ISSUE_STOP
+            false
     );
 
     while(1){
@@ -208,7 +220,7 @@ void test_something(){
 		            SENSOR_ADDR | TWI_WRITE,
 		            &command,
 		            sizeof(command),
-		            TWI_DONT_ISSUE_STOP
+		            true
 		    );
 
 		   	uint8_t reg_2;
@@ -217,7 +229,7 @@ void test_something(){
 		           	SENSOR_ADDR | TWI_READ,
 		            &reg_2,
 		            sizeof(reg_2),
-		            TWI_ISSUE_STOP
+		            false
 		    );
 
 		    if (!(reg_2 & 0x80) ){
@@ -227,11 +239,12 @@ void test_something(){
     }
 	command = CTRL_REG1;
 
-    twi_master_transfer(
-            SENSOR_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
             &command,
             sizeof(command),
-            TWI_DONT_ISSUE_STOP
+            true
     );
 
     data = 0x84;
@@ -240,7 +253,7 @@ void test_something(){
            	SENSOR_ADDR | TWI_WRITE,
             &data,
             sizeof(data),
-            TWI_ISSUE_STOP
+            false
     );
 
 
