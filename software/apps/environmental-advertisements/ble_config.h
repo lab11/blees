@@ -3,12 +3,12 @@
 
 #include "app_timer.h"
 
-//cannot change server database if -
+//cannot change server database
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0
 
-//advertising interval = 1000*0.625ms = 625ms
+//advertising interval = 1000ms
 #define APP_ADV_INTERVAL                MSEC_TO_UNITS(1000, UNIT_0_625_MS)
-#define APP_COMPANY_IDENTIFIER			0x11BB
+#define APP_COMPANY_IDENTIFIER			0xB1EE
 #define MANUFACTURER_NAME 				"Lab11UMich"
 #define MODEL_NUMBER 					DEVICE_NAME
 #define HARDWARE_REVISION 				"A"
@@ -17,7 +17,6 @@
 //advertising timeout sec
 #define APP_ADV_TIMEOUT_IN_SECONDS      0
 
-#define UPDATE_RATE     APP_TIMER_TICKS(1000, 0)
 
 //RTC1_Prescale
 #define APP_TIMER_PRESCALER             0
@@ -67,8 +66,6 @@
 #define SEC_PARAM_MIN_KEY_SIZE          7
 
 #define SEC_PARAM_MAX_KEY_SIZE          16
-
-#define DEAD_BEEF                       0xDEADBEEF
 
 //max scheduler event size
 #define SCHED_MAX_EVENT_DATA_SIZE       sizeof(app_timer_event_t)
