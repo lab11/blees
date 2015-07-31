@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "twi_master.h"
+#include "nrf_drv_twi.h"
 #include <stdbool.h>
 #include <math.h>
 #include "si7021.h"
@@ -48,15 +48,18 @@
 #define TWI_READ 0b1
 #define TWI_WRITE 0b0
 
+static nrf_drv_twi_t * m_instance;
+
 
 void si7021_reset(){
 
 	uint8_t data = Reset;
-    twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
-            TWI_ISSUE_STOP
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
+        &data,
+        sizeof(data),
+        false
     );
 
 }
@@ -64,18 +67,20 @@ void si7021_reset(){
 void si7021_read_temp_hold(float * temp){
 
 	uint8_t command = Meas_Temp_Hold_Master;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
 	uint8_t temp_hum_data[3] = {0, 0, 0};
-    twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         temp_hum_data,
         sizeof(temp_hum_data),
-        TWI_ISSUE_STOP
+        false
     );
 
     float temperature = -46.85 + (175.72 * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xfc)) / (1 << 16));
@@ -87,19 +92,21 @@ void si7021_read_temp_hold(float * temp){
 void si7021_read_temp(float *temp){
 
 	uint8_t command = Meas_Temp_No_Hold_Master;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
 	uint8_t temp_hum_data[3] = {0, 0, 0};
     while (
-        !twi_master_transfer(
-                TEMP_HUM_ADDR | TWI_READ,
-                temp_hum_data,
-                sizeof(temp_hum_data),
-                TWI_ISSUE_STOP
+        !nrf_drv_twi_rx(
+       		m_instance, 
+        	TEMP_HUM_ADDR,
+            temp_hum_data,
+            sizeof(temp_hum_data),
+            false
         )) {for(int i = 0; i < 10000; ++i) {}}
 
     float temperature = -46.85 + (175.72 * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xfc)) / (1 << 16));
@@ -111,18 +118,20 @@ void si7021_read_temp(float *temp){
 void si7021_read_RH_hold(float *hum){
 
 	uint8_t command = Meas_RH_Hold_Master;
-    twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
     uint8_t temp_hum_data[3] = {0, 0, 0};
-    twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         temp_hum_data,
         sizeof(temp_hum_data),
-        TWI_ISSUE_STOP
+        false
     );
 
     float humidity = -6.0 + ((125.0 / (1 << 16)) * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xf0)));
@@ -134,18 +143,20 @@ void si7021_read_RH_hold(float *hum){
 void si7021_read_RH(float *hum){
 
 	uint8_t command = Meas_RH_No_Hold_Master;
-    twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_WRITE,
-            &command,
-            sizeof(command),
-            TWI_DONT_ISSUE_STOP
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
+        &command,
+        sizeof(command),
+        true
     );
     uint8_t temp_hum_data[3] = {0, 0, 0};
-    while (!twi_master_transfer(
-            TEMP_HUM_ADDR | TWI_READ,
+    while (!nrf_drv_twi_rx(
+        	m_instance, 
+        	TEMP_HUM_ADDR,
             temp_hum_data,
             sizeof(temp_hum_data),
-            TWI_ISSUE_STOP
+            false
     )) {for (int i = 0; i < 10000; ++i) {}}
 
     float humidity = -6.0 + ((125.0 / (1 << 16)) * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xf0)));
@@ -157,18 +168,20 @@ void si7021_read_RH(float *hum){
 void si7021_read_temp_after_RH(float *temp){
 
 	uint8_t command = Read_Temp_From_Prev_RH;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
 	uint8_t temp_hum_data[3] = {0, 0, 0};
-    twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         temp_hum_data,
         sizeof(temp_hum_data),
-        TWI_ISSUE_STOP
+        false
     );
 
     float temperature = -46.85 + (175.72 * (((uint32_t) temp_hum_data[0] << 8) | ((uint32_t) temp_hum_data[1] & 0xfc)) / (1 << 16));
@@ -184,20 +197,28 @@ void si7021_read_temp_and_RH(float *temp, float *hum){
 
 }
 
+void si7021_init(nrf_drv_twi_t * p_instance){
+
+	m_instance = p_instance;
+	
+}
+
 void si7021_read_user_reg(uint8_t *reg_status){
 
 	uint8_t command = Read_User_Reg_1;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
-    twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_READ,
+    nrf_drv_twi_rx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         reg_status,
         sizeof(uint8_t),
-        TWI_ISSUE_STOP
+        false
     );
 
 
@@ -218,17 +239,19 @@ void si7021_config(si7021_meas_res_t res_mode){
     uint8_t data = reg_status | res1 | res0;
 
     command = Write_User_Reg_1;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &data,
         sizeof(data),
-        TWI_ISSUE_STOP
+        false
     );
 
 }
@@ -242,17 +265,19 @@ void si7021_heater_on(){
 	uint8_t data = reg_status | HEATER_ON;
 
 	uint8_t command = Write_User_Reg_1;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &data,
         sizeof(data),
-        TWI_ISSUE_STOP
+        false
     );
 
 }
@@ -266,17 +291,19 @@ void si7021_heater_off(){
 	uint8_t data = reg_status & HEATER_OFF;
 
 	uint8_t command = Write_User_Reg_1;
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &command,
         sizeof(command),
-        TWI_DONT_ISSUE_STOP
+        true
     );
-	twi_master_transfer(
-        TEMP_HUM_ADDR | TWI_WRITE,
+    nrf_drv_twi_tx(
+        m_instance, 
+        TEMP_HUM_ADDR, 
         &data,
         sizeof(data),
-        TWI_ISSUE_STOP
+        false
     );
 
 

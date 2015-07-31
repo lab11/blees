@@ -26,6 +26,8 @@ void si7021_read_temp_after_RH(float *temp);
 
 void si7021_read_temp_and_RH(float *temp, float *hum);
 
+void si7021_init(nrf_drv_twi_t * p_instance);
+
 //not sure if this is working...
 void si7021_config(si7021_meas_res_t res_mode);
 
