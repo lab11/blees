@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "time.h"
+#include "app_error.h"
+
 
 void sleep(unsigned int mseconds)
 {
@@ -15,7 +17,7 @@ void sleep(unsigned int mseconds)
 
 //#define SENSOR_GND_ADDR 	0x52
 
-#define SENSOR_GND_ADDR 0b01010010
+#define SENSOR_GND_ADDR 0b00101001
 
 #define COMMAND_REG			0x80
 #define CLEAR_INTERRUPT		0x40
@@ -51,99 +53,141 @@ void sleep(unsigned int mseconds)
 
 static nrf_drv_twi_t * m_instance;
 
+static int check_error(ret_code_t error){
+
+	if (error == NRF_SUCCESS){
+		return 0;
+	}
+
+	else if (error == NRF_ERROR_BUSY){
+		return 1;
+	}
+	else if (error == NRF_ERROR_INTERNAL){
+		return 2;
+	}
+	else return 3;
+
+}
+
 // Read ADC Channels Using Read Word Protocol
 void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 
-	bool error = false;
-	uint8_t data_low = 0;
-	uint8_t data_high = 0;
-	uint8_t command;
+	ret_code_t error = NRF_SUCCESS;
+	int e = 4;
+	uint8_t data_low[1] = {0};
+	uint8_t data_high[1] = {0};
 
-	uint8_t address;
+	//uint8_t data[2] = {0x00, 0x00};
 
 	//read byte from Ch0 lower data register
-	command = COMMAND_REG| BLOCK_PROTOCOL | CH0_LOW;
+	uint8_t command[1] = {COMMAND_REG | CH0_LOW};
 
+	error =
 	nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&command, 
+		command, 
 		sizeof(command), 
 		true
 	);
 
+	e = check_error(error);
+
 	printf("hey");
 
+	error =
 	nrf_drv_twi_rx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&data_low,
+		data_low,
 		sizeof(data_low),
 		false
 	);
+
+	e = check_error(error);
 
 	//read byte from Ch0 higher data register
-	command = COMMAND_REG | WORD_PROTOCOL | CH0_HIGH;
+	command[0] = COMMAND_REG | CH0_HIGH;
 
+	error =
 	nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
+		true
 	);
 
+	e = check_error(error);
+
+	error =
 	nrf_drv_twi_rx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&data_high,
+		data_high,
 		sizeof(data_high),
 		false
 	);
 
+	e = check_error(error);
+
 	//Shift data high to upper byte and set channel 0 data
-	*channel0_data = 256 * data_high + data_low;
+	*channel0_data = 256 * data_high[0] + data_low[0];
 
 	//read byte from Ch1 lower data register
-	command = COMMAND_REG | WORD_PROTOCOL | CH1_LOW;
+	command[0] = COMMAND_REG | CH1_LOW;
 
+	error =
 	nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
+		true
 	);
 
+	e = check_error(error);
+
+	error =
 	nrf_drv_twi_rx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&data_low,
+		data_low,
 		sizeof(data_low),
 		false
 	);
 
-	//read byte from Ch1 higher data register
-	command = COMMAND_REG | WORD_PROTOCOL | CH1_HIGH;
+	e = check_error(error);
 
+	//read byte from Ch1 higher data register
+	command[0] = COMMAND_REG | CH1_HIGH;
+
+	error =
 	nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
+		true
 	);
 
+	e = check_error(error);
+
+
+	error =
 	nrf_drv_twi_rx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&data_high,
+		data_high,
 		sizeof(data_high),
 		false
 	);
 
+	e = check_error(error);
+
+
 	//Shift data high to upper byte and set channel 1 data
-	*channel1_data = 256 * data_high + data_low;
+	*channel1_data = 256 * data_high[0] + data_low[0];
 
 	printf("hi");
 
@@ -184,64 +228,71 @@ float tsl2561_readLux(tsl2561_integration_time_mode_t int_mode){
 
 void tsl2561_on(void){
 
-	bool error = false;
+	ret_code_t error = NRF_SUCCESS;
 
 	//uint8_t command[] = {0xC0};
 
-	uint8_t command = COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR;
+	uint8_t command[2] = 
+	{ 
+		COMMAND_REG | CONTROL_REG_ADDR,
+		POWER_ON
+	};
+
 
 	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
     printf("hi");
 
-    
+    error =
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR,
-        &command,
+        command,
         sizeof(command),
-        true
+        false
 	);
     
+	uint8_t command2[1] = {COMMAND_REG | CLEAR_INTERRUPT};
+
+    error =
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_GND_ADDR,
+        command2,
+        sizeof(command2),
+        false
+	);
 
 	//int a = 5;
 
    	
     printf("hey");
-
-    
-    uint8_t data = POWER_ON;
-
-    nrf_drv_twi_tx(
-        m_instance, 
-        SENSOR_GND_ADDR,
-        &data,
-        sizeof(data),
-        false
-    );
-    
 
 }
 
 void tsl2561_off(void){
 
-	bool error = false;
+	ret_code_t error = NRF_SUCCESS;
 
 	//uint8_t command[] = {0xC0};
 
-	uint8_t command = COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR;
+	uint8_t command[2] = 
+	{
+		COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR,
+		POWER_OFF
+	};
 
 	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
     printf("hi");
 
-    
+    error =
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR,
-        &command,
+        command,
         sizeof(command),
-        true
+        false
     );
     
 
@@ -250,136 +301,119 @@ void tsl2561_off(void){
    	
     printf("hey");
 
-    
-    uint8_t data = POWER_OFF;
 
-    nrf_drv_twi_tx(
+}
+
+void tsl2561_interrupt_test(){
+
+	uint8_t command[2] = {0x00, 0x00};
+
+	uint8_t data = 0x30;
+
+	command[0] = COMMAND_REG | INTERRUPT_CONTROL_REG_ADDR;
+
+	command[1] = data;
+
+	nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR,
-        &data,
-        sizeof(data),
-        false
-    );
+		command, 
+		sizeof(command), 
+		false
+	);
+
+
 
 }
 
 void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_high){
 
-	uint8_t command;
-	uint8_t data;
+	uint8_t command3[3] = {0x00, 0x00, 0x00};
+	uint8_t command2[2] = {0x00, 0x00};
+	uint8_t data1[1] = {0x00};
+	uint8_t data2[2] = {0x00, 0x00};
+	ret_code_t error = NRF_SUCCESS;
 
 	if (threshold_low){
 
-		memcpy(&data, threshold_low, 1);
-		command = COMMAND_REG| BLOCK_PROTOCOL | THRESHLOWLOW_REG_ADDR;
+		//memcpy(data, threshold_low, 1);
+		memcpy(data2, threshold_low, 2);
 
-		//error = 
+		command3[0] = COMMAND_REG| THRESHLOWLOW_REG_ADDR;
+		command3[1] = data2[0];
+		command3[2] = data2[1];
+
+		error = 
         nrf_drv_twi_tx(
             m_instance, 
             SENSOR_GND_ADDR,
-			&command, 
-			sizeof(command), 
+			command3, 
+			sizeof(command3), 
 			false
 		);
 
-		//error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			&data,
-			sizeof(data),
-			false
-		); 
-
+        /*
 		memcpy(&data, threshold_low+1, 1);
-		command = COMMAND_REG| BLOCK_PROTOCOL | THRESHLOWHIGH_REG_ADDR;
+		command[0] = COMMAND_REG| THRESHLOWHIGH_REG_ADDR;
+		command[1] = data;
 
-		//error = 
+		error = 
         nrf_drv_twi_tx(
             m_instance, 
             SENSOR_GND_ADDR,
-			&command, 
+			command, 
 			sizeof(command), 
 			false
 		);
-
-		//error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			&data,
-			sizeof(data),
-			false
-		);
+		*/
 
 	}
 
 	if (threshold_high){
 
-		memcpy(&data, threshold_high, 1);
-		command = COMMAND_REG| BLOCK_PROTOCOL | THRESHHIGHLOW_REG_ADDR;
+		memcpy(data2, threshold_high, 2);
+		command3[0] = COMMAND_REG| THRESHHIGHLOW_REG_ADDR;
+		command3[1] = data2[0];
+		command3[2] = data2[1];
 
 		//error = 
 		nrf_drv_twi_tx(
             m_instance, 
             SENSOR_GND_ADDR,
-			&command, 
-			sizeof(command), 
-			false
-		);
-
-		//error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			&data,
-			sizeof(data),
+			command3, 
+			sizeof(command3), 
 			false
 		); 
 
-		memcpy(&data, threshold_high+1, 1);
-		command = COMMAND_REG| BLOCK_PROTOCOL | THRESHHIGHHIGH_REG_ADDR;
+		/*
+		memcpy(data, threshold_high+1, 1);
+		command[0] = COMMAND_REG| THRESHHIGHHIGH_REG_ADDR;
+		command[1] = data[0];
 
-		//error = 
+		error = 
         nrf_drv_twi_tx(
             m_instance, 
             SENSOR_GND_ADDR,
-			&command, 
+			command, 
 			sizeof(command), 
 			false
 		);
-
-		//error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			&data,
-			sizeof(data),
-			false
-		);
+		*/
 
 	}
 
 	if ((threshold_low) || (threshold_high)){
 		
-		data = INTERRUPT_LEVEL_INTERRUPT;
-		command = COMMAND_REG| BLOCK_PROTOCOL | INTERRUPT_CONTROL_REG_ADDR;
+		data1[0] = INTERRUPT_LEVEL_INTERRUPT;
+		command2[0] = COMMAND_REG| INTERRUPT_CONTROL_REG_ADDR;
+		command2[1] = data1[0];
 
-		//error = 
+		error = 
         nrf_drv_twi_tx(
             m_instance, 
             SENSOR_GND_ADDR,
-			&command, 
-			sizeof(command), 
-			false
-		);
-
-		//error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			&data,
-			sizeof(data),
+			command2, 
+			sizeof(command2), 
 			false
 		);
 
@@ -389,40 +423,41 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 void tsl2561_interrupt_disable(void){
 
-	uint8_t data = INTERRUPT_OUTPUT_DISABLED;
-	uint8_t command = COMMAND_REG | CLEAR_INTERRUPT | BLOCK_PROTOCOL | INTERRUPT_CONTROL_REG_ADDR;
+	ret_code_t error = NRF_SUCCESS;
 
-	//error = 
+	uint8_t data = INTERRUPT_OUTPUT_DISABLED;
+	uint8_t command[2] = 
+	{
+		COMMAND_REG | CLEAR_INTERRUPT | INTERRUPT_CONTROL_REG_ADDR,
+		data
+	};
+
+
+	error = 
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR,
-		&command, 
+		command, 
 		sizeof(command), 
 		false
 	);
 
-	//error = 
-    nrf_drv_twi_tx(
-        m_instance, 
-        SENSOR_GND_ADDR,
-		&data,
-		sizeof(data),
-		false
-	);
+	printf("end");
 
 }
 
 void tsl2561_init(nrf_drv_twi_t * p_instance){
 
 	m_instance = p_instance;
-	
+
 }
 
 
 void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode_t mode_time){
 
+	ret_code_t error = NRF_SUCCESS;
+
 	uint8_t data;
-	uint8_t command;
 
 	if (mode_gain == tsl2561_HIGH){
 
@@ -438,23 +473,18 @@ void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode
 	
 	data = data | mode_time;
 
-	command = COMMAND_REG | BLOCK_PROTOCOL | TIMING_REG_ADDR;
+	uint8_t command[2] = 
+	{
+		COMMAND_REG | TIMING_REG_ADDR,
+		data
+	};
 
-	//error = 
+	error = 
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
-	);
-
-	//error = 
-    nrf_drv_twi_tx(
-        m_instance, 
-        SENSOR_GND_ADDR,
-		&data,
-		sizeof(data),
 		false
 	);
 
@@ -464,7 +494,7 @@ void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode
 void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 
 	uint8_t data;
-	uint8_t command;
+	ret_code_t error = NRF_SUCCESS;
 
 	if (mode_gain == tsl2561_HIGH){
 
@@ -480,23 +510,18 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 	
 	data = data | MANUAL_INTEGRATION | BEGIN_INTEGRATION;
 
-	command = COMMAND_REG | BLOCK_PROTOCOL | TIMING_REG_ADDR;
+	uint8_t command[2] =
+	{
+		COMMAND_REG | TIMING_REG_ADDR,
+		data
+	};
 
-	//error = 
+	error = 
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
-	);
-
-	//error = 
-    nrf_drv_twi_tx(
-        m_instance, 
-        SENSOR_GND_ADDR,
-		&data,
-		sizeof(data),
 		false
 	);
 
@@ -504,22 +529,15 @@ void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
 
 	data = data & (STOP_INTEGRATION);
 
+	command[1] = data;
+
 	//is this one necessary??
-	//error = 
+	error = 
     nrf_drv_twi_tx(
         m_instance, 
         SENSOR_GND_ADDR, 
-		&command, 
+		command, 
 		sizeof(command), 
-		false
-	);
-
-	//error = 
-    nrf_drv_twi_tx(
-        m_instance, 
-        SENSOR_GND_ADDR,
-		&data,
-		sizeof(data),
 		false
 	);
 

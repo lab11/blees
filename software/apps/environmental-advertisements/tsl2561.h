@@ -30,6 +30,8 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 
 void tsl2561_interrupt_disable(void);
 
+void tsl2561_interrupt_test();
+
 void tsl2561_init(nrf_drv_twi_t * p_instance);
 
 //don't know if this works
