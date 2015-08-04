@@ -3,6 +3,8 @@
 #include "adxl362.h"
 #include "app_error.h"
 #include <stdint.h>
+#include "spi_driver.h"
+#include "nrf_delay.h"
 
 
 //Addresses of Registers
@@ -80,74 +82,7 @@
 
 #define SELF_TEST 0x2E
 
-//Commands
-#define WRITE_REG 0x0A
-#define READ_REG 0x0B
-#define READ_FIFO 0x0D
-
-
-static void spi_write(uint8_t buf) {
-    //clear the ready event
-    NRF_SPI->EVENTS_READY = 0;
-
-    NRF_SPI->TXD = buf;
-
-    //wait until byte has transmitted
-    while(NRF_SPI->EVENTS_READY == 0);
-
-    uint8_t throw = NRF_SPI->RXD;
-
-    NRF_SPI->EVENTS_READY = 0;
-}
-
-static void spi_read(uint8_t* buf) {
-
-    //clear ready event
-    NRF_SPI->EVENTS_READY = 0;
-
-    NRF_SPI->TXD = 0x00;
-
-    //wait until byte has been received
-    while(NRF_SPI->EVENTS_READY == 0);
-
-    buf[0] = NRF_SPI->RXD;
-
-    NRF_SPI->EVENTS_READY = 0;
-}
-
-static void spi_read_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
-
-	nrf_gpio_pin_clear(SPI_SS_PIN);
-    spi_write(READ_REG);
-    spi_write(reg_addr); // STATUS
-
-    int i = 0;
-    do{
-    	spi_read(data + i);
-    	i++;
-    } while (i < num_bytes);
-
-    nrf_gpio_pin_set(SPI_SS_PIN);
-
-}
-
-static void spi_write_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
-
-	nrf_gpio_pin_clear(SPI_SS_PIN);
-    spi_write(WRITE_REG);
-    spi_write(reg_addr); // STATUS
-
-    int i = 0;
-    do{
-    	spi_write(data[i]);
-    	i++;
-    } while (i < num_bytes);
-
-    nrf_gpio_pin_set(SPI_SS_PIN);
-
-}
-
-void config_interrupt_mode(interrupt_mode i_mode, bool use_referenced_activity, bool use_referenced_inactivity){
+void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode, bool use_referenced_activity, bool use_referenced_inactivity){
 
 	uint8_t data[1] = {0x00};
 
@@ -170,9 +105,9 @@ void config_interrupt_mode(interrupt_mode i_mode, bool use_referenced_activity, 
 
 }
 
-//if intmap_1 = 1, config for intpin 1
-// if intmap_1 = 0, config for intpin 2
-void config_INTMAP(interrupt_map_t * int_map, bool intmap_1){
+//if intmap_1 = true, config for intpin 1
+// if intmap_1 = false, config for intpin 2
+void adxl362_config_INTMAP(adxl362_interrupt_map_t * int_map, bool intmap_1){
 
 	uint8_t data[1] = {0x00};
 
@@ -212,9 +147,8 @@ void config_INTMAP(interrupt_map_t * int_map, bool intmap_1){
 }
 
 
-
 //only 11 bits are used
-void set_activity_threshold(uint16_t act_threshold){
+void adxl362_set_activity_threshold(uint16_t act_threshold){
 
 	uint8_t data[1] = { 0x0F & act_threshold};
 	spi_write_reg(THRESH_ACT_L, data, 1);
@@ -224,7 +158,7 @@ void set_activity_threshold(uint16_t act_threshold){
 
 }
 
-void set_inactivity_threshold(uint16_t inact_threshold){
+void adxl362_set_inactivity_threshold(uint16_t inact_threshold){
 
 	uint8_t data[1] = { 0x0F & inact_threshold};
 	spi_write_reg(THRESH_INACT_L, data, 1);
@@ -235,11 +169,11 @@ void set_inactivity_threshold(uint16_t inact_threshold){
 }
 
 //ignored if device is on wake-up mode
-void set_inactivity_time(uint16_t inact_time){
+void adxl362_set_inactivity_time(uint16_t inact_time){
 
 	uint8_t data[2];
 	data[0] = 0x00FF & inact_time;
-	data[1] = (0xFF00 & inact_time) >> 15;
+	data[1] = (0xFF00 & inact_time) >> 8;
 
 	spi_write_reg(TIME_INACT_L, data, 1);
 	spi_write_reg(TIME_INACT_H, data + 1, 1);
@@ -247,7 +181,7 @@ void set_inactivity_time(uint16_t inact_time){
 
 }
 
-void set_activity_time(uint8_t act_time){
+void adxl362_set_activity_time(uint8_t act_time){
 
 	uint8_t data[1] = {act_time};
 
@@ -255,7 +189,7 @@ void set_activity_time(uint8_t act_time){
 
 }
 
-void activity_interrupt_enable(){
+void adxl362_activity_interrupt_enable(){
 
 	uint8_t data[1] = {0x00};
 
@@ -265,9 +199,13 @@ void activity_interrupt_enable(){
 
 	spi_write_reg(ACT_INACT_CTL, data, 1);
 
+	//clear activity interrupt
+	spi_read_reg(STATUS, data, 1);
+
+
 }
 
-void inactivity_interrupt_enable(){
+void adxl362_inactivity_interrupt_enable(){
 
 	uint8_t data[1] = {0x00};
 
@@ -277,9 +215,12 @@ void inactivity_interrupt_enable(){
 
 	spi_write_reg(ACT_INACT_CTL, data, 1);
 
+	//clear inactivity interrupt
+	spi_read_reg(STATUS, data, 1);
+
 }
 
-void activity_inactivity_interrupt_enable(){
+void adxl362_activity_inactivity_interrupt_enable(){
 
 	uint8_t data[1] = {0x00};
 
@@ -289,13 +230,31 @@ void activity_inactivity_interrupt_enable(){
 
 	spi_write_reg(ACT_INACT_CTL, data, 1);
 
+	//clear activity/inactivity interrupt
+	spi_read_reg(STATUS, data, 1);
+
 }
 
-void config_FIFO(fifo_mode f_mode, bool store_temp, uint16_t num_samples){
+void adxl362_read_FIFO(uint8_t * buf, uint16_t num_samples){
+
+	uint8_t command[1] = {READ_FIFO};
+
+	spi_write(command);
+
+	for(int i = 0; i < num_samples; i++){
+		spi_read(buf + i);
+	}
+}
+
+void adxl362_config_FIFO(adxl362_fifo_mode f_mode, bool store_temp, uint16_t num_samples){
 
 	uint8_t data[1] = { num_samples & 0x00FF};
 
+	uint8_t read_data[1] = {0x00};
+
 	spi_write_reg(FIFO_SAMPLES, data, 1);
+
+	spi_read_reg(FIFO_SAMPLES, read_data, 1);
 
 	data[0] = f_mode;
 
@@ -312,23 +271,27 @@ void config_FIFO(fifo_mode f_mode, bool store_temp, uint16_t num_samples){
 
 	spi_write_reg(FIFO_CONTROL, data, 1);
 
+	spi_read_reg(FIFO_CONTROL, read_data, 1);
+
+	printf("halt");
+
 }
 
 /**********SAMPLE 8 MSB OF DATA***********/
 
-void sample_accel_byte_x(uint8_t * x_data){
+void adxl362_sample_accel_byte_x(uint8_t * x_data){
 
 	spi_read_reg(XDATA, x_data, 1);
 
 }
 
-void sample_accel_byte_y(uint8_t * y_data){
+void adxl362_sample_accel_byte_y(uint8_t * y_data){
 
 	spi_read_reg(YDATA, y_data, 1);
 
 }
 
-void sample_accel_byte_z(uint8_t * z_data){
+void adxl362_sample_accel_byte_z(uint8_t * z_data){
 
 	spi_read_reg(ZDATA, z_data, 1);
 
@@ -337,7 +300,7 @@ void sample_accel_byte_z(uint8_t * z_data){
 
 /**********SAMPLE 16 BITS OF DATA***********/
 
-void sample_accel_word_x(uint8_t * x_data){
+void adxl362_sample_accel_word_x(uint8_t * x_data){
 
 	spi_read_reg(XDATA_L, x_data, 1);
 
@@ -345,7 +308,7 @@ void sample_accel_word_x(uint8_t * x_data){
 
 }
 
-void sample_accel_word_y(uint8_t * y_data){
+void adxl362_sample_accel_word_y(uint8_t * y_data){
 
 	spi_read_reg(YDATA_L, y_data, 1);
 
@@ -353,7 +316,7 @@ void sample_accel_word_y(uint8_t * y_data){
 
 }
 
-void sample_accel_word_z(uint8_t * z_data){
+void adxl362_sample_accel_word_z(uint8_t * z_data){
 
 	spi_read_reg(ZDATA_L, z_data, 1);
 
@@ -362,7 +325,7 @@ void sample_accel_word_z(uint8_t * z_data){
 }
 
 
-uint8_t read_status_reg(){
+uint8_t adxl362_read_status_reg(){
 
 	uint8_t status_reg_data[1] = {0};
 
@@ -370,37 +333,42 @@ uint8_t read_status_reg(){
 
 	return status_reg_data[0];
 
+}
+
+void adxl362_sample_accel_word(uint8_t * x_data, uint8_t * y_data, uint8_t * z_data){
+
+	adxl362_sample_accel_word_x(x_data);
+
+	adxl362_sample_accel_word_y(y_data);
+
+	adxl362_sample_accel_word_z(z_data);
 
 }
 
-void sample_accel_word(uint8_t * x_data, uint8_t * y_data, uint8_t * z_data){
 
-	sample_accel_word_x(x_data);
+void adxl362_sample_accel_byte(uint8_t * x_data, uint8_t * y_data, uint8_t * z_data){
 
-	sample_accel_word_y(y_data);
+	adxl362_sample_accel_byte_x(x_data);
 
-	sample_accel_word_z(z_data);
+	adxl362_sample_accel_byte_y(y_data);
 
-}
-
-
-void sample_accel_byte(uint8_t * x_data, uint8_t * y_data, uint8_t * z_data){
-
-	sample_accel_byte_x(x_data);
-
-	sample_accel_byte_y(y_data);
-
-	sample_accel_byte_z(z_data);
+	adxl362_sample_accel_byte_z(z_data);
 
 }
 
 //if measure = 0 standby mode, if measure = 1, measurement mode
 
-void accelerometer_init(noise_mode n_mode, bool measure, bool autosleep_en, bool wakeup_en){
+void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool autosleep_en, bool wakeup_en){
+
+	spi_init();
 
     // send a soft reset to the accelerometer
     uint8_t data[1] = {RESET_CODE};
     spi_write_reg(SOFT_RESET, data, 1);
+
+    uint32_t delay = 1;
+
+    nrf_delay_ms(delay);
 
     if (measure){
     	data[0] = MEASUREMENT_MODE;
@@ -417,7 +385,8 @@ void accelerometer_init(noise_mode n_mode, bool measure, bool autosleep_en, bool
 
 }
 
-void config_measurement_range(measurement_range m_range){
+
+void adxl362_config_measurement_range(adxl362_measurement_range m_range){
 
 	uint8_t data[1] = {0x00};
 
@@ -433,18 +402,9 @@ void config_measurement_range(measurement_range m_range){
 }
 
 
-void spi_init(){
-    // initialize spi
-    nrf_gpio_cfg_output(SPI_SS_PIN);
-    nrf_gpio_pin_set(SPI_SS_PIN);
-	NRF_SPI->PSELSCK 	= 	SPI_SCK_PIN;
-	NRF_SPI->PSELMOSI 	= 	SPI_MOSI_PIN;
-	NRF_SPI->PSELMISO 	= 	SPI_MISO_PIN;
-	NRF_SPI->FREQUENCY	= 	SPI_FREQUENCY_FREQUENCY_M1;
-	NRF_SPI->CONFIG	= 	(uint32_t)(SPI_CONFIG_CPHA_Leading << SPI_CONFIG_CPHA_Pos) |
-						(SPI_CONFIG_CPOL_ActiveHigh << SPI_CONFIG_CPOL_Pos) |
-						(SPI_CONFIG_ORDER_MsbFirst << SPI_CONFIG_ORDER_Pos);
-	NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
-	NRF_SPI->EVENTS_READY = 0;
+void adxl362_read_dev_id(uint8_t *buf){
+
+	spi_read_reg(PARTID, buf, 1);
+
 
 }
