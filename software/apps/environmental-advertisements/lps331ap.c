@@ -87,6 +87,28 @@ void lps331ap_readPressure(float *pres){
 
 }
 
+void lps331ap_read_status_reg(uint8_t * buf){
+
+    uint8_t command = STATUS_REG;
+
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
+            &command,
+            sizeof(command),
+            true
+    );
+
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
+            buf,
+            sizeof(buf),
+            false
+    );
+
+}
+
 //does not return correct temperature
 void lps331ap_readTemp (float *temp){
 
@@ -112,7 +134,7 @@ void lps331ap_readTemp (float *temp){
     );
 
 
-    float temperature = (( 0x0000FFFF & (  ( (uint32_t) temp_data[1] << 8) |  ((uint32_t) temp_data[0]) ) ) / 480.0 ) + 42.5;
+    float temperature = (((int16_t)( 0x0000FFFF & (  ( (uint32_t) temp_data[1] << 8) |  ((uint32_t) temp_data[0]) ) )) / 480.0 ) + 42.5;
 
 
     *temp = temperature;
@@ -152,6 +174,51 @@ void lps331ap_init(lps331ap_data_rate_t data_rate, nrf_drv_twi_t * p_instance){
 
 }
 
+void lps331ap_read_controlreg1(uint8_t * data){
+
+    uint8_t command = CTRL_REG1;
+
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
+            &command,
+            sizeof(command),
+            true
+    );
+
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
+            data,
+            sizeof(data),
+            false
+    );
+
+}
+
+
+void lps331ap_read_controlreg2(uint8_t * data){
+
+    uint8_t command = CTRL_REG2;
+
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
+            &command,
+            sizeof(command),
+            true
+    );
+
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
+            data,
+            sizeof(data),
+            false
+    );
+
+}
+
 // must only be called after lps331ap_init has been called
 void lps331ap_power_on(){
 
@@ -160,6 +227,10 @@ void lps331ap_power_on(){
 		(data_rate_g << 4) |  POWER_ON | BLOCK_UPDATE_ENABLE
 	};
 
+    if (data_rate_g == lps331ap_MODE0){
+        command[1] = POWER_ON | BLOCK_UPDATE_ENABLE;
+    }
+
     nrf_drv_twi_tx(
             m_instance, 
             SENSOR_ADDR,
@@ -167,6 +238,10 @@ void lps331ap_power_on(){
             sizeof(command),
             false
     );
+
+    if (data_rate_g == lps331ap_MODE0){
+        lps331ap_one_shot();    
+    }
 
 }
 

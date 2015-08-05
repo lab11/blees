@@ -82,6 +82,8 @@
 
 #define SELF_TEST 0x2E
 
+#define READ_FIFO 0x0D
+
 void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode, bool use_referenced_activity, bool use_referenced_inactivity){
 
 	uint8_t data[1] = {0x00};
@@ -235,15 +237,56 @@ void adxl362_activity_inactivity_interrupt_enable(){
 
 }
 
+void adxl362_num_FIFO_samples_ready(uint16_t *num_ready){
+
+	uint8_t n_ready[2] = {0x00, 0x00};
+
+	spi_read_reg(FIFO_ENTRIES_L, n_ready, 1);
+	spi_read_reg(FIFO_ENTRIES_H, n_ready + 1, 1);
+
+	*num_ready = (uint16_t)(n_ready[0] | ( (0x03 & n_ready[1]) << 8));
+
+
+}
+
 void adxl362_read_FIFO(uint8_t * buf, uint16_t num_samples){
 
 	uint8_t command[1] = {READ_FIFO};
 
-	spi_write(command);
+	nrf_gpio_pin_clear(SPI_SS_PIN);
+    spi_write(READ_FIFO);
+
+    int i = 0;
+    do{
+        spi_read(buf + i);
+        i++;
+    } while (i < num_samples);
+
+    nrf_gpio_pin_set(SPI_SS_PIN);
+	/*
+	spi_write(command[0]);
 
 	for(int i = 0; i < num_samples; i++){
 		spi_read(buf + i);
 	}
+	*/
+}
+
+void adxl362_parse_FIFO(uint8_t * buf_in, int16_t * buf_out, uint16_t num_samples){
+
+
+	for(int i = 0, j = 0; i < num_samples; i = i+2, j++){
+
+		if ((buf_in[i+1] & 0x20) == 0x20){
+			buf_out[j] = (int16_t)( 0xC0 | (buf_in[i] | ((0x3F & buf_in[i+1]) << 8) ));
+
+		}
+		else{
+			buf_out[j] = (int16_t)(buf_in[i] | ((0x3F & buf_in[i+1]) << 8) );
+		}
+
+	}
+
 }
 
 void adxl362_config_FIFO(adxl362_fifo_mode f_mode, bool store_temp, uint16_t num_samples){

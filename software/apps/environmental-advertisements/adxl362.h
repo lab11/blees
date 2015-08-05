@@ -79,13 +79,17 @@ void adxl362_activity_inactivity_interrupt_enable();
 
 
 
+void adxl362_num_FIFO_samples_ready(uint16_t *num_ready);
+
+
 void adxl362_config_FIFO(adxl362_fifo_mode f_mode, bool store_temp, uint16_t num_samples);\
 
 void adxl362_read_FIFO(uint8_t * buf, uint16_t num_samples);
 
+void adxl362_parse_FIFO(uint8_t * buf_in, int16_t * buf_out, uint16_t num_samples);
+
 
 uint8_t adxl362_read_status_reg();
-
 
 
 void adxl362_sample_accel_word(uint8_t * x_data, uint8_t * y_data, uint8_t * z_data);

@@ -22,6 +22,12 @@ void lps331ap_readTemp (float *temp);
 
 void lps331ap_power_off();
 
+void lps331ap_read_controlreg1(uint8_t * data);
+
+void lps331ap_read_controlreg2(uint8_t * data);
+
+void lps331ap_read_status_reg(uint8_t * buf);
+
 void lps331ap_init(lps331ap_data_rate_t data_rate, nrf_drv_twi_t * p_instance);
 
 void lps331ap_power_on();
@@ -29,4 +35,4 @@ void lps331ap_power_on();
 void lps331ap_one_shot();
 
 
-#endif //SI7021_H
+#endif //LPS331AP_H
