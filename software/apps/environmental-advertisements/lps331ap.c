@@ -22,6 +22,7 @@
 
 #define CTRL_REG2 0x21 
 #define ONE_SHOT_ENABLE 0x01
+#define SW_RESET 0x04
 
 #define CTRL_REG3 0x22 
 
@@ -53,8 +54,6 @@
 static nrf_drv_twi_t * m_instance;
 
 
-static lps331ap_data_rate_t data_rate_g;
-
 // must only be called after lps331ap_on has been called
 void lps331ap_readPressure(float *pres){
 
@@ -84,28 +83,6 @@ void lps331ap_readPressure(float *pres){
                         ((uint32_t) pressure_data[0]))) / 4096.0;
 
     *pres = pressure;
-
-}
-
-void lps331ap_read_status_reg(uint8_t * buf){
-
-    uint8_t command = STATUS_REG;
-
-    nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_ADDR,
-            &command,
-            sizeof(command),
-            true
-    );
-
-    nrf_drv_twi_rx(
-            m_instance, 
-            SENSOR_ADDR,
-            buf,
-            sizeof(buf),
-            false
-    );
 
 }
 
@@ -161,13 +138,58 @@ void lps331ap_power_off(){
 
 }
 
+void lps331ap_sw_reset(){
 
-void lps331ap_init(lps331ap_data_rate_t data_rate, nrf_drv_twi_t * p_instance){
+    uint8_t command[] = 
+    {
+        CTRL_REG2,
+        SW_RESET
+
+    };
+
+    nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
+            &command,
+            sizeof(command),
+            false
+    );
+
+}
 
 
-	lps331ap_power_off(); // it is necessary to turn off sensor before updating data rate
+void lps331ap_config(lps331ap_data_rate_t data_rate, lps331ap_p_res_t p_res, lps331ap_t_res_t t_res){
 
-	data_rate_g = data_rate; 
+
+    lps331ap_config_data_rate(data_rate);
+
+    lps331ap_config_res(p_res, t_res);
+
+}
+
+
+void lps331ap_config_data_rate(lps331ap_data_rate_t data_rate){
+
+    uint8_t command[2] = 
+    {
+        CTRL_REG1,
+        (data_rate << 4)
+    };
+
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_ADDR,
+        command,
+        sizeof(command),
+        false
+    );
+
+
+}
+
+void lps331ap_init(nrf_drv_twi_t * p_instance){
+
+    //lps331ap_sw_reset();
 
     m_instance = p_instance;
 
@@ -219,118 +241,124 @@ void lps331ap_read_controlreg2(uint8_t * data){
 
 }
 
-// must only be called after lps331ap_init has been called
-void lps331ap_power_on(){
+void lps331ap_read_status_reg(uint8_t * buf){
 
-	uint8_t command[] = {
-		CTRL_REG1, 
-		(data_rate_g << 4) |  POWER_ON | BLOCK_UPDATE_ENABLE
-	};
-
-    if (data_rate_g == lps331ap_MODE0){
-        command[1] = POWER_ON | BLOCK_UPDATE_ENABLE;
-    }
+    uint8_t command[] = {STATUS_REG};
 
     nrf_drv_twi_tx(
             m_instance, 
             SENSOR_ADDR,
-            command,
+            &command,
+            sizeof(command),
+            true
+    );
+
+    nrf_drv_twi_rx(
+            m_instance, 
+            SENSOR_ADDR,
+            buf,
+            sizeof(buf),
+            false
+    );
+
+}
+
+void lps331ap_config_res(lps331ap_p_res_t p_res, lps331ap_t_res_t t_res){
+
+    uint8_t data = (p_res | (t_res << 4));
+
+    uint8_t command[] = 
+    {
+        RES_CONF,
+        data
+
+    };
+
+     nrf_drv_twi_tx(
+            m_instance, 
+            SENSOR_ADDR,
+            &command,
             sizeof(command),
             false
     );
 
-    if (data_rate_g == lps331ap_MODE0){
-        lps331ap_one_shot();    
-    }
+}
+
+
+// must only be called after lps331ap_init has been called
+void lps331ap_power_on(){
+
+    uint8_t command[1] = {CTRL_REG1};
+
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_ADDR,
+        command,
+        sizeof(command),
+        true
+    );
+
+    uint8_t data[1] = {0x00};
+
+    nrf_drv_twi_rx(
+        m_instance, 
+        SENSOR_ADDR,
+        data,
+        sizeof(data),
+        false
+    );
+
+
+	uint8_t command2[] = {
+		CTRL_REG1, 
+		data[0] | POWER_ON | BLOCK_UPDATE_ENABLE
+	};
+
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_ADDR,
+        command2,
+        sizeof(command2),
+        false
+    );
 
 }
 
 //need to test this
-void lps331ap_one_shot(){
+void lps331ap_one_shot_config(){
 
 
-	uint8_t command[] = 
+    uint8_t command[] = 
+    {
+        CTRL_REG1,
+        BLOCK_UPDATE_ENABLE
+    };
+
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_ADDR,
+        command,
+        sizeof(command),
+        false
+    ); 
+
+}
+
+void lps331ap_one_shot_enable(){
+
+    uint8_t command2[] = 
     {
         CTRL_REG2,
         ONE_SHOT_ENABLE
 
     };
 
-	 nrf_drv_twi_tx(
+     nrf_drv_twi_tx(
             m_instance, 
             SENSOR_ADDR,
-            &command,
-            sizeof(command),
+            command2,
+            sizeof(command2),
             false
     );
 
 }
-
-/*
-void test_something(){
-
-	uint8_t command = CTRL_REG2;
-
-    nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_ADDR,
-            &command,
-            sizeof(command),
-            true
-    );
-
-    uint8_t data = 0x84;
-
-    twi_master_transfer(
-           	SENSOR_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
-            false
-    );
-
-    while(1){
-		command = CTRL_REG2;
-
-		    twi_master_transfer(
-		            SENSOR_ADDR | TWI_WRITE,
-		            &command,
-		            sizeof(command),
-		            true
-		    );
-
-		   	uint8_t reg_2;
-
-		    twi_master_transfer(
-		           	SENSOR_ADDR | TWI_READ,
-		            &reg_2,
-		            sizeof(reg_2),
-		            false
-		    );
-
-		    if (!(reg_2 & 0x80) ){
-		    	break;
-		    }
-
-    }
-	command = CTRL_REG1;
-
-    nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_ADDR,
-            &command,
-            sizeof(command),
-            true
-    );
-
-    data = 0x84;
-
-    twi_master_transfer(
-           	SENSOR_ADDR | TWI_WRITE,
-            &data,
-            sizeof(data),
-            false
-    );
-
-
-}
-*/
