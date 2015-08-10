@@ -14,7 +14,7 @@ typedef enum
     lps331ap_MODE6, // Pressure = 12.5 Hz, 		Temperature = 12.5 Hz
     lps331ap_MODE7, // Pressure = 25 Hz, 		Temperature = 25 Hz
 
-} lps331ap_data_rate_t; //Measurement Resolution, (aka ODR)
+} lps331ap_data_rate; //Measurement Resolution, (aka ODR)
 
 
 typedef enum
@@ -31,7 +31,7 @@ typedef enum
     lps331ap_P_RES_9, // Nr. Internal Average = 384
     lps331ap_P_RES_10, // Nr. Internal Average = 512, not allowed with ODR = 25Hz/25Hz
 
-} lps331ap_p_res_t; //Pressure Resolution
+} lps331ap_p_res; //Pressure Resolution
 
 typedef enum
 {
@@ -44,23 +44,56 @@ typedef enum
     lps331ap_T_RES_6, // Nr. Internal Average = 64
     lps331ap_T_RES_7, // Nr. Internal Average = 128, not allowed with ODR = 25Hz/25Hz
 
-} lps331ap_t_res_t; //Temperature Resolution
+} lps331ap_t_res; //Temperature Resolution
+
+
+
+
+typedef enum
+{
+	lps331ap_intrerrupt_mode_NONE,
+	lps331ap_interrupt_mode_P_HIGH,
+	lps331ap_interrupt_mode_P_LOW,
+	lps331ap_interrupt_mode_P_LOW_OR_P_HIGH,
+	lps331ap_interrupt_mode_DATA_READY,
+
+} interrupt_config;
+
 
 //call in this order to start:
 //sw_reset, init, off, config, one_shot_config?, on, one_shot_enable
 
 void lps331ap_sw_reset();
 
+void lps331ap_sw_reset_disable();
+
 void lps331ap_init(nrf_drv_twi_t * p_instance);
 
 void lps331ap_power_off();
 
-void lps331ap_config(lps331ap_data_rate_t data_rate, lps331ap_p_res_t p_res, lps331ap_t_res_t t_res);
+void lps331ap_config(lps331ap_data_rate data_rate, lps331ap_p_res p_res, lps331ap_t_res t_res);
 
 
-void lps331ap_config_data_rate(lps331ap_data_rate_t data_rate);
+void lps331ap_interrupt_disable_all();
 
-void lps331ap_config_res(lps331ap_p_res_t p_res, lps331ap_t_res_t t_res);
+void lps331ap_config_interrupt(interrupt_config interrupt_c_1, interrupt_config interrupt_c_2 , bool active_low);
+
+//if latch_request = true, interrupt latched into interrupt source reg
+// interrupt source reg is cleared by reading INT_ACT register
+void lps331ap_interrupt_enable(bool latch_request);
+
+void lps331ap_interrupt_enable_manual(bool high, bool low, bool latch_request);
+
+void lps331ap_set_pressure_threshold(uint16_t p_thresh);
+
+void lps331ap_read_interrupt_source_reg(uint8_t * buf);
+
+
+
+
+void lps331ap_config_data_rate(lps331ap_data_rate data_rate);
+
+void lps331ap_config_res(lps331ap_p_res p_res, lps331ap_t_res t_res);
 
 
 void lps331ap_one_shot_config();
@@ -77,6 +110,8 @@ void lps331ap_readTemp (float *temp);
 void lps331ap_read_controlreg1(uint8_t * data);
 
 void lps331ap_read_controlreg2(uint8_t * data);
+
+void lps331ap_read_controlreg3(uint8_t * data);
 
 void lps331ap_read_status_reg(uint8_t * buf);
 

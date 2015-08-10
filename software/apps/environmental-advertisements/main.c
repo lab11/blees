@@ -7,7 +7,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
- #include "math.h"
+#include "math.h"
+
 
 // Nordic Libraries
 #include "nordic_common.h"
@@ -26,6 +27,7 @@
 #include "app_trace.h"
 #include "ble_hrs_c.h"
 #include "ble_bas_c.h"
+#include "app_util.h"
 #include "app_timer.h"
 
 // Platform, Peripherals, Devices, Services
@@ -97,15 +99,6 @@ static ble_gap_sec_params_t                  m_sec_params;                      
 static uint16_t                              m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
 
 static ble_ess_t                             m_ess;
-
-//static ble_sensorsim_cfg_t                   m_temp_sim_cfg;                         /**< Temperature sensor simulator configuration. */
-//static ble_sensorsim_state_t                 m_temp_sim_state;                       /**< Temperature sensor simulator state. */
-
-//static ble_sensorsim_cfg_t                   m_pres_sim_cfg;                         /**< Pressure sensor simulator configuration. */
-//static ble_sensorsim_state_t                 m_pres_sim_state;                       /**< Pressure sensor simulator state. */
-
-//static ble_sensorsim_cfg_t                   m_hum_sim_cfg;                         /**< Humidity sensor simulator configuration. */
-//static ble_sensorsim_state_t                 m_hum_sim_state;                       /**< Humidity sensor simulator state. */
 
 static app_timer_id_t                        m_ess_timer_id;                        /**< ESS timer. */
 
@@ -191,10 +184,6 @@ static void update_advdata(void);
  *   HANDLERS AND CALLBACKS
  ******************************************************************************/
 
-// Persistent storage system event handler
-void pstorage_sys_event_handler (uint32_t p_evt);
-
-
 /**@brief Function for error handling, which is called when an error has occurred.
  *
  * @warning This handler is an example only and does not fit a final product. You need to analyze
@@ -220,11 +209,9 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     // On assert, the system can only recover with a reset.
     //NVIC_SystemReset();
 
-    //led_on(SQUALL_LED_PIN);
-    //while(1);
+    led_on(SQUALL_LED_PIN);
+    while(1);
     ble_debug_assert_handler(error_code, line_num, p_file_name);
-    //NVIC_SystemReset();
-
 
 }
 
@@ -273,34 +260,29 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
 
     switch (p_ble_evt->header.evt_id) {
         case BLE_GAP_EVT_CONNECTED:
-
             app.conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             //advertising_stop();
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-
-
-            m_ess_meas_not_conf_pending = false;
-
             app.conn_handle = BLE_CONN_HANDLE_INVALID;
             advertising_start();
             break;
 
         case BLE_GATTS_EVT_WRITE:
             break;
-        
+
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
             err_code = sd_ble_gap_sec_params_reply(app.conn_handle,
                     BLE_GAP_SEC_STATUS_SUCCESS, &m_sec_params, NULL);
             APP_ERROR_CHECK(err_code);
             break;
-        
+
         case BLE_GATTS_EVT_SYS_ATTR_MISSING:
             err_code = sd_ble_gatts_sys_attr_set(app.conn_handle, NULL, 0, 0);
             APP_ERROR_CHECK(err_code);
             break;
-        
+
         case BLE_GAP_EVT_AUTH_STATUS:
             break;
 
@@ -309,7 +291,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
             err_code = sd_ble_gap_sec_info_reply(app.conn_handle, NULL, NULL, NULL);
             APP_ERROR_CHECK(err_code);
             break;
-        
+
         case BLE_GAP_EVT_TIMEOUT:
             if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING) {
                 err_code = sd_power_system_off();
@@ -325,13 +307,11 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
                                                  BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
                 APP_ERROR_CHECK(err_code);
             }
-            break;       
-
+            break;    
         default:
             break;
     }
 }
-
 
 /**@brief Function for handling the ESS events.
  *
@@ -393,13 +373,11 @@ static void on_sys_evt(uint32_t sys_evt)
  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
-
     //dm_ble_evt_handler(p_ble_evt); // what does this do?
     ble_ess_on_ble_evt(&m_ess, p_ble_evt);
 
     on_ble_evt(p_ble_evt);
     ble_conn_params_on_ble_evt(p_ble_evt);
-
 }
 
 
@@ -411,8 +389,8 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
  * @param[in]   sys_evt   System stack event.
  */
 static void sys_evt_dispatch(uint32_t sys_evt) {
-    //pstorage_sys_event_handler(sys_evt);
     on_sys_evt(sys_evt);
+
 }
 
 // timer callback
@@ -689,13 +667,10 @@ static void advertising_init(void) {
     
     APP_ERROR_CHECK(err_code);
 
-
-
 }
 
 // Initialize connection parameters
 static void conn_params_init(void) {
-
     uint32_t               err_code;
     ble_conn_params_init_t cp_init;
     memset(&cp_init, 0, sizeof(cp_init));
@@ -928,23 +903,6 @@ static void scheduler_init(void)
  ******************************************************************************/
 
 static void advertising_start(void) {
-
-    /*
-    uint32_t count, err_code;
-
-    // Verify if there is any flash access pending, if yes delay starting advertising until
-    // it's complete.
-    err_code = pstorage_access_status_get(&count);
-    APP_ERROR_CHECK(err_code);
-
-    if (count != 0)
-    {
-        m_memory_access_in_progress = true;
-        return;
-    }
-    
-    */
-    /***from before***/
     uint32_t err_code = sd_ble_gap_adv_start(&m_adv_params);
     APP_ERROR_CHECK(err_code);
 }
@@ -958,7 +916,7 @@ static void timers_start(void) {
     uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
     APP_ERROR_CHECK(err_code);
 
-    /**added***/
+        /**added***/
     // Start application timers.
     err_code = app_timer_start(m_ess_timer_id, ESS_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
@@ -1032,7 +990,6 @@ static void update_advdata(void) {
     err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
-
 
 /*******************************************************************************
  *   Need to be moved
@@ -1138,21 +1095,18 @@ void ess_update(void)
     
 }
 
+
 /*******************************************************************************
  *   MAIN LOOP
  ******************************************************************************/
 
 int main(void) {
 
-    //printf("hi");
-
-
-
     // Initialization
-    //led_init(SQUALL_LED_PIN);
-    //led_init(BLEES_LED_PIN);
-    //led_on(SQUALL_LED_PIN);
-    //led_on(BLEES_LED_PIN);
+    led_init(SQUALL_LED_PIN);
+    led_init(BLEES_LED_PIN);
+    led_on(SQUALL_LED_PIN);
+    led_on(BLEES_LED_PIN);
 
     timers_init();
 
@@ -1163,7 +1117,7 @@ int main(void) {
     gap_params_init();
     services_init();
     advertising_init();
-        sensors_init();//new
+    sensors_init();//new
     conn_params_init();
     sec_params_init();
 
@@ -1175,18 +1129,10 @@ int main(void) {
     advertising_start();
 
     // Initialization complete
-    //led_off(SQUALL_LED_PIN);
-    //printf("hi");
-
-    //printf("hi2");
-
-    //printf("hi3");
-
+    led_off(SQUALL_LED_PIN);
 
     while (1) {
         app_sched_execute();
-
-        //printf("hey");
 
         power_manage();
     }

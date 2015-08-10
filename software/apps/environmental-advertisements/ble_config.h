@@ -67,8 +67,11 @@
 
 #define SEC_PARAM_MAX_KEY_SIZE          16
 
+
 //max scheduler event size
-#define SCHED_MAX_EVENT_DATA_SIZE       sizeof(app_timer_event_t)
+//#define SCHED_MAX_EVENT_DATA_SIZE       sizeof(app_timer_event_t)
+//need to fix this
+#define SCHED_MAX_EVENT_DATA_SIZE       50
 
 //max num in scheduler queue
 #define SCHED_QUEUE_SIZE                10

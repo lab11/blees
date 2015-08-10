@@ -13,6 +13,9 @@ APPLICATION_SRCS += nrf_drv_common.c
 APPLICATION_SRCS += nrf_drv_gpiote.c
 APPLICATION_SRCS += nrf_drv_twi.c
 APPLICATION_SRCS += led.c
+APPLICATION_SRCS += app_scheduler.c
+
+
 
 DEVICE = NRF51
 
@@ -29,12 +32,13 @@ APPLICATION_SRCS += $(TARGET_LOWER).c
 USE_SOFTDEVICE = s110
 
 SDK_VERSION = 9
+
 TEMPLATE_PATH ?= ../../nrf5x-base/nrf51-pure-gcc-setup/template/
 
 LIBRARY_PATHS += ./ ../../platform/
 SOURCE_PATHS += ../../platform/
 
-CFLAGS = -Os
+CFLAGS = -O0
 GDB_PORT_NUMBER = 2331
 
 include ../../nrf5x-base/Makefile.include
