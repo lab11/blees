@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+ #include "math.h"
 
 // Nordic Libraries
 #include "nordic_common.h"
@@ -75,7 +76,7 @@
 #define MAX_PRES_LEVEL              100000000
 #define PRES_LEVEL_INCREMENT        1
 #define INIT_PRES_DATA              456
-#define PRES_TRIGGER_CONDITION      TRIG_INACTIVE
+#define PRES_TRIGGER_CONDITION      TRIG_WHILE_NE
 #define PRES_TRIGGER_VAL_OPERAND    470
 #define PRES_TRIGGER_VAL_TIME       100000
 
@@ -83,7 +84,7 @@
 #define MAX_HUM_LEVEL               100000000
 #define HUM_LEVEL_INCREMENT         100
 #define INIT_HUM_DATA               789
-#define HUM_TRIGGER_CONDITION       TRIG_INACTIVE
+#define HUM_TRIGGER_CONDITION       TRIG_WHILE_NE
 #define HUM_TRIGGER_VAL_OPERAND     799
 #define HUM_TRIGGER_VAL_TIME        50000
 
@@ -484,6 +485,7 @@ static void pres_meas_timeout_handler(void * p_context)
         float pres;
         memset(&pres, 0, sizeof(pres));
 
+        lps331ap_one_shot_enable();
         lps331ap_readPressure(&pres);
 
         meas = (uint32_t)(pres);
@@ -804,7 +806,7 @@ static void hum_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing the sensor simulators.
  */
-static void sensor_sim_init(void)
+static void sensors_init(void)
 {
 
     nrf_drv_twi_config_t twi_config;
@@ -830,6 +832,7 @@ static void sensor_sim_init(void)
     lps331ap_sw_reset_disable();
     lps331ap_power_off();
     lps331ap_config(lps331ap_MODE1, lps331ap_P_RES_10, lps331ap_T_RES_7);
+    lps331ap_one_shot_config();
     lps331ap_power_on();
 
     
@@ -1045,6 +1048,8 @@ void ess_update(void)
     uint8_t  hum_meas_val[4];
     
     uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
+
 
     if (m_ess.temperature.trigger_val_cond >= 0x03){
         float temp;
@@ -1052,8 +1057,7 @@ void ess_update(void)
 
         si7021_read_temp_hold(&temp);
 
-
-        meas = (uint32_t)(temp);
+        meas = (int16_t)(temp * 100);
         
         memcpy(temp_meas_val, &meas, 2);
 
@@ -1080,9 +1084,10 @@ void ess_update(void)
         float pres;
         memset(&pres, 0, sizeof(pres));
 
+        lps331ap_one_shot_enable();
         lps331ap_readPressure(&pres);
 
-        meas = (uint32_t)(pres);
+        meas = (uint32_t)(pres * 1000);
 
         memcpy(pres_meas_val, &meas, 4);
         
@@ -1110,7 +1115,7 @@ void ess_update(void)
 
         (si7021_read_RH_hold(&hum));
 
-        meas = (uint32_t)(hum);
+        meas = (uint16_t)(hum * 100);
 
         memcpy(hum_meas_val, &meas, 2);
 
@@ -1158,7 +1163,7 @@ int main(void) {
     gap_params_init();
     services_init();
     advertising_init();
-        sensor_sim_init();//new
+        sensors_init();//new
     conn_params_init();
     sec_params_init();
 
