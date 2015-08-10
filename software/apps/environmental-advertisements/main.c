@@ -54,37 +54,28 @@
 
 /**********************************frombefore****************************/
 
-#define APP_ADV_TIMEOUT_IN_SECONDS      200                                         /**< The advertising timeout (in units of seconds). */
+//#define APP_ADV_TIMEOUT_IN_SECONDS      300                                         /**< The advertising timeout (in units of seconds). */
 
 #define APP_GPIOTE_MAX_USERS            1                                           /**< Maximum number of users of the GPIOTE handler. */
 
 
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)    /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
-#define ESS_MEAS_INTERVAL   APP_TIMER_TICKS(500, APP_TIMER_PRESCALER)
+#define ESS_MEAS_INTERVAL               APP_TIMER_TICKS(500, APP_TIMER_PRESCALER)
 
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 
-#define MIN_TEMP_LEVEL              123
-#define MAX_TEMP_LEVEL              100000000
-#define TEMP_LEVEL_INCREMENT        1
 #define INIT_TEMP_DATA              123
-#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
+#define TEMP_TRIGGER_CONDITION      TRIG_INACTIVE
 #define TEMP_TRIGGER_VAL_OPERAND    156
 #define TEMP_TRIGGER_VAL_TIME       50000
 
-#define MIN_PRES_LEVEL              456
-#define MAX_PRES_LEVEL              100000000
-#define PRES_LEVEL_INCREMENT        1
 #define INIT_PRES_DATA              456
 #define PRES_TRIGGER_CONDITION      TRIG_WHILE_NE
 #define PRES_TRIGGER_VAL_OPERAND    470
 #define PRES_TRIGGER_VAL_TIME       100000
 
-#define MIN_HUM_LEVEL               789
-#define MAX_HUM_LEVEL               100000000
-#define HUM_LEVEL_INCREMENT         100
 #define INIT_HUM_DATA               789
 #define HUM_TRIGGER_CONDITION       TRIG_WHILE_NE
 #define HUM_TRIGGER_VAL_OPERAND     799
@@ -92,9 +83,6 @@
 
 
 #define BOND_DELETE_ALL_BUTTON_ID            1                                          /**< Button used for deleting all bonded centrals during startup. */
-
-
-static ble_gap_sec_params_t                  m_sec_params;                               /**< Security requirements for this application. */
 
 static uint16_t                              m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
 
@@ -149,7 +137,6 @@ static ble_gap_adv_params_t m_adv_params;
 static ble_advdata_t        advdata;
 
 // Security requirements for this application.
-/*
 static ble_gap_sec_params_t m_sec_params = {
     SEC_PARAM_BOND,
     SEC_PARAM_MITM,
@@ -158,7 +145,6 @@ static ble_gap_sec_params_t m_sec_params = {
     SEC_PARAM_MIN_KEY_SIZE,
     SEC_PARAM_MAX_KEY_SIZE,
 };
-*/
 
 static app_timer_id_t sample_timer;
 
@@ -412,6 +398,7 @@ static void ess_meas_timeout_handler(void * p_context)
     ess_update();
 }
 
+
 static void temp_meas_timeout_handler(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
@@ -421,15 +408,15 @@ static void temp_meas_timeout_handler(void * p_context)
 
         uint8_t  temp_meas_val[4]; 
         uint32_t meas;
+        memset(&meas, 0, sizeof(meas));
 
         float temp;
         memset(&temp, 0, sizeof(temp));
 
         si7021_read_temp_hold(&temp);
 
+        meas = (int16_t)(temp * 100);
 
-        meas = (uint32_t)(temp);
-        
         memcpy(temp_meas_val, &meas, 2);
 
         err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val, MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
@@ -450,6 +437,8 @@ static void temp_meas_timeout_handler(void * p_context)
 
 }
 
+
+
 static void pres_meas_timeout_handler(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
@@ -459,24 +448,25 @@ static void pres_meas_timeout_handler(void * p_context)
         
         uint8_t  pres_meas_val[4]; 
         uint32_t meas;
-
+        memset(&meas, 0, sizeof(meas));
+        
         float pres;
         memset(&pres, 0, sizeof(pres));
 
         lps331ap_one_shot_enable();
         lps331ap_readPressure(&pres);
 
-        meas = (uint32_t)(pres);
-        
-        memcpy(pres_meas_val, &meas, 4);
+        meas = (uint32_t)(pres * 1000);
 
+        memcpy(pres_meas_val, &meas, 4);
+        
         err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
         
         if (err_code == NRF_SUCCESS) {
             m_ess_meas_not_conf_pending = true;
         }
 
-        else if ( //(err_code != NRF_SUCCESS) &&
+        else if (//(err_code != NRF_SUCCESS) &&
             (err_code != NRF_ERROR_INVALID_STATE) &&
             (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
             (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
@@ -497,13 +487,15 @@ static void hum_meas_timeout_handler(void * p_context)
         
         uint8_t  hum_meas_val[4]; 
         uint32_t meas;
+        memset(&meas, 0, sizeof(meas));
+
         float hum;
         memset(&hum, 0, sizeof(hum));
 
         (si7021_read_RH_hold(&hum));
 
-        meas = (uint32_t)(hum);
-        
+        meas = (uint16_t)(hum * 100);
+
         memcpy(hum_meas_val, &meas, 2);
 
         err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val, MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
@@ -512,7 +504,7 @@ static void hum_meas_timeout_handler(void * p_context)
             m_ess_meas_not_conf_pending = true;
         }
 
-        if ( //(err_code != NRF_SUCCESS) &&
+        else if (//(err_code != NRF_SUCCESS) &&
             (err_code != NRF_ERROR_INVALID_STATE) &&
             (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
             (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
@@ -522,36 +514,6 @@ static void hum_meas_timeout_handler(void * p_context)
         }
     //}
 
-}
-
-/**@brief Function for handling the Device Manager events.
- *
- * @param[in]   p_evt   Data associated to the device manager event.
- */
-static uint32_t device_manager_evt_handler(dm_handle_t const * p_handle,
-                                           dm_event_t const  * p_event,
-                                           ret_code_t        event_result)
-{
-    
-    APP_ERROR_CHECK(event_result);
-    
-    switch(p_event->event_id)
-    {
-        case DM_EVT_DEVICE_CONTEXT_STORED:
-            //dm_security_status_req(p_handle, &m_security_status);
-            break;
-        case DM_EVT_LINK_SECURED:
-            //dm_security_status_req(p_handle, &m_security_status);
-            break;
-        case DM_EVT_DISCONNECTION:
-            //dm_device_delete(p_handle);
-            break;
-        default:
-            break;
-    }
-    
-    return NRF_SUCCESS;
-    
 }
 
 /*******************************************************************************
@@ -635,7 +597,6 @@ static void advertising_init(void) {
     memset(&m_adv_params, 0, sizeof(m_adv_params));
     //m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND; // use this to disable connection abilit
     m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_IND;
-
     m_adv_params.p_peer_addr        = NULL;
     m_adv_params.fp                 = BLE_GAP_ADV_FP_ANY;
     m_adv_params.interval           = APP_ADV_INTERVAL;
@@ -652,21 +613,17 @@ static void advertising_init(void) {
     
     // Build and set advertising data
     memset(&advdata, 0, sizeof(advdata));
-    
     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.include_appearance      = true;
-    //advdata.flags.size              = sizeof(flags);
-    //advdata.flags.p_data            = &flags;
     advdata.flags = flags;
     
+
     memset(&scanrsp, 0, sizeof(scanrsp));
     scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
     scanrsp.uuids_complete.p_uuids  = adv_uuids;
     
     err_code = ble_advdata_set(&advdata, &scanrsp);
-    
     APP_ERROR_CHECK(err_code);
-
 }
 
 // Initialize connection parameters
@@ -737,46 +694,30 @@ static void timers_init(void) {
  */
 static void temp_char_init(ble_ess_init_t * p_ess_init)
 {
-    int16_t init_data = INIT_TEMP_DATA;
     p_ess_init->temp_trigger_data.condition = TEMP_TRIGGER_CONDITION;
-    int16_t operand = TEMP_TRIGGER_VAL_OPERAND; // used if trigger doesn't require a timer
-    uint32_t temp_time = TEMP_TRIGGER_VAL_TIME; // used if trigger requires a timer
-
-    p_ess_init->init_temp_data = init_data;
-    p_ess_init->temp_trigger_val_var = (operand);
-    p_ess_init->temp_trigger_data.time_interval = (temp_time);
-
-
+    p_ess_init->init_temp_data = (int16_t)(INIT_TEMP_DATA);
+    p_ess_init->temp_trigger_val_var = (int16_t)(TEMP_TRIGGER_VAL_OPERAND);
+    p_ess_init->temp_trigger_data.time_interval = (uint32_t)(TEMP_TRIGGER_VAL_TIME);
 }
 
 /**@brief Function for initializing the pressure.
  */
 static void pres_char_init(ble_ess_init_t * p_ess_init)
 {
-    uint32_t init_data = INIT_PRES_DATA;
     p_ess_init->pres_trigger_data.condition = PRES_TRIGGER_CONDITION;
-    uint32_t operand = PRES_TRIGGER_VAL_OPERAND; // used if trigger doesn't require a timer
-    uint32_t pres_time = PRES_TRIGGER_VAL_TIME; // used if trigger requires a timer
-
-    p_ess_init->init_pres_data = init_data;
-    p_ess_init->pres_trigger_val_var = (operand);
-    p_ess_init->pres_trigger_data.time_interval = (pres_time);
-
+    p_ess_init->init_pres_data = (uint32_t)(INIT_PRES_DATA);
+    p_ess_init->pres_trigger_val_var = (uint32_t)(PRES_TRIGGER_VAL_OPERAND);
+    p_ess_init->pres_trigger_data.time_interval = (uint32_t)(PRES_TRIGGER_VAL_TIME);
 }
 
 /**@brief Function for initializing the humidity.
  */
 static void hum_char_init(ble_ess_init_t * p_ess_init)
 {
-    uint16_t init_data = INIT_HUM_DATA;
     p_ess_init->hum_trigger_data.condition = HUM_TRIGGER_CONDITION;
-    uint16_t operand = HUM_TRIGGER_VAL_OPERAND; // used if trigger doesn't require a timer
-    uint32_t hum_time = HUM_TRIGGER_VAL_TIME; // used if trigger requires a timer
-
-    p_ess_init->init_hum_data = init_data;
-    p_ess_init->hum_trigger_val_var = (operand);
-    p_ess_init->hum_trigger_data.time_interval = (hum_time);
-
+    p_ess_init->init_hum_data = (uint16_t)(INIT_HUM_DATA);
+    p_ess_init->hum_trigger_val_var = (uint16_t)(HUM_TRIGGER_VAL_OPERAND);
+    p_ess_init->hum_trigger_data.time_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
 }
 
 /**@brief Function for initializing the sensor simulators.
@@ -799,7 +740,6 @@ static void sensors_init(void)
     si7021_init(&twi_instance);
     si7021_reset();
     si7021_heater_off();
-
 
     //initialize pressure
     lps331ap_init(&twi_instance);
@@ -833,63 +773,6 @@ static void services_init (void) {
     APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief Function for the Device Manager initialization.
- */
-static void device_manager_init(void)
-{
-
-    /*
-    
-    uint32_t               err_code;
-    dm_init_param_t        init_data;
-    dm_application_param_t register_param;
-
-    // Initialize persistent storage module.
-    //err_code = pstorage_init();
-    //APP_ERROR_CHECK(err_code);
-
-    memset(&init_data, 0, sizeof(init_data));
-
-    init_data.clear_persistent_data = true;
-
-    // Clear all bonded centrals if the Bonds Delete button is pushed.
-    //err_code = bsp_button_is_pressed(BOND_DELETE_ALL_BUTTON_ID,&(init_data.clear_persistent_data));
-    //APP_ERROR_CHECK(err_code);
-
-    err_code = dm_init(&init_data);
-    APP_ERROR_CHECK(err_code);
-
-    memset(&register_param.sec_param, 0, sizeof(ble_gap_sec_params_t));
-    
-    //register_param.sec_param.timeout      = SEC_PARAM_TIMEOUT;
-    register_param.sec_param.bond         = SEC_PARAM_BOND;
-    register_param.sec_param.mitm         = SEC_PARAM_MITM;
-    register_param.sec_param.io_caps      = SEC_PARAM_IO_CAPABILITIES;
-    register_param.sec_param.oob          = SEC_PARAM_OOB;
-    register_param.sec_param.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
-    register_param.sec_param.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
-    register_param.evt_handler            = device_manager_evt_handler;
-    register_param.service_type           = DM_PROTOCOL_CNTXT_GATT_SRVR_ID;
-
-    err_code = dm_register(&m_app_handle, &register_param);
-    APP_ERROR_CHECK(err_code);
-    */
-    
-}
-
-/**@brief Function for initializing security parameters.
- */
-static void sec_params_init(void)
-{
-    m_sec_params.bond         = SEC_PARAM_BOND;
-    m_sec_params.mitm         = SEC_PARAM_MITM;
-    m_sec_params.io_caps      = SEC_PARAM_IO_CAPABILITIES;
-    m_sec_params.oob          = SEC_PARAM_OOB;
-    m_sec_params.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
-    m_sec_params.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
-}
-
 /**@brief Function for the Event Scheduler initialization.
  */
 static void scheduler_init(void)
@@ -916,7 +799,7 @@ static void timers_start(void) {
     uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
     APP_ERROR_CHECK(err_code);
 
-        /**added***/
+    /**added***/
     // Start application timers.
     err_code = app_timer_start(m_ess_timer_id, ESS_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
@@ -968,7 +851,12 @@ static void power_manage(void) {
 static void update_advdata(void) {
     uint32_t err_code;
     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    ble_advdata_manuf_data_t manuf_specific_data;
+    //ble_advdata_manuf_data_t manuf_specific_data;
+    //memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
+
+
+    ble_advdata_service_data_t service_data;
+
 
     memcpy(&m_beacon_info[0],  &m_sensor_info.temp, 4);
     memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 4);
@@ -976,16 +864,26 @@ static void update_advdata(void) {
     memcpy(&m_beacon_info[12], &m_sensor_info.pressure, 4);
     //memcpy(&m_beacon_info[16], &m_sensor_info.acceleration, 2);
 
-    manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
-    manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
-    manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
+    //manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
+    //manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
+    //manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
+
+    
+    memset(&service_data, 0, sizeof(service_data));
+    service_data.data.p_data = (uint8_t *)m_beacon_info;
+    service_data.data.size = APP_BEACON_INFO_LENGTH;
+    service_data.service_uuid = ESS_UUID_SERVICE;
+    
 
     // Build and set advertising data.
     memset(&advdata, 0, sizeof(advdata));
 
     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.flags                   = flags;
-    advdata.p_manuf_specific_data   = &manuf_specific_data;
+    //advdata.p_manuf_specific_data   = &manuf_specific_data;
+    advdata.p_service_data_array = &service_data;
+    advdata.service_data_count = 1;
+
 
     err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
@@ -998,100 +896,18 @@ static void update_advdata(void) {
  */
 void ess_update(void)
 {
-    uint32_t err_code;
 
-    uint8_t  temp_meas_val[4];
-    uint8_t  pres_meas_val[4];
-    uint8_t  hum_meas_val[4];
-    
-    uint32_t meas;
-    memset(&meas, 0, sizeof(meas));
-
-
-    if (m_ess.temperature.trigger_val_cond >= 0x03){
-        float temp;
-        memset(&temp, 0, sizeof(temp));
-
-        si7021_read_temp_hold(&temp);
-
-        meas = (int16_t)(temp * 100);
-        
-        memcpy(temp_meas_val, &meas, 2);
-
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val, MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if ( //(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-        
-        
+    if (m_ess.temperature.trigger_val_cond >= 0x03){ 
+        temp_meas_timeout_handler(NULL);   
     }
 
     if (m_ess.pressure.trigger_val_cond >= 0x03){
-
-        float pres;
-        memset(&pres, 0, sizeof(pres));
-
-        lps331ap_one_shot_enable();
-        lps331ap_readPressure(&pres);
-
-        meas = (uint32_t)(pres * 1000);
-
-        memcpy(pres_meas_val, &meas, 4);
-        
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    
+        pres_meas_timeout_handler(NULL);  
     }
 
     if (m_ess.humidity.trigger_val_cond >= 0x03){
-
-        float hum;
-        memset(&hum, 0, sizeof(hum));
-
-        (si7021_read_RH_hold(&hum));
-
-        meas = (uint16_t)(hum * 100);
-
-        memcpy(hum_meas_val, &meas, 2);
-
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val, MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    
-   }
+        hum_meas_timeout_handler(NULL);
+    }
     
 }
 
@@ -1113,13 +929,11 @@ int main(void) {
     // Setup BLE and services
     ble_stack_init();
     scheduler_init(); //new
-    device_manager_init(); //new
     gap_params_init();
     services_init();
     advertising_init();
     sensors_init();//new
     conn_params_init();
-    sec_params_init();
 
     // Advertise data
     update_advdata();
