@@ -21,10 +21,10 @@
 //RTC1_Prescale
 #define APP_TIMER_PRESCALER             0
 
-#define APP_TIMER_MAX_TIMERS            7
+#define APP_TIMER_MAX_TIMERS            8
 
 //size of op queues
-#define APP_TIMER_OP_QUEUE_SIZE         5
+#define APP_TIMER_OP_QUEUE_SIZE         8
 
 
 //500ms

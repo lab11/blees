@@ -65,29 +65,30 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-
+//1  ~= 41 micro
 #define INIT_TEMP_DATA              123
-#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
+#define TEMP_TRIGGER_CONDITION      TRIG_INACTIVE
 #define TEMP_TRIGGER_VAL_OPERAND    156
-#define TEMP_TRIGGER_VAL_TIME       50000
+#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+
 
 #define INIT_PRES_DATA              456
-#define PRES_TRIGGER_CONDITION      TRIG_WHILE_NE
+#define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define PRES_TRIGGER_VAL_OPERAND    470
-#define PRES_TRIGGER_VAL_TIME       100000
+#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)
 
 #define INIT_HUM_DATA               789
-#define HUM_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define HUM_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define HUM_TRIGGER_VAL_OPERAND     799
-#define HUM_TRIGGER_VAL_TIME        50000
+#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 #define INIT_LUX_DATA               789
-#define LUX_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define LUX_TRIGGER_CONDITION       TRIG_INACTIVE
 #define LUX_TRIGGER_VAL_OPERAND     799
 #define LUX_TRIGGER_VAL_TIME        50000
 
 #define INIT_ACC_DATA               789
-#define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define ACC_TRIGGER_CONDITION       TRIG_INACTIVE
 #define ACC_TRIGGER_VAL_OPERAND     799
 #define ACC_TRIGGER_VAL_TIME        50000
 
@@ -175,7 +176,7 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
  ******************************************************************************/
 static void advertising_start(void);
 static void update_advdata(void);
-
+static void update_timers( ble_evt_t * p_ble_evt );
 
 /*******************************************************************************
  *   HANDLERS AND CALLBACKS
@@ -267,6 +268,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
             break;
 
         case BLE_GATTS_EVT_WRITE:
+            update_timers(p_ble_evt);
             break;
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
@@ -407,6 +409,7 @@ static void ess_meas_timeout_handler(void * p_context)
     UNUSED_PARAMETER(p_context);
     //if (m_ess_meas_not_conf_pending) ess_update();
     ess_update();
+
 }
 
 
@@ -716,31 +719,24 @@ static void advertising_init(void) {
 
 // Initialize connection parameters
 static void conn_params_init(void) {
-    uint32_t               err_code;
-    ble_conn_params_init_t cp_init;
+    uint32_t                err_code;
+    ble_conn_params_init_t  cp_init;
     memset(&cp_init, 0, sizeof(cp_init));
+
     cp_init.p_conn_params                  = NULL;
-    
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-    
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
-    
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    
     cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    
     cp_init.disconnect_on_fail             = false;
-    
     cp_init.evt_handler                    = on_conn_params_evt;
-    
     cp_init.error_handler                  = conn_params_error_handler;
     
-    
     err_code = ble_conn_params_init(&cp_init);
-    
     APP_ERROR_CHECK(err_code);
 }
 
+//Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
     uint32_t err_code;
 
@@ -824,7 +820,7 @@ static void lux_char_init(ble_ess_init_t * p_ess_init)
     p_ess_init->lux_trigger_data.time_interval = (uint32_t)(LUX_TRIGGER_VAL_TIME);
 }
 
-/**@brief Function for initializing the humidity.
+/**@brief Function for initializing the acceleration.
  */
 static void acc_char_init(ble_ess_init_t * p_ess_init)
 {
@@ -924,8 +920,8 @@ static void services_init (void) {
     temp_char_init(&ess_init); //initialize temp
     pres_char_init(&ess_init); //initialize pres
     hum_char_init(&ess_init); //initialize hum
-    lux_char_init(&ess_init); //initialize hum
-    acc_char_init(&ess_init); //initialize hum
+    lux_char_init(&ess_init); //initialize lux
+    acc_char_init(&ess_init); //initialize acc
     
     err_code = ble_ess_init(&m_ess, &ess_init);
     APP_ERROR_CHECK(err_code);
@@ -957,18 +953,13 @@ static void timers_start(void) {
     uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
     APP_ERROR_CHECK(err_code);
 
-    /**added***/
-    // Start application timers.
     err_code = app_timer_start(m_ess_timer_id, ESS_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
-
     
-    uint32_t meas_interval;
-
+    uint32_t meas_interval = 0;
 
     if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){   
-        memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
-        err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
+        err_code = app_timer_start(m_temp_timer_id, (uint32_t)(TEMP_TRIGGER_VAL_TIME), NULL);
         APP_ERROR_CHECK(err_code);
     }
     else{
@@ -976,10 +967,8 @@ static void timers_start(void) {
         APP_ERROR_CHECK(err_code);
     }
     
-    
     if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){   
-        memcpy(&meas_interval, m_ess.pressure.trigger_val_buff + 1, 3);
-        err_code = app_timer_start(m_pres_timer_id, meas_interval, NULL);
+        err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
         APP_ERROR_CHECK(err_code);
     } 
     else{
@@ -987,25 +976,84 @@ static void timers_start(void) {
         APP_ERROR_CHECK(err_code);
     }
     
-    
     if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){   
-        memcpy(&meas_interval, m_ess.humidity.trigger_val_buff + 1, 3);
-        err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
+        meas_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
+        err_code = app_timer_start(m_hum_timer_id, (uint32_t)(HUM_TRIGGER_VAL_TIME), NULL);
         APP_ERROR_CHECK(err_code);
     }
     else{
         err_code = app_timer_stop(m_hum_timer_id);
         APP_ERROR_CHECK(err_code);
     }
+
     if ( (m_ess.lux.trigger_val_cond == 0x01) || (m_ess.lux.trigger_val_cond == 0x02) ){   
-        memcpy(&meas_interval, m_ess.lux.trigger_val_buff + 1, 3);
-        err_code = app_timer_start(m_lux_timer_id, meas_interval, NULL);
+        meas_interval = (uint32_t)(LUX_TRIGGER_VAL_TIME);
+        err_code = app_timer_start(m_lux_timer_id, (uint32_t)(LUX_TRIGGER_VAL_TIME), NULL);
         APP_ERROR_CHECK(err_code);
     }
     else{
-        err_code = app_timer_stop(m_hum_timer_id);
+        err_code = app_timer_stop(m_lux_timer_id);
         APP_ERROR_CHECK(err_code);
     }
+}
+
+static void update_timers( ble_evt_t * p_ble_evt ){
+
+    ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+    uint32_t meas_interval = 0;
+    uint32_t err_code;
+
+    if (p_evt_write->handle == m_ess.temperature.trigger_handle)
+    {
+        app_timer_stop(m_temp_timer_id);
+        if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){   
+            memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
+            meas_interval = (uint32_t)(meas_interval);
+            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
+            err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
+            APP_ERROR_CHECK(err_code);
+        }
+    }
+    else if (p_evt_write->handle == m_ess.pressure.trigger_handle)
+    {
+        app_timer_stop(m_pres_timer_id);
+        if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){   
+            memcpy(&meas_interval, m_ess.pressure.trigger_val_buff + 1, 3);
+            meas_interval = (uint32_t)(meas_interval);
+            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
+            err_code = app_timer_start(m_pres_timer_id, meas_interval, NULL);
+            APP_ERROR_CHECK(err_code);
+        } 
+    }
+    else if (p_evt_write->handle == m_ess.humidity.trigger_handle)
+    {
+        app_timer_stop(m_hum_timer_id);
+        if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){   
+            memcpy(&meas_interval, m_ess.humidity.trigger_val_buff + 1, 3);
+            meas_interval = (uint32_t)(meas_interval);
+            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
+            err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
+            APP_ERROR_CHECK(err_code);
+        }
+    }
+    else if (p_evt_write->handle == m_ess.lux.trigger_handle)
+    {
+        app_timer_stop(m_lux_timer_id);
+        if ( (m_ess.lux.trigger_val_cond == 0x01) || (m_ess.lux.trigger_val_cond == 0x02) ){   
+            memcpy(&meas_interval, m_ess.lux.trigger_val_buff + 1, 3);
+            meas_interval = (uint32_t)(meas_interval);
+            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
+            err_code = app_timer_start(m_lux_timer_id, meas_interval, NULL);
+            APP_ERROR_CHECK(err_code);
+        }
+    }
+    
+    else if (p_evt_write->handle == m_ess.acceleration.trigger_handle)
+    {
+
+    }
+
 }
 
 /** @brief Function for the Power manager.
@@ -1020,7 +1068,6 @@ static void update_advdata(void) {
     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
     //ble_advdata_manuf_data_t manuf_specific_data;
     //memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
-
 
     ble_advdata_service_data_t service_data;
 
@@ -1092,13 +1139,11 @@ void ess_update(void)
 {
 
     if (m_ess.temperature.trigger_val_cond >= 0x03){ 
-        temp_take_measurement(NULL);   
+        temp_take_measurement(NULL);
     }
-
     if (m_ess.pressure.trigger_val_cond >= 0x03){
         pres_take_measurement(NULL);  
     }
-
     if (m_ess.humidity.trigger_val_cond >= 0x03){
         hum_take_measurement(NULL);
     }
@@ -1143,7 +1188,7 @@ int main(void) {
     advertising_start();
 
     // Initialization complete
-    led_off(SQUALL_LED_PIN);
+    //led_off(SQUALL_LED_PIN);
 
     while (1) {
         app_sched_execute();
