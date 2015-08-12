@@ -86,6 +86,11 @@
 #define LUX_TRIGGER_VAL_OPERAND     799
 #define LUX_TRIGGER_VAL_TIME        50000
 
+#define INIT_ACC_DATA               789
+#define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define ACC_TRIGGER_VAL_OPERAND     799
+#define ACC_TRIGGER_VAL_TIME        50000
+
 
 #define BOND_DELETE_ALL_BUTTON_ID            1                                          /**< Button used for deleting all bonded centrals during startup. */
 
@@ -560,6 +565,44 @@ static void lux_take_measurement(void * p_context)
 
 }
 
+static void acc_take_measurement(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+
+    //if (!m_ess_meas_not_conf_pending) {
+        uint32_t err_code;
+        
+        uint8_t  acc_meas_val[4]; 
+        uint32_t meas;
+        memset(&meas, 0, sizeof(meas));
+
+        uint8_t acc;
+        memset(&acc, 0, sizeof(acc));
+
+        acc = adxl362_read_status_reg();
+
+        meas = (uint8_t)((acc & 0x70) >> 6);
+
+        memcpy(acc_meas_val, &meas, 2);
+
+        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val, MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
+        
+        if (err_code == NRF_SUCCESS) {
+            m_ess_meas_not_conf_pending = true;
+        }
+
+        else if (//(err_code != NRF_SUCCESS) &&
+            (err_code != NRF_ERROR_INVALID_STATE) &&
+            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            )
+        {
+            APP_ERROR_HANDLER(err_code);
+        }
+    //}
+
+}
+
 /*******************************************************************************
  *   INIT FUNCTIONS
  ******************************************************************************/
@@ -734,7 +777,7 @@ static void timers_init(void) {
     hum_take_measurement);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize timer for Humidity Trigger
+    // Initialize timer for Lux Trigger
     err_code = app_timer_create(&m_lux_timer_id,
     APP_TIMER_MODE_REPEATED,
     lux_take_measurement);
@@ -770,7 +813,8 @@ static void hum_char_init(ble_ess_init_t * p_ess_init)
     p_ess_init->hum_trigger_val_var = (uint16_t)(HUM_TRIGGER_VAL_OPERAND);
     p_ess_init->hum_trigger_data.time_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
 }
-/**@brief Function for initializing the humidity.
+
+/**@brief Function for initializing lux.
  */
 static void lux_char_init(ble_ess_init_t * p_ess_init)
 {
@@ -778,6 +822,16 @@ static void lux_char_init(ble_ess_init_t * p_ess_init)
     p_ess_init->init_lux_data = (uint16_t)(INIT_LUX_DATA);
     p_ess_init->lux_trigger_val_var = (uint16_t)(LUX_TRIGGER_VAL_OPERAND);
     p_ess_init->lux_trigger_data.time_interval = (uint32_t)(LUX_TRIGGER_VAL_TIME);
+}
+
+/**@brief Function for initializing the humidity.
+ */
+static void acc_char_init(ble_ess_init_t * p_ess_init)
+{
+    p_ess_init->acc_trigger_data.condition = ACC_TRIGGER_CONDITION;
+    p_ess_init->init_acc_data = (uint8_t)(INIT_ACC_DATA);
+    p_ess_init->acc_trigger_val_var = (uint16_t)(ACC_TRIGGER_VAL_OPERAND);
+    p_ess_init->acc_trigger_data.time_interval = (uint32_t)(ACC_TRIGGER_VAL_TIME);
 }
 
 
@@ -841,13 +895,17 @@ static void sensors_init(void)
     intmap_2.FIFO_WATERMARK = 0;
     intmap_2.FIFO_OVERRUN = 0;
     intmap_2.ACT = 0;
-    intmap_2.INACT = 0;
-    intmap_2.AWAKE = 1;
+    intmap_2.INACT = 1;
+    intmap_2.AWAKE = 0;
     intmap_2.INT_LOW = 1;
     adxl362_config_INTMAP(&intmap_2, false);
+    adxl362_config_interrupt_mode(LOOP, true , true);
+    adxl362_activity_interrupt_enable();
+    adxl362_inactivity_interrupt_enable();
     */
     adxl362_config_interrupt_mode(LOOP, true , true);
     adxl362_activity_inactivity_interrupt_enable();
+
     
 }
 
@@ -867,7 +925,7 @@ static void services_init (void) {
     pres_char_init(&ess_init); //initialize pres
     hum_char_init(&ess_init); //initialize hum
     lux_char_init(&ess_init); //initialize hum
-
+    acc_char_init(&ess_init); //initialize hum
     
     err_code = ble_ess_init(&m_ess, &ess_init);
     APP_ERROR_CHECK(err_code);
@@ -990,7 +1048,9 @@ static void update_advdata(void) {
     uint8_t acc;
     memset(&acc, 0, sizeof(acc));
     acc = adxl362_read_status_reg();
-    m_sensor_info.acceleration = (uint8_t)((acc & 0x70) >> 5);
+    m_sensor_info.acceleration = (uint8_t)((acc & 0x70) >> 6);
+    //m_sensor_info.acceleration = (uint8_t)(acc);
+
 
     memcpy(&m_beacon_info[0],  &m_sensor_info.temp, 2);
     memcpy(&m_beacon_info[2],  &m_sensor_info.pressure, 4);
@@ -1042,8 +1102,11 @@ void ess_update(void)
     if (m_ess.humidity.trigger_val_cond >= 0x03){
         hum_take_measurement(NULL);
     }
-    if (m_ess.humidity.trigger_val_cond >= 0x03){
+    if (m_ess.lux.trigger_val_cond >= 0x03){
         lux_take_measurement(NULL);
+    }
+    if (m_ess.acceleration.trigger_val_cond >= 0x03){
+        acc_take_measurement(NULL);
     }
     
 }

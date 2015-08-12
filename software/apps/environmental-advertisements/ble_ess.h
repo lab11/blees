@@ -53,6 +53,10 @@
 
 #define MAX_LUX_LEN 2
 
+#define INIT_ACC_LEN 1
+
+#define MAX_ACC_LEN 1
+
 #define ESS_UUID_ES_MEAS_DESC 0x290C
 
 #define ESS_UUID_ES_TRIGGER_SETTING 0x290D
@@ -139,9 +143,9 @@ typedef struct
 	uint16_t						lux_trigger_val_var;
 	ess_char_trigger_init_data_t	lux_trigger_data;
 
-	//uint16_t 						init_acc_data;	
-	//uint16_t						acc_trigger_val_var;
-	//ess_char_trigger_init_data_t	acc_trigger_data;
+	uint16_t 						init_acc_data;	
+	uint16_t						acc_trigger_val_var;
+	ess_char_trigger_init_data_t	acc_trigger_data;
 
     bool							is_notify_supported;	/**< Determines if notifications are supported */
 	
@@ -174,14 +178,14 @@ typedef struct ble_ess_s
 	ble_gatts_char_handles_t      	pres_char_handles;          //< Handles related to the Pressure characteristic. 
 	ble_gatts_char_handles_t     	hum_char_handles;           //< Handles related to the Humidity characteristic. 
 	ble_gatts_char_handles_t     	lux_char_handles;           //< Handles related to the Humidity characteristic. 
-	//ble_gatts_char_handles_t     	acc_char_handles;           //< Handles related to the Humidity characteristic. 
+	ble_gatts_char_handles_t     	acc_char_handles;           //< Handles related to the Humidity characteristic. 
 
 
 	ess_char_data_t 			  	temperature;
 	ess_char_data_t 			  	pressure;
 	ess_char_data_t 			  	humidity;
 	ess_char_data_t 			  	lux;
-	//ess_char_data_t 			  	acceleration;
+	ess_char_data_t 			  	acceleration;
 
 	uint8_t                       	uuid_type;
     uint16_t                      	conn_handle;                /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
