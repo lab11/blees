@@ -8,18 +8,6 @@
 
 #include "app_util.h"
 
-void ess_copybuff( uint8_t * buff_1, uint8_t * buff_2, uint32_t length){
-
-    buff_2[0] = buff_1[0];
-
-    uint32_t len = 0;
-
-    while (len < length) {
-        buff_2[len] = buff_1[len];
-        len++;
-    }
-}
-
 /**@brief Function for handling the Connect event.
  *
  * @param[in]   p_ess       Environmental Service structure.
@@ -44,7 +32,10 @@ static void on_disconnect(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 static bool is_char_value_handle(ble_gatts_evt_hvc_t * p_hvc, ble_ess_t * p_ess){
     if ((p_hvc->handle == (p_ess->temp_char_handles.value_handle)) ||
         (p_hvc->handle == (p_ess->pres_char_handles.value_handle))||
-        (p_hvc->handle == (p_ess->hum_char_handles.value_handle)) ){
+        (p_hvc->handle == (p_ess->hum_char_handles.value_handle))||
+        (p_hvc->handle == (p_ess->lux_char_handles.value_handle))||
+        (p_hvc->handle == (p_ess->acc_char_handles.value_handle)) ){
+
         return true;
     }
     return false;
@@ -94,6 +85,16 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
         memcpy(&(p_ess->humidity.trigger_val_cond), p_evt_write->data, 1);
         memcpy(p_ess->humidity.trigger_val_buff, p_evt_write->data, 4);
     }
+    else if (p_evt_write->handle == p_ess->lux.trigger_handle)
+    {
+        memcpy(&(p_ess->lux.trigger_val_cond), p_evt_write->data, 1);
+        memcpy(p_ess->lux.trigger_val_buff, p_evt_write->data, 4);
+    }
+    else if (p_evt_write->handle == p_ess->acceleration.trigger_handle)
+    {
+        memcpy(&(p_ess->acceleration.trigger_val_cond), p_evt_write->data, 1);
+        memcpy(p_ess->acceleration.trigger_val_buff, p_evt_write->data, 4);
+    }
 }
 
 
@@ -123,17 +124,6 @@ void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
     }
 }
 
-static uint8_t encode_buffer(uint8_t * p_encoded_buffer, const uint8_t * trigger_condition, const uint8_t * trigger_var_buff){
-    uint8_t len = 0;
-    p_encoded_buffer[len] = *trigger_condition;
-    len++;
-    p_encoded_buffer[len] = *trigger_var_buff;
-    len++;
-    
-    return len;
-    
-}
-
 
 /**@brief Function for adding a pressure characteristic.
  *
@@ -160,6 +150,7 @@ static uint8_t encode_buffer(uint8_t * p_encoded_buffer, const uint8_t * trigger
 static uint32_t ess_char_add(ble_ess_t * p_ess,
                             const ble_ess_init_t * p_ess_init,
                             int ESS_CHAR_UUID,
+                            uint8_t uuid_type,
                             ess_char_data_t * char_data,
                             uint8_t * fake_data_p,
                             uint16_t init_char_len,
@@ -182,7 +173,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
     /***** set characteristic properties *****/
     char_md.char_props.read   = 1; // mandatory
-    //char_md.char_props.notify = 1;
     char_md.char_props.notify = p_ess_init->is_notify_supported; // optional
     p_ess->is_notify_supported = char_md.char_props.notify;
     //char_md.char_props.write   = 0; // excluded
@@ -212,9 +202,8 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     char_md.p_sccd_md         = NULL;
     char_md.p_char_user_desc  = NULL;
     
-    ble_uuid.type = p_ess->uuid_type;
+    ble_uuid.type = uuid_type;
     ble_uuid.uuid = ESS_CHAR_UUID;
-    //ble_uuid.uuid = 0x2A1C;
     
     /* I currently cannot find any information about required characteristic value attribute metadata */
     memset(&attr_md, 0, sizeof(attr_md));
@@ -353,18 +342,17 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     uint8_t *init_data_ptr;
 
     memcpy(p_ess->temperature.val_last, &(p_ess_init->init_temp_data), 2);
-    //(p_ess->temperature.val_last) = (uint8_t*)&(p_ess_init->init_temp_data);
     memcpy(p_ess->pressure.val_last, &(p_ess_init->init_pres_data), 4);
-    //(p_ess->pressure.val_last) = (uint8_t*)&(p_ess_init->init_pres_data);
     memcpy(p_ess->humidity.val_last, &(p_ess_init->init_hum_data), 2);
-    //(p_ess->humidity.val_last) = (uint8_t*)&(p_ess_init->init_hum_data);
+    memcpy(p_ess->lux.val_last, &(p_ess_init->init_lux_data), 2);
+    memcpy(p_ess->acceleration.val_last, &(p_ess_init->init_acc_data), 1);
+
     
     /****** Add temperature characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_temp_data);
-    
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_TEMP_CHAR, &(p_ess->temperature), init_data_ptr, INIT_TEMP_LEN, MAX_TEMP_LEN, 
+
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_TEMP_CHAR, BLE_UUID_TYPE_BLE,  &(p_ess->temperature), init_data_ptr, INIT_TEMP_LEN, MAX_TEMP_LEN, 
         &(p_ess_init->temp_trigger_data),  (uint8_t*)&(p_ess_init->temp_trigger_val_var), &(p_ess->temp_char_handles) );
-    
 
     if (err_code != NRF_SUCCESS)
     {
@@ -374,7 +362,7 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /******* Add pressure characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_pres_data);
     
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_PRES_CHAR, &(p_ess->pressure), init_data_ptr, INIT_PRES_LEN, MAX_PRES_LEN, 
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_PRES_CHAR, BLE_UUID_TYPE_BLE, &(p_ess->pressure), init_data_ptr, INIT_PRES_LEN, MAX_PRES_LEN, 
         &(p_ess_init->pres_trigger_data),  (uint8_t*)&(p_ess_init->pres_trigger_val_var), &(p_ess->pres_char_handles) );
 
     if (err_code != NRF_SUCCESS)
@@ -385,7 +373,7 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /******* Add humidity characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_hum_data);
     
-   err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_HUM_CHAR, &(p_ess->humidity), init_data_ptr, INIT_HUM_LEN, MAX_HUM_LEN, 
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_HUM_CHAR, BLE_UUID_TYPE_BLE, &(p_ess->humidity), init_data_ptr, INIT_HUM_LEN, MAX_HUM_LEN, 
         &(p_ess_init->hum_trigger_data),  (uint8_t*)&(p_ess_init->hum_trigger_val_var), &(p_ess->hum_char_handles) );
 
     if (err_code != NRF_SUCCESS)
@@ -393,6 +381,26 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
         return err_code;
     }
     
+    /******* Add lux characteristic *******/
+    init_data_ptr = (uint8_t*)&(p_ess_init->init_lux_data);
+    
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_LUX_CHAR_SHORT, BLE_UUID_TYPE_BLE, &(p_ess->lux), init_data_ptr, INIT_LUX_LEN, MAX_LUX_LEN, 
+        &(p_ess_init->lux_trigger_data),  (uint8_t*)&(p_ess_init->lux_trigger_val_var), &(p_ess->lux_char_handles) );
+
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+    /******* Add acceleration characteristic *******/
+    init_data_ptr = (uint8_t*)&(p_ess_init->init_acc_data);
+    
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_ACC_CHAR_SHORT, BLE_UUID_TYPE_BLE, &(p_ess->acceleration), init_data_ptr, INIT_ACC_LEN, MAX_ACC_LEN, 
+        &(p_ess_init->acc_trigger_data),  (uint8_t*)&(p_ess_init->acc_trigger_val_var), &(p_ess->acc_char_handles) );
+
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
 
     return NRF_SUCCESS;
     

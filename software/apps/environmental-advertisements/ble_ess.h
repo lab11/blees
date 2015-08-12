@@ -26,6 +26,17 @@
 
 #define ESS_UUID_HUM_CHAR 0x2A6F
 
+#define ESS_UUID_LUX_CHAR 0xC55A62C082624A628F9AA5C5124ECADC
+
+#define ESS_UUID_LUX_CHAR_SHORT 0xC512
+//#define ESS_UUID_LUX_CHAR_SHORT 0x2A77
+//#define ESS_UUID_LUX_CHAR_SHORT 0x2AF0
+
+#define ESS_UUID_ACC_CHAR 0xCD3F4A3482F34F7E909D28F8014F36DA
+
+#define ESS_UUID_ACC_CHAR_SHORT 0xF801
+
+
 #define INIT_TEMP_LEN 2
 
 #define MAX_TEMP_LEN 2
@@ -37,6 +48,14 @@
 #define INIT_HUM_LEN 2
 
 #define MAX_HUM_LEN 2
+
+#define INIT_LUX_LEN 2
+
+#define MAX_LUX_LEN 2
+
+#define INIT_ACC_LEN 1
+
+#define MAX_ACC_LEN 1
 
 #define ESS_UUID_ES_MEAS_DESC 0x290C
 
@@ -68,7 +87,6 @@
 
 int intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed);
 
-void ess_copybuff( uint8_t * buff_1, uint8_t * buff_2, uint32_t length);
 /**@brief ESS event type. */
 typedef enum
 {
@@ -121,6 +139,13 @@ typedef struct
 	uint16_t						hum_trigger_val_var;
 	ess_char_trigger_init_data_t	hum_trigger_data;
 
+	uint16_t 						init_lux_data;	
+	uint16_t						lux_trigger_val_var;
+	ess_char_trigger_init_data_t	lux_trigger_data;
+
+	uint16_t 						init_acc_data;	
+	uint16_t						acc_trigger_val_var;
+	ess_char_trigger_init_data_t	acc_trigger_data;
 
     bool							is_notify_supported;	/**< Determines if notifications are supported */
 	
@@ -129,6 +154,8 @@ typedef struct
 
 typedef struct 
 {
+	//ble_uuid_t					char_uuid;
+
 	uint8_t	   					val_last[4];
 
 	//ble_gatts_char_handles_t 	char_handle;
@@ -143,36 +170,25 @@ typedef struct
 /**@brief ESS structure. This contains various status information for the service. */
 typedef struct ble_ess_s
 {
-    ble_ess_evt_handler_t         evt_handler;              /**< Event handler to be called for handling events in the ESS. */
-    bool						is_notify_supported;		/**< TRUE if notifications are supported */
-    uint16_t                      ess_service_handle;         /**< Handle of ESS (as provided by the BLE stack). */
+    ble_ess_evt_handler_t         	evt_handler;              	/**< Event handler to be called for handling events in the ESS. */
+    bool							is_notify_supported;		/**< TRUE if notifications are supported */
+    uint16_t                      	ess_service_handle;         /**< Handle of ESS (as provided by the BLE stack). */
+   
+    ble_gatts_char_handles_t      	temp_char_handles;          //< Handles related to the Temperature characteristic. 
+	ble_gatts_char_handles_t      	pres_char_handles;          //< Handles related to the Pressure characteristic. 
+	ble_gatts_char_handles_t     	hum_char_handles;           //< Handles related to the Humidity characteristic. 
+	ble_gatts_char_handles_t     	lux_char_handles;           //< Handles related to the Humidity characteristic. 
+	ble_gatts_char_handles_t     	acc_char_handles;           //< Handles related to the Humidity characteristic. 
 
-    
-    ble_gatts_char_handles_t      temp_char_handles;          //< Handles related to the Temperature characteristic. 
-	ble_gatts_char_handles_t      pres_char_handles;          //< Handles related to the Pressure characteristic. 
-	ble_gatts_char_handles_t      hum_char_handles;           //< Handles related to the Humidity characteristic. 
-	
-	/*
-	uint8_t temp_trigger_val_cond;
-	uint8_t temp_trigger_val_buff[4];
 
-	uint8_t pres_trigger_val_cond;
-	uint8_t pres_trigger_val_buff[4];
+	ess_char_data_t 			  	temperature;
+	ess_char_data_t 			  	pressure;
+	ess_char_data_t 			  	humidity;
+	ess_char_data_t 			  	lux;
+	ess_char_data_t 			  	acceleration;
 
-	uint8_t hum_trigger_val_cond;
-	uint8_t hum_trigger_val_buff[4];
-	
-	uint16_t 		temp_trigger_handle;
-	uint16_t 		pres_trigger_handle;
-	uint16_t 		hum_trigger_handle;
-	*/
-
-	ess_char_data_t 			  temperature;
-	ess_char_data_t 			  pressure;
-	ess_char_data_t 			  humidity;
-	
-	uint8_t                       uuid_type;
-    uint16_t                      conn_handle;                /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
+	uint8_t                       	uuid_type;
+    uint16_t                      	conn_handle;                /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
     
 } ble_ess_t;
 
@@ -186,7 +202,6 @@ typedef struct ble_ess_s
  *
  * @return      NRF_SUCCESS on successful initialization of service, otherwise an error code.
  */
-
 uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init);
 
 /**@brief Function for handling the Application's BLE Stack events.
