@@ -32,7 +32,8 @@ static void on_disconnect(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 static bool is_char_value_handle(ble_gatts_evt_hvc_t * p_hvc, ble_ess_t * p_ess){
     if ((p_hvc->handle == (p_ess->temp_char_handles.value_handle)) ||
         (p_hvc->handle == (p_ess->pres_char_handles.value_handle))||
-        (p_hvc->handle == (p_ess->hum_char_handles.value_handle)) ){
+        (p_hvc->handle == (p_ess->hum_char_handles.value_handle))||
+        (p_hvc->handle == (p_ess->lux_char_handles.value_handle)) ){
         return true;
     }
     return false;
@@ -82,13 +83,11 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
         memcpy(&(p_ess->humidity.trigger_val_cond), p_evt_write->data, 1);
         memcpy(p_ess->humidity.trigger_val_buff, p_evt_write->data, 4);
     }
-    /*
     else if (p_evt_write->handle == p_ess->lux.trigger_handle)
     {
         memcpy(&(p_ess->lux.trigger_val_cond), p_evt_write->data, 1);
         memcpy(p_ess->lux.trigger_val_buff, p_evt_write->data, 4);
     }
-    */
     /*
     else if (p_evt_write->handle == p_ess->acceleration.trigger_handle)
     {
@@ -345,7 +344,7 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     memcpy(p_ess->temperature.val_last, &(p_ess_init->init_temp_data), 2);
     memcpy(p_ess->pressure.val_last, &(p_ess_init->init_pres_data), 4);
     memcpy(p_ess->humidity.val_last, &(p_ess_init->init_hum_data), 2);
-    //memcpy(p_ess->lux.val_last, &(p_ess_init->init_lux_data), 2);
+    memcpy(p_ess->lux.val_last, &(p_ess_init->init_lux_data), 2);
     //memcpy(p_ess->acc.val_last, &(p_ess_init->init_acc_data), 2);
 
     
@@ -383,7 +382,6 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     }
     
     /******* Add lux characteristic *******/
-    /*
     init_data_ptr = (uint8_t*)&(p_ess_init->init_lux_data);
     
     err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_LUX_CHAR_SHORT, BLE_UUID_TYPE_BLE, &(p_ess->lux), init_data_ptr, INIT_LUX_LEN, MAX_LUX_LEN, 
@@ -393,7 +391,6 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     {
         return err_code;
     }
-    */
     /******* Add acceleration characteristic *******/
     /*
     init_data_ptr = (uint8_t*)&(p_ess_init->init_acc_data);

@@ -81,6 +81,11 @@
 #define HUM_TRIGGER_VAL_OPERAND     799
 #define HUM_TRIGGER_VAL_TIME        50000
 
+#define INIT_LUX_DATA               789
+#define LUX_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define LUX_TRIGGER_VAL_OPERAND     799
+#define LUX_TRIGGER_VAL_TIME        50000
+
 
 #define BOND_DELETE_ALL_BUTTON_ID            1                                          /**< Button used for deleting all bonded centrals during startup. */
 
@@ -93,6 +98,7 @@ static app_timer_id_t                        m_ess_timer_id;                    
 static app_timer_id_t                        m_temp_timer_id;                        /**< ESS timer. */
 static app_timer_id_t                        m_pres_timer_id;                        /**< ESS timer. */
 static app_timer_id_t                        m_hum_timer_id;                        /**< ESS timer. */
+static app_timer_id_t                        m_lux_timer_id;                        /**< ESS timer. */
 
 
 static bool                                  m_ess_meas_not_conf_pending = false; /** Flag to keep track of when a notification confirmation is pending */
@@ -516,6 +522,44 @@ static void hum_take_measurement(void * p_context)
 
 }
 
+static void lux_take_measurement(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+
+    //if (!m_ess_meas_not_conf_pending) {
+        uint32_t err_code;
+        
+        uint8_t  lux_meas_val[4]; 
+        uint32_t meas;
+        memset(&meas, 0, sizeof(meas));
+
+        float lux;
+        memset(&lux, 0, sizeof(lux));
+
+        (si7021_read_RH_hold(&lux));
+
+        meas = (uint16_t)(lux);
+
+        memcpy(lux_meas_val, &meas, 2);
+
+        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
+        
+        if (err_code == NRF_SUCCESS) {
+            m_ess_meas_not_conf_pending = true;
+        }
+
+        else if (//(err_code != NRF_SUCCESS) &&
+            (err_code != NRF_ERROR_INVALID_STATE) &&
+            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            )
+        {
+            APP_ERROR_HANDLER(err_code);
+        }
+    //}
+
+}
+
 /*******************************************************************************
  *   INIT FUNCTIONS
  ******************************************************************************/
@@ -689,6 +733,12 @@ static void timers_init(void) {
     APP_TIMER_MODE_REPEATED,
     hum_take_measurement);
     APP_ERROR_CHECK(err_code);
+
+    // Initialize timer for Humidity Trigger
+    err_code = app_timer_create(&m_lux_timer_id,
+    APP_TIMER_MODE_REPEATED,
+    lux_take_measurement);
+    APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for initializing the temperature.
@@ -720,6 +770,16 @@ static void hum_char_init(ble_ess_init_t * p_ess_init)
     p_ess_init->hum_trigger_val_var = (uint16_t)(HUM_TRIGGER_VAL_OPERAND);
     p_ess_init->hum_trigger_data.time_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
 }
+/**@brief Function for initializing the humidity.
+ */
+static void lux_char_init(ble_ess_init_t * p_ess_init)
+{
+    p_ess_init->lux_trigger_data.condition = LUX_TRIGGER_CONDITION;
+    p_ess_init->init_lux_data = (uint16_t)(INIT_LUX_DATA);
+    p_ess_init->lux_trigger_val_var = (uint16_t)(LUX_TRIGGER_VAL_OPERAND);
+    p_ess_init->lux_trigger_data.time_interval = (uint32_t)(LUX_TRIGGER_VAL_TIME);
+}
+
 
 /**@brief Function for initializing the sensor simulators.
  */
@@ -806,6 +866,8 @@ static void services_init (void) {
     temp_char_init(&ess_init); //initialize temp
     pres_char_init(&ess_init); //initialize pres
     hum_char_init(&ess_init); //initialize hum
+    lux_char_init(&ess_init); //initialize hum
+
     
     err_code = ble_ess_init(&m_ess, &ess_init);
     APP_ERROR_CHECK(err_code);
@@ -871,6 +933,15 @@ static void timers_start(void) {
     if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){   
         memcpy(&meas_interval, m_ess.humidity.trigger_val_buff + 1, 3);
         err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
+        APP_ERROR_CHECK(err_code);
+    }
+    else{
+        err_code = app_timer_stop(m_hum_timer_id);
+        APP_ERROR_CHECK(err_code);
+    }
+    if ( (m_ess.lux.trigger_val_cond == 0x01) || (m_ess.lux.trigger_val_cond == 0x02) ){   
+        memcpy(&meas_interval, m_ess.lux.trigger_val_buff + 1, 3);
+        err_code = app_timer_start(m_lux_timer_id, meas_interval, NULL);
         APP_ERROR_CHECK(err_code);
     }
     else{
@@ -970,6 +1041,9 @@ void ess_update(void)
 
     if (m_ess.humidity.trigger_val_cond >= 0x03){
         hum_take_measurement(NULL);
+    }
+    if (m_ess.humidity.trigger_val_cond >= 0x03){
+        lux_take_measurement(NULL);
     }
     
 }
