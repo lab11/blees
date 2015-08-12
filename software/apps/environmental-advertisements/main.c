@@ -67,7 +67,7 @@
 
 
 #define INIT_TEMP_DATA              123
-#define TEMP_TRIGGER_CONDITION      TRIG_INACTIVE
+#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
 #define TEMP_TRIGGER_VAL_OPERAND    156
 #define TEMP_TRIGGER_VAL_TIME       50000
 
@@ -149,11 +149,11 @@ static ble_gap_sec_params_t m_sec_params = {
 static app_timer_id_t sample_timer;
 
 static struct {
-    float temp;
-    float humidity;
-    float light;
-    float pressure;
-    float acceleration;
+    int16_t temp;
+    uint32_t pressure;
+    uint16_t humidity;
+    uint16_t light;
+    uint8_t acceleration;
 } m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
 
 static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
@@ -399,7 +399,7 @@ static void ess_meas_timeout_handler(void * p_context)
 }
 
 
-static void temp_meas_timeout_handler(void * p_context)
+static void temp_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
 
@@ -439,7 +439,7 @@ static void temp_meas_timeout_handler(void * p_context)
 
 
 
-static void pres_meas_timeout_handler(void * p_context)
+static void pres_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
 
@@ -478,7 +478,7 @@ static void pres_meas_timeout_handler(void * p_context)
 
 }
 
-static void hum_meas_timeout_handler(void * p_context)
+static void hum_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
 
@@ -605,7 +605,7 @@ static void advertising_init(void) {
     /*Newly added*/
     volatile uint32_t      err_code;
     ble_advdata_t advdata;
-    ble_advdata_t scanrsp;
+    //ble_advdata_t scanrsp;
     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
     ble_uuid_t adv_uuids[] = {
         {ESS_UUID_SERVICE, m_ess.uuid_type}
@@ -618,11 +618,12 @@ static void advertising_init(void) {
     advdata.flags = flags;
     
 
-    memset(&scanrsp, 0, sizeof(scanrsp));
-    scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
-    scanrsp.uuids_complete.p_uuids  = adv_uuids;
+    //memset(&scanrsp, 0, sizeof(scanrsp));
+    //scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
+    //scanrsp.uuids_complete.p_uuids  = adv_uuids;
     
-    err_code = ble_advdata_set(&advdata, &scanrsp);
+    //err_code = ble_advdata_set(&advdata, &scanrsp);
+    err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -674,19 +675,19 @@ static void timers_init(void) {
     // Initialize timer for Temperature trigger
     err_code = app_timer_create(&m_temp_timer_id,
     APP_TIMER_MODE_REPEATED,
-    temp_meas_timeout_handler);
+    temp_take_measurement);
     APP_ERROR_CHECK(err_code);
     
     // Initialize timer for Pressure Trigger
     err_code = app_timer_create(&m_pres_timer_id,
     APP_TIMER_MODE_REPEATED,
-    pres_meas_timeout_handler);
+    pres_take_measurement);
     APP_ERROR_CHECK(err_code);
     
     // Initialize timer for Humidity Trigger
     err_code = app_timer_create(&m_hum_timer_id,
     APP_TIMER_MODE_REPEATED,
-    hum_meas_timeout_handler);
+    hum_take_measurement);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -750,6 +751,43 @@ static void sensors_init(void)
     lps331ap_one_shot_config();
     lps331ap_power_on();
 
+    //initialize lux
+    tsl2561_init(&twi_instance);
+    tsl2561_on();
+
+    //initialize accelerometer
+    adxl362_accelerometer_init(NORMAL, true, false, false);
+    uint16_t act_thresh = 0x000F;
+    adxl362_set_activity_threshold(act_thresh);
+    uint16_t inact_thresh = 0x000F;
+    adxl362_set_inactivity_threshold(inact_thresh);
+    uint8_t a_time = 2;
+    adxl362_set_activity_time(a_time);
+    uint8_t ia_time = 50;
+    adxl362_set_inactivity_time(ia_time);
+    /*
+    adxl362_interrupt_map_t intmap_1, intmap_2;
+    intmap_1.DATA_READY = 0;
+    intmap_1.FIFO_READY = 0;
+    intmap_1.FIFO_WATERMARK = 0;
+    intmap_1.FIFO_OVERRUN = 0;
+    intmap_1.ACT = 1;
+    intmap_1.INACT = 0;
+    intmap_1.AWAKE = 0;
+    intmap_1.INT_LOW = 1;
+    adxl362_config_INTMAP(&intmap_1, true);
+    intmap_2.DATA_READY = 0;
+    intmap_2.FIFO_READY = 0;
+    intmap_2.FIFO_WATERMARK = 0;
+    intmap_2.FIFO_OVERRUN = 0;
+    intmap_2.ACT = 0;
+    intmap_2.INACT = 0;
+    intmap_2.AWAKE = 1;
+    intmap_2.INT_LOW = 1;
+    adxl362_config_INTMAP(&intmap_2, false);
+    */
+    adxl362_config_interrupt_mode(LOOP, true , true);
+    adxl362_activity_inactivity_interrupt_enable();
     
 }
 
@@ -857,12 +895,37 @@ static void update_advdata(void) {
 
     ble_advdata_service_data_t service_data;
 
+    float temp;
+    memset(&temp, 0, sizeof(temp));
+    si7021_read_temp_hold(&temp);
+    m_sensor_info.temp = (int16_t)(temp * 100);
+        
+    float pres;
+    memset(&pres, 0, sizeof(pres));
+    lps331ap_one_shot_enable();
+    lps331ap_readPressure(&pres);
+    m_sensor_info.pressure = (uint32_t)(pres * 1000);
 
-    memcpy(&m_beacon_info[0],  &m_sensor_info.temp, 4);
-    memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 4);
-    memcpy(&m_beacon_info[8],  &m_sensor_info.light, 4);
-    memcpy(&m_beacon_info[12], &m_sensor_info.pressure, 4);
-    //memcpy(&m_beacon_info[16], &m_sensor_info.acceleration, 2);
+    float hum;
+    memset(&hum, 0, sizeof(hum));
+    (si7021_read_RH_hold(&hum));
+    m_sensor_info.humidity = (uint16_t)(hum * 100);
+
+    float lux;
+    memset(&lux, 0, sizeof(lux));
+    lux = tsl2561_readLux(tsl2561_MODE0);
+    m_sensor_info.light = (uint16_t)(lux);
+
+    uint8_t acc;
+    memset(&acc, 0, sizeof(acc));
+    acc = adxl362_read_status_reg();
+    m_sensor_info.acceleration = (uint8_t)((acc & 0x70) >> 5);
+
+    memcpy(&m_beacon_info[0],  &m_sensor_info.temp, 2);
+    memcpy(&m_beacon_info[2],  &m_sensor_info.pressure, 4);
+    memcpy(&m_beacon_info[6],  &m_sensor_info.humidity, 2);
+    memcpy(&m_beacon_info[8], &m_sensor_info.light, 2);
+    memcpy(&m_beacon_info[10], &m_sensor_info.acceleration, 1);
 
     //manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
     //manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
@@ -898,15 +961,15 @@ void ess_update(void)
 {
 
     if (m_ess.temperature.trigger_val_cond >= 0x03){ 
-        temp_meas_timeout_handler(NULL);   
+        temp_take_measurement(NULL);   
     }
 
     if (m_ess.pressure.trigger_val_cond >= 0x03){
-        pres_meas_timeout_handler(NULL);  
+        pres_take_measurement(NULL);  
     }
 
     if (m_ess.humidity.trigger_val_cond >= 0x03){
-        hum_meas_timeout_handler(NULL);
+        hum_take_measurement(NULL);
     }
     
 }
