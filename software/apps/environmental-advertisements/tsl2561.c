@@ -308,8 +308,7 @@ void tsl2561_interrupt_test(){
 
 	uint8_t command[2] = {0x00, 0x00};
 
-	uint8_t data = 0x30;
-
+	uint8_t data = 0x30; 
 	command[0] = COMMAND_REG | INTERRUPT_CONTROL_REG_ADDR;
 
 	command[1] = data;
