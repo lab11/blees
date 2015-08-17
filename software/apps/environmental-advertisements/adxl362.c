@@ -150,30 +150,36 @@ void adxl362_config_INTMAP(adxl362_interrupt_map_t * int_map, bool intmap_1){
 
 
 //only 11 bits are used
+
 void adxl362_set_activity_threshold(uint16_t act_threshold){
 
-	uint8_t data[1] = { 0x0F & act_threshold};
+	uint8_t data[1] = { 0x00FF & act_threshold};
 	spi_write_reg(THRESH_ACT_L, data, 1);
 
-	data[0] = 0xF0 & act_threshold;
+	spi_read_reg(THRESH_ACT_H, data, 1);
+
+	data[0] = data[0] & 0xF8;
+
+	data[0] = (data[0] | ((act_threshold & 0x0700) >> 8) );
 	spi_write_reg(THRESH_ACT_H, data, 1);
 
 }
 
 void adxl362_set_inactivity_threshold(uint16_t inact_threshold){
 
-	uint8_t data[1] = { 0x0F & inact_threshold};
+	uint8_t data[1] = { 0x00FF & inact_threshold};
 	spi_write_reg(THRESH_INACT_L, data, 1);
 	
-	data[0] = 0xF0 & inact_threshold;
+	data[0] = (uint8_t)((0x0700 & inact_threshold) >> 8);
 	spi_write_reg(THRESH_INACT_H, data, 1);
 
 }
 
+
 //ignored if device is on wake-up mode
 void adxl362_set_inactivity_time(uint16_t inact_time){
 
-	uint8_t data[2];
+	uint8_t data[2] = {0x00, 0x00};
 	data[0] = 0x00FF & inact_time;
 	data[1] = (0xFF00 & inact_time) >> 8;
 
@@ -265,7 +271,6 @@ void adxl362_read_FIFO(uint8_t * buf, uint16_t num_samples){
     nrf_gpio_pin_set(SPI_SS_PIN);
 	/*
 	spi_write(command[0]);
-
 	for(int i = 0; i < num_samples; i++){
 		spi_read(buf + i);
 	}
@@ -403,15 +408,15 @@ void adxl362_sample_accel_byte(uint8_t * x_data, uint8_t * y_data, uint8_t * z_d
 
 void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool autosleep_en, bool wakeup_en){
 
+	
 	spi_init();
 
     // send a soft reset to the accelerometer
     uint8_t data[1] = {RESET_CODE};
     spi_write_reg(SOFT_RESET, data, 1);
 
-    uint32_t delay = 1;
-
-    nrf_delay_ms(delay);
+    for (int i = 0; i < 100; i++);
+    
 
     if (measure){
     	data[0] = MEASUREMENT_MODE;
