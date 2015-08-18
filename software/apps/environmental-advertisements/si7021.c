@@ -6,50 +6,25 @@
 #include <string.h>
 #include "time.h"
 
-#define Meas_RH_Hold_Master 0xE5
-//Measure Relative Humidity, Hold Master Mode
-
-#define Meas_RH_No_Hold_Master 0xF5
-//Measure Relative Humidity, No Hold Master Mode
-
-#define Meas_Temp_Hold_Master 0xE3
-//Measure Temperature, Hold Master Mode
-
-#define Meas_Temp_No_Hold_Master 0xF3
-//Measure Temperature, No Hold Master Mode
-
-#define Read_Temp_From_Prev_RH 0xE0
-//Read Temperature Value from Previous RH Measurement
-
-#define RESET 0xFE
-//Reset
-
-#define Write_User_Reg_1 0xE6
-//Write RH/T User Register 1
-
-#define Read_User_Reg_1 0xE7
-//Read RH/T User Register 1
-
+#define Meas_RH_Hold_Master 0xE5 		//Measure Relative Humidity, Hold Master Mode
+#define Meas_RH_No_Hold_Master 0xF5 	//Measure Relative Humidity, No Hold Master Mode
+#define Meas_Temp_Hold_Master 0xE3		//Measure Temperature, Hold Master Mode
+#define Meas_Temp_No_Hold_Master 0xF3	//Measure Temperature, No Hold Master Mode
+#define Read_Temp_From_Prev_RH 0xE0		//Read Temperature Value from Previous RH Measurement
+#define RESET 0xFE						//Reset
+#define Write_User_Reg_1 0xE6			//Write RH/T User Register 1
+#define Read_User_Reg_1 0xE7			//Read RH/T User Register 1
 #define	Read_ID_Byte_1	0xFA 
-#define Read_ID_Byte_1_b 0x0F
-//Read Electronic ID 1st
-
-#define Read_ID_Byte_2	0xFC
-#define Read_ID_Byte_2_b	0xC9
-
-//Read Electronic ID 2nd
-
-#define Read_Firm_Rev_1	 0x84
-
+#define Read_ID_Byte_1_b 0x0F 			//Read 1st Electronic ID
+#define Read_ID_Byte_2	0xFC 			//Read 2nd Electronic ID
+#define Read_ID_Byte_2_b  0xC9
+#define Read_Firm_Rev_1	 0x84 			//Read Firmware Revision
 #define Read_Firm_Rev_2  0xB8
-//Read Firmware Revision
 
 #define HEATER_ON 	0x04
 #define HEATER_OFF  ~(HEATER_ON)
 
-//#define TEMP_HUM_ADDR_THIS	0x80
 #define TEMP_HUM_ADDR_THIS	0x40
-
 
 static nrf_drv_twi_t * m_instance;
 
@@ -243,8 +218,7 @@ void si7021_read_temp_after_RH(float *temp){
 void si7021_read_temp_and_RH(float *temp, float *hum){
 
 	si7021_read_RH(hum);
-	//employ read temp after RH shortcut
-	si7021_read_temp_after_RH(temp);
+	si7021_read_temp_after_RH(temp); //employ read temp after RH shortcut
 
 }
 

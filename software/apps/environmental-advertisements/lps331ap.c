@@ -1,55 +1,44 @@
 #include <stdint.h>
-#include "nrf_drv_twi.h"
 #include <stdbool.h>
-#include <math.h>
-#include "lps331ap.h"
-#include <stdio.h>
 #include <string.h>
+#include <math.h>
+
+#include "nrf_drv_twi.h"
 #include "time.h"
 
+#include "lps331ap.h"
 
+//Register defines
 #define REF_P_XL 0x08
 #define REF_P_L 0x09
 #define REF_P_H 0x0A
-
 #define RES_CONF 0x10
-
 #define CTRL_REG1 0x20 
+#define CTRL_REG2 0x21 
+#define CTRL_REG3 0x22 
+#define INT_CFG_REG 0x23 
+#define INT_SOURCE_REG 0x24 
+#define THS_P_LOW_REG 0x25
+#define THS_P_HIGH_REG 0x26
+#define STATUS_REG 0x27 
+#define PRESS_OUT_XL 0x28
+#define PRESS_OUT_L 0x29 
+#define PRESS_OUT_H 0x2A 
+#define TEMP_OUT_L 0x2B
+#define TEMP_OUT_H 0x2C 
+#define AMP_CTRL 0x30 
+
+//Ctrl_Reg1 defines
 #define POWER_ON   0x80
 #define POWER_OFF   0x00
 #define BLOCK_UPDATE_ENABLE 0x04
 
-
-#define CTRL_REG2 0x21 
+//Ctrl_Reg2 defines
 #define ONE_SHOT_ENABLE 0x01
 #define SW_RESET 0x04
 
-#define CTRL_REG3 0x22 
-
-#define INT_CFG_REG 0x23 
-#define INT_SOURCE_REG 0x24 
-
-#define THS_P_LOW_REG 0x25
-#define THS_P_HIGH_REG 0x26
-
-#define STATUS_REG 0x27 
-
-#define PRESS_OUT_XL 0x28
-#define PRESS_OUT_L 0x29 
-#define PRESS_OUT_H 0x2A 
-
-#define TEMP_OUT_L 0x2B
-#define TEMP_OUT_H 0x2C 
-
-#define AMP_CTRL 0x30 
-
-// Read/Write def
-#define TWI_READ                        0b1
-#define TWI_WRITE                       0b0
-
-#define SENSOR_ADDR	0x5C
-
-#define AUTO_INCR	0x80
+#define SENSOR_ADDR 0x5C
+#define AUTO_INCR   0x80
 
 static nrf_drv_twi_t * m_instance;
 

@@ -66,14 +66,13 @@
 
 #define DEAD_BEEF                   0xDEADBEEF                                     /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-//1  ~= 41 micro
 #define UPDATE_RATE                 APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 //Initial Pressure Parameters
 #define INIT_PRES_DATA              456
 #define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define PRES_TRIGGER_VAL_OPERAND    470
-#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)
+#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 //Initial Humidity Parameters
 #define INIT_HUM_DATA               789
@@ -83,21 +82,21 @@
 
 //Initial Temperature Parameters
 #define INIT_TEMP_DATA              123
-#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
+#define TEMP_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define TEMP_TRIGGER_VAL_OPERAND    156
 #define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 //Initial Lux Parameters
 #define INIT_LUX_DATA               789
-#define LUX_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define LUX_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define LUX_TRIGGER_VAL_OPERAND     799
-#define LUX_TRIGGER_VAL_TIME        UPDATE_RATE
+#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 //Initial Acceleration Parameters
 #define INIT_ACC_DATA               789
-#define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define ACC_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 
 /*******************************************************************************
@@ -583,7 +582,7 @@ static void acc_take_measurement(void * p_context)
     }
     m_sensor_info.acceleration = meas;
 
-    while(!update_advdata());
+    while( !update_advdata() );
 
     memcpy(acc_meas_val, &meas, 1);
 
@@ -720,6 +719,7 @@ static void conn_params_init(void) {
 
 //Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
+
     uint32_t err_code;
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
     
@@ -840,7 +840,7 @@ static void sensors_init(void)
     tsl2561_on();
 
     //initialize accelerometer
-    adxl362_accelerometer_init(NORMAL, true, false, false);
+    adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
     uint16_t act_thresh = 0x000C;
     adxl362_set_activity_threshold(act_thresh);
     uint16_t inact_thresh = 0x0096;
@@ -875,7 +875,7 @@ static void sensors_init(void)
     intmap_2.INT_LOW = 1;
     adxl362_config_INTMAP(&intmap_2, false);
 
-    adxl362_config_interrupt_mode(LOOP, true , true);
+    adxl362_config_interrupt_mode(adxl362_INTERRUPT_LOOP, true , true);
     adxl362_activity_inactivity_interrupt_enable();
 
     adxl362_read_status_reg();
@@ -893,11 +893,11 @@ static void services_init (void) {
     ess_init.evt_handler = on_ess_evt;
     ess_init.is_notify_supported = true;
     
-    pres_char_init(&ess_init); //initialize pres
-    hum_char_init(&ess_init); //initialize hum
-    temp_char_init(&ess_init); //initialize temp
-    lux_char_init(&ess_init); //initialize lux
-    acc_char_init(&ess_init); //initialize acc
+    pres_char_init(&ess_init);  //initialize pres
+    hum_char_init(&ess_init);   //initialize hum
+    temp_char_init(&ess_init);  //initialize temp
+    lux_char_init(&ess_init);   //initialize lux
+    acc_char_init(&ess_init);   //initialize acc
     
     err_code = ble_ess_init(&m_ess, &ess_init);
     APP_ERROR_CHECK(err_code);

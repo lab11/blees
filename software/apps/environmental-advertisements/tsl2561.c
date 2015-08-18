@@ -7,48 +7,45 @@
 #include "time.h"
 #include "app_error.h"
 
-
 void sleep(unsigned int mseconds)
 {
     clock_t goal = mseconds + clock();
     while (goal > clock());
 }
 
-//#define SENSOR_GND_ADDR 	0x52
+#define SENSOR_GND_ADDR 			0b00101001
 
-#define SENSOR_GND_ADDR 0b00101001
-
-#define COMMAND_REG			0x80
-#define CLEAR_INTERRUPT		0x40
-#define	WORD_PROTOCOL 		0x20
-#define	BLOCK_PROTOCOL		0x10
-#define CH0_LOW 	  		0xC
-#define CH0_HIGH 			0xD
-#define	CH1_LOW				0xE
-#define CH1_HIGH			0xF
-
-#define CONTROL_REG_ADDR	0x0
-#define POWER_ON			0x03
-#define	POWER_OFF			0x00
-
-#define TIMING_REG_ADDR		0x1
-#define HIGH_GAIN_MODE		0x10
-#define LOW_GAIN_MODE		0x00
-#define	MANUAL_INTEGRATION	0x03
-#define	BEGIN_INTEGRATION	0x08
-#define	STOP_INTEGRATION	~BEGIN_INTEGRATION
-
-#define THRESHLOWLOW_REG_ADDR	0x2
-#define THRESHLOWHIGH_REG_ADDR	0x3
-#define	THRESHHIGHLOW_REG_ADDR	0x4
-#define THRESHHIGHHIGH_REG_ADDR	0x5	
-
+#define CONTROL_REG_ADDR			0x0
+#define TIMING_REG_ADDR				0x1
+#define THRESHLOWLOW_REG_ADDR		0x2
+#define THRESHLOWHIGH_REG_ADDR		0x3
+#define	THRESHHIGHLOW_REG_ADDR		0x4
+#define THRESHHIGHHIGH_REG_ADDR		0x5	
 #define INTERRUPT_CONTROL_REG_ADDR	0x6
+#define CH0_LOW 	  				0xC
+#define CH0_HIGH 					0xD
+#define	CH1_LOW						0xE
+#define CH1_HIGH					0xF
+#define COMMAND_REG					0x80
+#define CLEAR_INTERRUPT				0x40
+#define	WORD_PROTOCOL 				0x20
+#define	BLOCK_PROTOCOL				0x10
+
+//Control_Reg defines
+#define POWER_ON					0x03
+#define	POWER_OFF					0x00
+
+//Timing_Reg defines
+#define HIGH_GAIN_MODE				0x10
+#define LOW_GAIN_MODE				0x00
+#define	MANUAL_INTEGRATION			0x03
+#define	BEGIN_INTEGRATION			0x08
+#define	STOP_INTEGRATION			~BEGIN_INTEGRATION
+
+//Interrupt_Control_Reg defines
 #define	INTERRUPT_OUTPUT_DISABLED	0x00
 #define INTERRUPT_LEVEL_INTERRUPT	0x10
 
-#define TWI_READ 0b1
-#define TWI_WRITE 0b0
 
 static nrf_drv_twi_t * m_instance;
 
@@ -72,11 +69,8 @@ static int check_error(ret_code_t error){
 void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 
 	ret_code_t error = NRF_SUCCESS;
-	int e = 4;
 	uint8_t data_low[1] = {0};
 	uint8_t data_high[1] = {0};
-
-	//uint8_t data[2] = {0x00, 0x00};
 
 	//read byte from Ch0 lower data register
 	uint8_t command[1] = {COMMAND_REG | CH0_LOW};
@@ -89,8 +83,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(command), 
 		true
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	error =
 	nrf_drv_twi_rx(
@@ -100,8 +93,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(data_low),
 		false
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	//read byte from Ch0 higher data register
 	command[0] = COMMAND_REG | CH0_HIGH;
@@ -114,8 +106,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(command), 
 		true
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	error =
 	nrf_drv_twi_rx(
@@ -125,8 +116,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(data_high),
 		false
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	//Shift data high to upper byte and set channel 0 data
 	*channel0_data = 256 * data_high[0] + data_low[0];
@@ -142,8 +132,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(command), 
 		true
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	error =
 	nrf_drv_twi_rx(
@@ -153,8 +142,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(data_low),
 		false
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 	//read byte from Ch1 higher data register
 	command[0] = COMMAND_REG | CH1_HIGH;
@@ -167,8 +155,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(command), 
 		true
 	);
-
-	e = check_error(error);
+	check_error(error);
 
 
 	error =
@@ -179,9 +166,7 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 		sizeof(data_high),
 		false
 	);
-
-	e = check_error(error);
-
+	check_error(error);
 
 	//Shift data high to upper byte and set channel 1 data
 	*channel1_data = 256 * data_high[0] + data_low[0];
@@ -225,16 +210,11 @@ void tsl2561_on(void){
 
 	ret_code_t error = NRF_SUCCESS;
 
-	//uint8_t command[] = {0xC0};
-
 	uint8_t command[2] = 
 	{ 
 		COMMAND_REG | CONTROL_REG_ADDR,
 		POWER_ON
 	};
-
-
-	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
     error =
     nrf_drv_twi_tx(
@@ -256,22 +236,17 @@ void tsl2561_on(void){
         false
 	);
 
-	//int a = 5;
 }
 
 void tsl2561_off(void){
 
 	ret_code_t error = NRF_SUCCESS;
 
-	//uint8_t command[] = {0xC0};
-
 	uint8_t command[2] = 
 	{
 		COMMAND_REG | CLEAR_INTERRUPT | CONTROL_REG_ADDR,
 		POWER_OFF
 	};
-
-	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
     error =
     nrf_drv_twi_tx(
@@ -281,10 +256,6 @@ void tsl2561_off(void){
         sizeof(command),
         false
     );
-    
-
-	//int a = 5;
-
 
 }
 
@@ -335,21 +306,6 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 			false
 		);
 
-        /*
-		memcpy(&data, threshold_low+1, 1);
-		command[0] = COMMAND_REG| THRESHLOWHIGH_REG_ADDR;
-		command[1] = data;
-
-		error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			command, 
-			sizeof(command), 
-			false
-		);
-		*/
-
 	}
 
 	if (threshold_high){
@@ -367,21 +323,6 @@ void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_hig
 			sizeof(command3), 
 			false
 		); 
-
-		/*
-		memcpy(data, threshold_high+1, 1);
-		command[0] = COMMAND_REG| THRESHHIGHHIGH_REG_ADDR;
-		command[1] = data[0];
-
-		error = 
-        nrf_drv_twi_tx(
-            m_instance, 
-            SENSOR_GND_ADDR,
-			command, 
-			sizeof(command), 
-			false
-		);
-		*/
 
 	}
 

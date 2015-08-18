@@ -98,32 +98,6 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 }
 
 
-
-void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
-{
-    switch (p_ble_evt->header.evt_id)
-    {
-        case BLE_GAP_EVT_CONNECTED:
-            on_connect(p_ess, p_ble_evt);
-            break;
-            
-        case BLE_GAP_EVT_DISCONNECTED:
-            on_disconnect(p_ess, p_ble_evt);
-            break;
-            
-        case BLE_GATTS_EVT_HVC:
-            on_hvc(p_ess, p_ble_evt);
-            break;
-        case BLE_GATTS_EVT_WRITE:
-            //break;
-            on_write(p_ess, p_ble_evt);
-            break;
-        default:
-            break;
-    }
-}
-
-
 /**@brief Function for adding an ESS characteristic.
  *
  * @param[in]   p_ess        Environmental Service structure.
@@ -152,7 +126,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
                             uint8_t uuid_type,
                             ess_char_data_t * char_data,
                             uint8_t * fake_data_p,
-                            uint16_t init_char_len,
                             uint16_t max_char_len,
                             ess_char_trigger_init_data_t * char_trigger_init_data,
                             uint8_t * trigger_val,
@@ -173,10 +146,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     char_md.char_props.read   = 1; // mandatory
     char_md.char_props.notify = p_ess_init->is_notify_supported; // optional
     p_ess->is_notify_supported = char_md.char_props.notify;
-    
-    /***** external properties are optional ****/
-    char_md.char_ext_props.reliable_wr = 1;
-    char_md.char_ext_props.wr_aux = 1;
     
     
     /******** if notify is enabled ******/
@@ -210,7 +179,7 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
     attr_char_value.p_uuid    = &ble_uuid; //the type for this attribute is always the same UUID found in the characteristic's declaration value field
     attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = init_char_len;
+    attr_char_value.init_len  = max_char_len;
     attr_char_value.init_offs = 0;
     attr_char_value.max_len   = max_char_len;
     attr_char_value.p_value   = fake_data_p;
@@ -274,6 +243,93 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
 }
 
+static bool is_notification_needed(uint8_t condition, uint8_t * operand, uint8_t * ess_meas_val_new, uint8_t * ess_meas_val_old, uint8_t char_len, bool is_signed){
+
+        bool notif_needed = false;
+        
+        if (condition == TRIG_FIXED_INTERVAL){
+            notif_needed = true;
+        }
+
+        else if (condition == TRIG_NO_LESS){
+            notif_needed = true;
+        }
+
+        else if (condition == TRIG_VALUE_CHANGE){
+            int n = ble_ess_intcmp(ess_meas_val_new, ess_meas_val_old, char_len, is_signed);
+            if ( n != 0){
+                notif_needed = true;
+            }
+        }
+
+        else {
+
+            int n = ble_ess_intcmp(ess_meas_val_new, operand+1, char_len, is_signed);
+
+            if (condition == TRIG_WHILE_LT){ 
+                if (n < 0){
+                    notif_needed = true;
+                }
+            }
+
+            else if (condition == TRIG_WHILE_LTE){
+                if (n <= 0){
+                    notif_needed = true;
+                }
+            }
+
+            else if (condition == TRIG_WHILE_GT){
+                if (n>0){
+                   notif_needed = true;
+                }
+            }
+
+            else if (condition == TRIG_WHILE_GTE){
+                if (n>=0){
+                    notif_needed = true;
+                }
+            }
+
+            else if (condition == TRIG_WHILE_E){
+                if(n==0){
+                    notif_needed = true;
+                }
+            }
+
+            else if (condition == TRIG_WHILE_NE){
+                if(n!=0){
+                    notif_needed = true;
+                }
+            }
+
+        }
+
+    return notif_needed;
+}
+
+void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
+{
+    switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GAP_EVT_CONNECTED:
+            on_connect(p_ess, p_ble_evt);
+            break;
+            
+        case BLE_GAP_EVT_DISCONNECTED:
+            on_disconnect(p_ess, p_ble_evt);
+            break;
+            
+        case BLE_GATTS_EVT_HVC:
+            on_hvc(p_ess, p_ble_evt);
+            break;
+        case BLE_GATTS_EVT_WRITE:
+            //break;
+            on_write(p_ess, p_ble_evt);
+            break;
+        default:
+            break;
+    }
+}
 
 uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
 
@@ -314,12 +370,20 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
 
     //Initial data pointer
     uint8_t *init_data_ptr;
-    
+
     /******* Add pressure characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_pres_data);
     
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_PRES_CHAR, BLE_UUID_TYPE_BLE, &(p_ess->pressure), init_data_ptr, INIT_PRES_LEN, MAX_PRES_LEN, 
-        &(p_ess_init->pres_trigger_data),  (uint8_t*)&(p_ess_init->pres_trigger_val_var), &(p_ess->pres_char_handles) );
+    err_code = ess_char_add(p_ess, 
+                            p_ess_init, 
+                            ESS_UUID_PRES_CHAR, 
+                            BLE_UUID_TYPE_BLE, 
+                            &(p_ess->pressure), 
+                            init_data_ptr, 
+                            MAX_PRES_LEN, 
+                            &(p_ess_init->pres_trigger_data),  
+                            (uint8_t*)&(p_ess_init->pres_trigger_val_var), 
+                            &(p_ess->pres_char_handles) );
 
     if (err_code != NRF_SUCCESS)
     {
@@ -329,8 +393,16 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /******* Add humidity characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_hum_data);
     
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_HUM_CHAR, BLE_UUID_TYPE_BLE, &(p_ess->humidity), init_data_ptr, INIT_HUM_LEN, MAX_HUM_LEN, 
-        &(p_ess_init->hum_trigger_data),  (uint8_t*)&(p_ess_init->hum_trigger_val_var), &(p_ess->hum_char_handles) );
+    err_code = ess_char_add(p_ess, 
+                            p_ess_init, 
+                            ESS_UUID_HUM_CHAR, 
+                            BLE_UUID_TYPE_BLE, 
+                            &(p_ess->humidity), 
+                            init_data_ptr, 
+                            MAX_HUM_LEN, 
+                            &(p_ess_init->hum_trigger_data),  
+                            (uint8_t*)&(p_ess_init->hum_trigger_val_var), 
+                            &(p_ess->hum_char_handles) );
 
     if (err_code != NRF_SUCCESS)
     {
@@ -340,8 +412,16 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /****** Add temperature characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_temp_data);
 
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_TEMP_CHAR, BLE_UUID_TYPE_BLE,  &(p_ess->temperature), init_data_ptr, INIT_TEMP_LEN, MAX_TEMP_LEN, 
-        &(p_ess_init->temp_trigger_data),  (uint8_t*)&(p_ess_init->temp_trigger_val_var), &(p_ess->temp_char_handles) );
+    err_code = ess_char_add(p_ess, 
+                            p_ess_init, 
+                            ESS_UUID_TEMP_CHAR, 
+                            BLE_UUID_TYPE_BLE,  
+                            &(p_ess->temperature), 
+                            init_data_ptr, 
+                            MAX_TEMP_LEN, 
+                            &(p_ess_init->temp_trigger_data),  
+                            (uint8_t*)&(p_ess_init->temp_trigger_val_var), 
+                            &(p_ess->temp_char_handles) );
 
     if (err_code != NRF_SUCCESS)
     {
@@ -351,8 +431,16 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /******* Add lux characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_lux_data);
     
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_LUX_CHAR_SHORT, BLE_UUID_TYPE_BLE, &(p_ess->lux), init_data_ptr, INIT_LUX_LEN, MAX_LUX_LEN, 
-        &(p_ess_init->lux_trigger_data),  (uint8_t*)&(p_ess_init->lux_trigger_val_var), &(p_ess->lux_char_handles) );
+    err_code = ess_char_add(p_ess, 
+                            p_ess_init, 
+                            ESS_UUID_LUX_CHAR_SHORT, 
+                            BLE_UUID_TYPE_BLE, 
+                            &(p_ess->lux), 
+                            init_data_ptr, 
+                            MAX_LUX_LEN, 
+                            &(p_ess_init->lux_trigger_data),  
+                            (uint8_t*)&(p_ess_init->lux_trigger_val_var), 
+                            &(p_ess->lux_char_handles) );
 
     if (err_code != NRF_SUCCESS)
     {
@@ -362,8 +450,16 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     /******* Add acceleration characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_acc_data);
     
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_ACC_CHAR_SHORT, BLE_UUID_TYPE_BLE, &(p_ess->acceleration), init_data_ptr, INIT_ACC_LEN, MAX_ACC_LEN, 
-        &(p_ess_init->acc_trigger_data),  (uint8_t*)&(p_ess_init->acc_trigger_val_var), &(p_ess->acc_char_handles) );
+    err_code = ess_char_add(p_ess, 
+                            p_ess_init, 
+                            ESS_UUID_ACC_CHAR_SHORT, 
+                            BLE_UUID_TYPE_BLE, 
+                            &(p_ess->acceleration), 
+                            init_data_ptr, 
+                            MAX_ACC_LEN, 
+                            &(p_ess_init->acc_trigger_data),  
+                            (uint8_t*)&(p_ess_init->acc_trigger_val_var), 
+                            &(p_ess->acc_char_handles) );
 
     if (err_code != NRF_SUCCESS)
     {
@@ -372,33 +468,6 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
 
     return NRF_SUCCESS;
     
-}
-
-int intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed){
-
-    int len = length-1;
-
-    if (is_signed){
-        
-        if ((buff_1[len] >> 7) != (buff_2[len] >> 7) ){
-
-            if ((buff_2[len] >> 7) == 0) return -1;
-            else return 1;
-
-        } 
-    }
-
-    while( len >= 0){
-
-        if (buff_1[len] > buff_2[len]) return 1;
-        else if (buff_1[len] < buff_2[len]) return -1;
-        len--;
-
-    }
-
-    return 0;
-
-
 }
 
 uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_data, uint8_t  * ess_meas_val, uint16_t char_len, bool is_signed,  ble_gatts_char_handles_t * char_handles) //uint8_t * ess_meas_val, uint16_t char_len, bool is_signed)
@@ -460,67 +529,28 @@ uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_dat
     return err_code;
 }
 
+int ble_ess_intcmp( int8_t * buff_1, int8_t * buff_2, uint16_t length, bool is_signed){
 
-bool is_notification_needed(uint8_t condition, uint8_t * operand, uint8_t * ess_meas_val_new, uint8_t * ess_meas_val_old, uint8_t char_len, bool is_signed){
+    int len = length-1;
 
-        bool notif_needed = false;
+    if (is_signed){
         
-        if (condition == TRIG_FIXED_INTERVAL){
-            notif_needed = true;
-        }
+        if ((buff_1[len] >> 7) != (buff_2[len] >> 7) ){
 
-        else if (condition == TRIG_NO_LESS){
-            notif_needed = true;
-        }
+            if ((buff_2[len] >> 7) == 0) return -1;
+            else return 1;
 
-        else if (condition == TRIG_VALUE_CHANGE){
-            int n = intcmp(ess_meas_val_new, ess_meas_val_old, char_len, is_signed);
-            if ( n != 0){
-                notif_needed = true;
-            }
-        }
+        } 
+    }
 
-        else {
+    while( len >= 0){
 
-            int n = intcmp(ess_meas_val_new, operand+1, char_len, is_signed);
+        if (buff_1[len] > buff_2[len]) return 1;
+        else if (buff_1[len] < buff_2[len]) return -1;
+        len--;
 
-            if (condition == TRIG_WHILE_LT){ 
-                if (n < 0){
-                    notif_needed = true;
-                }
-            }
+    }
 
-            else if (condition == TRIG_WHILE_LTE){
-                if (n <= 0){
-                    notif_needed = true;
-                }
-            }
+    return 0;
 
-            else if (condition == TRIG_WHILE_GT){
-                if (n>0){
-                   notif_needed = true;
-                }
-            }
-
-            else if (condition == TRIG_WHILE_GTE){
-                if (n>=0){
-                    notif_needed = true;
-                }
-            }
-
-            else if (condition == TRIG_WHILE_E){
-                if(n==0){
-                    notif_needed = true;
-                }
-            }
-
-            else if (condition == TRIG_WHILE_NE){
-                if(n!=0){
-                    notif_needed = true;
-                }
-            }
-
-        }
-
-    return notif_needed;
 }

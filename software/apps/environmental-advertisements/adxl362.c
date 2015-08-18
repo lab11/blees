@@ -1,97 +1,79 @@
-#include "nrf_gpio.h"
 #include <stdio.h>
-#include "adxl362.h"
-#include "app_error.h"
 #include <stdint.h>
-#include "spi_driver.h"
+
+#include "app_error.h"
 #include "nrf_delay.h"
+#include "nrf_gpio.h"
 
+#include "spi_driver.h"
 
-//Addresses of Registers
+#include "adxl362.h"
+
+//Register Address defines
 #define DEVID_AD 0x00
-
 #define DEVID_MST 0x01
-
 #define PARTID 0x02
-
 #define REVID 0x03
-
 #define XDATA 0x08
-
 #define YDATA 0x09
-
 #define ZDATA 0x0A
-
 #define STATUS 0x0B
-
 #define FIFO_ENTRIES_L 0x0C
 #define FIFO_ENTRIES_H 0x0D
-
 #define XDATA_L 0x0E
 #define XDATA_H 0x0F
-
 #define YDATA_L 0x10
 #define YDATA_H 0x11
-
 #define ZDATA_L 0x12
 #define ZDATA_H 0x13
-
 #define TEMP_L 0x14
 #define TEMP_H 0x15
-
 #define SOFT_RESET 0x1F
 #define RESET_CODE 0x52 // for soft_reset reg
-
 #define THRESH_ACT_L 0x20
 #define THRESH_ACT_H 0x21
-
 #define TIME_ACT 0x22
-
 #define THRESH_INACT_L 0x23
 #define THRESH_INACT_H 0x24
-
 #define TIME_INACT_L 0x25
 #define TIME_INACT_H 0x26
-
 #define ACT_INACT_CTL 0x27
-#define DEFAULT_MODE 0x00 // for act_inact_ctl
-#define LINKED_MODE 0x10 // for act_inact_ctl
-#define LOOP_MODE 0x30 // for act_inact_ctl
-#define INACT_EN 0x04 // for act_inact_ctl
-#define ACT_EN 0x01 // for act_inact_ctl
-#define INACT_REF_EN 0x08 // for act_inact_ctl
-#define ACT_REF_EN 0x02 // for act_inact_ctl
-
-#define FIFO_CONTROL 0x28
-#define STORE_TEMP_MODE 0x04 // for fifo_control
-#define GREATER_THAN_255 0x08 // for fifo control
-
+#define FIFO_CTL 0x28
 #define FIFO_SAMPLES 0x29
-
 #define INTMAP1 0x2A
-
 #define INTMAP2 0x2B
-
 #define FILTER_CTL 0x2C
-
 #define POWER_CTL 0x2D
-#define STANDBY_MODE 0x00 // for power_ctl reg
-#define MEASUREMENT_MODE 0x02 // for power_ctl_reg
+#define SELF_TEST 0x2E
+#define READ_FIFO 0x0D
+
+//Act_Inact_Ctl defines
+#define DEFAULT_MODE 0x00
+#define LINKED_MODE 0x10
+#define LOOP_MODE 0x30
+#define INACT_EN 0x04
+#define ACT_EN 0x01
+#define INACT_REF_EN 0x08
+#define ACT_REF_EN 0x02
+
+//Fifo_Ctl defines
+#define STORE_TEMP_MODE 0x04
+#define GREATER_THAN_255 0x08
+
+//Power_Ctl defines
+#define STANDBY_MODE 0x00
+#define MEASUREMENT_MODE 0x02
 #define AUTOSLEEP_MODE_EN 0x03
 #define WAKEUP_MODE_EN 0x08
-
-#define SELF_TEST 0x2E
-
-#define READ_FIFO 0x0D
 
 void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode, bool use_referenced_activity, bool use_referenced_inactivity){
 
 	uint8_t data[1] = {0x00};
 
-	if (i_mode == LINKED){
+	if (i_mode == adxl362_INTERRUPT_LINKED){
 		data[0] = LINKED_MODE;
 	}
-	else if (i_mode == LOOP){
+	else if (i_mode == adxl362_INTERRUPT_LOOP){
 		data[0] = LOOP_MODE;
 	}
 	//else default;
@@ -157,10 +139,9 @@ void adxl362_set_activity_threshold(uint16_t act_threshold){
 	spi_write_reg(THRESH_ACT_L, data, 1);
 
 	spi_read_reg(THRESH_ACT_H, data, 1);
-
 	data[0] = data[0] & 0xF8;
-
 	data[0] = (data[0] | ((act_threshold & 0x0700) >> 8) );
+
 	spi_write_reg(THRESH_ACT_H, data, 1);
 
 }
@@ -192,7 +173,6 @@ void adxl362_set_inactivity_time(uint16_t inact_time){
 void adxl362_set_activity_time(uint8_t act_time){
 
 	uint8_t data[1] = {act_time};
-
 	spi_write_reg(TIME_ACT, data, 1);
 
 }
@@ -269,12 +249,6 @@ void adxl362_read_FIFO(uint8_t * buf, uint16_t num_samples){
     } while (i < num_samples);
 
     nrf_gpio_pin_set(SPI_SS_PIN);
-	/*
-	spi_write(command[0]);
-	for(int i = 0; i < num_samples; i++){
-		spi_read(buf + i);
-	}
-	*/
 }
 
 void adxl362_parse_FIFO(uint8_t * buf_in, int16_t * buf_out, uint16_t num_samples){
@@ -317,11 +291,9 @@ void adxl362_config_FIFO(adxl362_fifo_mode f_mode, bool store_temp, uint16_t num
 		data[0] = data[0] | GREATER_THAN_255; //AH bit set
 	}
 
-	spi_write_reg(FIFO_CONTROL, data, 1);
+	spi_write_reg(FIFO_CTL, data, 1);
 
-	spi_read_reg(FIFO_CONTROL, read_data, 1);
-
-	printf("halt");
+	spi_read_reg(FIFO_CTL, read_data, 1);
 
 }
 
@@ -405,7 +377,6 @@ void adxl362_sample_accel_byte(uint8_t * x_data, uint8_t * y_data, uint8_t * z_d
 }
 
 //if measure = 0 standby mode, if measure = 1, measurement mode
-
 void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool autosleep_en, bool wakeup_en){
 
 	
@@ -415,9 +386,9 @@ void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool au
     uint8_t data[1] = {RESET_CODE};
     spi_write_reg(SOFT_RESET, data, 1);
 
+    //wait for device to be reset
     for (int i = 0; i < 100; i++);
     
-
     if (measure){
     	data[0] = MEASUREMENT_MODE;
     }
@@ -427,6 +398,7 @@ void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool au
     if (wakeup_en){
     	data[0] = data[0] | WAKEUP_MODE_EN;
     }
+
     data[0] = data[0] | (n_mode << 4);
 
     spi_write_reg(POWER_CTL, data, 1);

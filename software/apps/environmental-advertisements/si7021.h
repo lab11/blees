@@ -15,29 +15,19 @@ typedef enum
 void si7021_reset();
 
 void si7021_init(nrf_drv_twi_t * p_instance);
-
-//not sure if this is working...
 void si7021_config(si7021_meas_res_t res_mode);
 
 void si7021_read_temp_hold(float * temp);
-
 void si7021_read_temp(float *temp);
-
 void si7021_read_RH_hold(float *hum);
-
 void si7021_read_RH(float *hum);
-
 void si7021_read_temp_after_RH(float *temp);
-
 void si7021_read_temp_and_RH(float *temp, float *hum);
 
 void si7021_read_user_reg(uint8_t *reg_status);
-
 void si7021_read_firmware_rev(uint8_t *buf);
 
-//heater currently not working?
 void si7021_heater_on();
-
 void si7021_heater_off();
 
 
