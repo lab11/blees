@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <math.h>
 #include "tsl2561.h"
-#include <stdio.h>
 #include <string.h>
 #include "time.h"
 #include "app_error.h"
@@ -92,8 +91,6 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 	);
 
 	e = check_error(error);
-
-	printf("hey");
 
 	error =
 	nrf_drv_twi_rx(
@@ -189,8 +186,6 @@ void tsl2561_readADC(uint16_t * channel0_data, uint16_t * channel1_data){
 	//Shift data high to upper byte and set channel 1 data
 	*channel1_data = 256 * data_high[0] + data_low[0];
 
-	printf("hi");
-
 }
 
 //currently doesn't work for manual integration
@@ -241,8 +236,6 @@ void tsl2561_on(void){
 
 	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
-    printf("hi");
-
     error =
     nrf_drv_twi_tx(
         m_instance, 
@@ -264,10 +257,6 @@ void tsl2561_on(void){
 	);
 
 	//int a = 5;
-
-   	
-    printf("hey");
-
 }
 
 void tsl2561_off(void){
@@ -284,8 +273,6 @@ void tsl2561_off(void){
 
 	//uint8_t lux_data[] = {0b11000000, 0b00000011};
 
-    printf("hi");
-
     error =
     nrf_drv_twi_tx(
         m_instance, 
@@ -297,9 +284,6 @@ void tsl2561_off(void){
     
 
 	//int a = 5;
-
-   	
-    printf("hey");
 
 
 }
@@ -441,7 +425,6 @@ void tsl2561_interrupt_disable(void){
 		false
 	);
 
-	printf("end");
 
 }
 

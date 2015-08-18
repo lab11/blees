@@ -204,8 +204,6 @@ void lps331ap_config_interrupt(interrupt_config interrupt_c_1, interrupt_config 
 
     lps331ap_read_controlreg3(data);
 
-    printf("hey");
-
 }
 
 

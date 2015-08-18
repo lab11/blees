@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <math.h>
 #include "si7021.h"
-#include <stdio.h>
 #include <string.h>
 #include "time.h"
 

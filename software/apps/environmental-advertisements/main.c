@@ -95,7 +95,7 @@
 #define INIT_ACC_DATA               789
 #define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
 #define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        UPDATE_RATE
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)
 
 
 #define BOND_DELETE_ALL_BUTTON_ID            1                                          /**< Button used for deleting all bonded centrals during startup. */
@@ -104,23 +104,19 @@ static uint16_t                              m_conn_handle = BLE_CONN_HANDLE_INV
 
 static ble_ess_t                             m_ess;
 
-static app_timer_id_t                        m_ess_timer_id;                        /**< ESS timer. */
+static app_timer_id_t                        m_ess_timer_id;                            /**< ESS timer. */
 
-static app_timer_id_t                        m_temp_timer_id;                        /**< ESS timer. */
-static app_timer_id_t                        m_pres_timer_id;                        /**< ESS timer. */
-static app_timer_id_t                        m_hum_timer_id;                        /**< ESS timer. */
-static app_timer_id_t                        m_lux_timer_id;                        /**< ESS timer. */
-static app_timer_id_t                        m_acc_timer_id;                        /**< ESS timer. */
+static app_timer_id_t                        m_temp_timer_id;                           /**< ESS Temperature timer. */
+static app_timer_id_t                        m_pres_timer_id;                           /**< ESS Pressure timer. */
+static app_timer_id_t                        m_hum_timer_id;                            /**< ESS Humidity timer. */
+static app_timer_id_t                        m_lux_timer_id;                            /**< ESS Lux timer. */
+static app_timer_id_t                        m_acc_timer_id;                            /**< ESS Accelerometer timer. */
 
 
 
 static bool                                  m_ess_meas_not_conf_pending = false; /** Flag to keep track of when a notification confirmation is pending */
 
 static bool                                  m_memory_access_in_progress = false;       /**< Flag to keep track of ongoing operations on persistent memory. */
-
-//static dm_application_instance_t             m_app_handle;                              /**< Application identifier allocated by device manager */
-
-//static dm_security_status_t                  m_security_status;
 
 static bool                                   m_ess_updating_advdata = false;
 
@@ -186,6 +182,8 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
 static void advertising_start(void);
 static bool update_advdata(void);
 static void update_timers( ble_evt_t * p_ble_evt );
+
+static uint8_t sensed_activity = 0x00;
 
 /*******************************************************************************
  *   HANDLERS AND CALLBACKS
@@ -323,51 +321,57 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
 
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    //led_on(SQUALL_LED_PIN);
 
-    //nrf_drv_gpiote_in_event_disable(PIN_IN);
+    if (nrf_gpio_pin_read(PIN_IN) == 0){
+        m_sensor_info.acceleration = 0x11;
+        led_on(BLEES_LED_PIN);
 
-    //nrf_gpio_pin_clear(PIN_IN);
-    //led_off(BLEES_LED_PIN);
+        //led_on(SQUALL_LED_PIN);
+        while(!(update_advdata())){
+            //nrf_gpio_pin_clear(PIN_IN);
+            //m_sensor_info.acceleration = 0x09;
+        };
 
-    //adxl362_read_status_reg();
+        //nrf_drv_gpiote_out_toggle(PIN_IN);
+        adxl362_read_status_reg();
 
-    //led_toggle(SQUALL_LED_PIN);
+        //led_off(SQUALL_LED_PIN);
+        nrf_gpio_pin_clear(PIN_IN);
 
-    m_sensor_info.acceleration = 0x10;
-    led_toggle(BLEES_LED_PIN);
+        //nrf_drv_gpiote_in_event_enable(PIN_IN, true);
+        //led_off(SQUALL_LED_PIN);
+    }
+    else {
+        m_sensor_info.acceleration = 0x01;
+        while(!(update_advdata())){
+            //nrf_gpio_pin_clear(PIN_IN);
+            //m_sensor_info.acceleration = 0x01;
+        };
+        led_off(BLEES_LED_PIN);
 
-    //led_on(SQUALL_LED_PIN);
-    while(!(update_advdata())){
-        //nrf_gpio_pin_clear(PIN_IN);
-        m_sensor_info.acceleration = 0x09;
-    };
-    //led_off(SQUALL_LED_PIN);
-
-    //nrf_drv_gpiote_out_toggle(PIN_IN);
-    adxl362_read_status_reg();
-
-    //led_off(SQUALL_LED_PIN);
-    nrf_gpio_pin_clear(PIN_IN);
-
-    //nrf_drv_gpiote_in_event_enable(PIN_IN, true);
-    //led_off(SQUALL_LED_PIN);
+    }
 
 
 }
 
 static void gpio_init(void)
 {
-    
+    led_off(BLEES_LED_PIN);
+
     ret_code_t err_code;
 
     err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+    //led_on(BLEES_LED_PIN);
+
+
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
 
     err_code = nrf_drv_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
     APP_ERROR_CHECK(err_code);
+
+    //led_off(BLEES_LED_PIN);
 
     nrf_gpio_pin_clear(PIN_IN);
 
@@ -380,10 +384,14 @@ static void gpio_init(void)
 
     NVIC_EnableIRQ(GPIOTE_IRQn);
 
-    NRF_GPIOTE->CONFIG[0] =  (GPIOTE_CONFIG_POLARITY_HiToLo << GPIOTE_CONFIG_POLARITY_Pos)
+    NRF_GPIOTE->CONFIG[0] =  (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos)
               | (PIN_IN << GPIOTE_CONFIG_PSEL_Pos)
               | (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos);
     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_IN0_Set << GPIOTE_INTENSET_IN0_Pos;
+
+
+    led_on(BLEES_LED_PIN);
+
     
 
 }
@@ -639,7 +647,7 @@ static void lux_take_measurement(void * p_context)
 
 static void acc_take_measurement(void * p_context)
 {
-        /*
+    
     UNUSED_PARAMETER(p_context);
 
     //if (!m_ess_meas_not_conf_pending) {
@@ -649,19 +657,21 @@ static void acc_take_measurement(void * p_context)
         uint32_t meas;
         memset(&meas, 0, sizeof(meas));
 
-        uint8_t acc;
-        memset(&acc, 0, sizeof(acc));
+        //uint8_t acc;
+        //memset(&acc, 0, sizeof(acc));
 
         //acc = adxl362_read_status_reg();
 
         //meas = (uint8_t)((acc & 0x70) >> 6);
 
-        meas = 0x01;
+        //meas = 0x01;
 
         //meas = acc;
 
-        m_sensor_info.acceleration = m_sensor_info.acceleration | meas;
-        update_advdata();
+        meas = m_sensor_info.acceleration & 0x80;
+
+        m_sensor_info.acceleration = meas;
+        while(!update_advdata());
 
         memcpy(acc_meas_val, &meas, 1);
 
@@ -680,7 +690,6 @@ static void acc_take_measurement(void * p_context)
             APP_ERROR_HANDLER(err_code);
         }
     //}
-    */
 
 }
 
@@ -1182,7 +1191,7 @@ int main(void) {
     led_init(BLEES_LED_PIN);
     led_on(SQUALL_LED_PIN);
     led_on(BLEES_LED_PIN);
-    led_off(SQUALL_LED_PIN);
+    //led_off(SQUALL_LED_PIN);
 
 
     timers_init();
