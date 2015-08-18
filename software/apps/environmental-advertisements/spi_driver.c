@@ -46,45 +46,16 @@ void spi_read(uint8_t* buf) {
     //wait until byte has been received
     while(NRF_SPI->EVENTS_READY == 0);
 
-    //check = NRF_SPI->EVENTS_READY;
-
     buf[0] = NRF_SPI->RXD;
 
     NRF_SPI->EVENTS_READY = 0;
 }
-
-/*
-void spi_read_FIFO(uint8_t* buf) {
-
-    uint8_t check = NRF_SPI->EVENTS_READY;
-
-    //clear ready event
-    NRF_SPI->EVENTS_READY = 0;
-
-    check = NRF_SPI->EVENTS_READY;
-
-
-    NRF_SPI->TXD = 0x0D;
-
-    check = NRF_SPI->EVENTS_READY;
-
-    //wait until byte has been received
-    while(NRF_SPI->EVENTS_READY == 0);
-
-    check = NRF_SPI->EVENTS_READY;
-
-
-    buf[0] = NRF_SPI->RXD;
-
-    NRF_SPI->EVENTS_READY = 0;
-}
-*/
 
 void spi_write_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
 
     nrf_gpio_pin_clear(SPI_SS_PIN);
     spi_write(WRITE_REG);
-    spi_write(reg_addr); // STATUS
+    spi_write(reg_addr);
 
     int i = 0;
     do{
@@ -100,7 +71,7 @@ void spi_read_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
 
 	nrf_gpio_pin_clear(SPI_SS_PIN);
     spi_write(READ_REG);
-    spi_write(reg_addr); // STATUS
+    spi_write(reg_addr);
 
     int i = 0;
     do{
