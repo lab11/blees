@@ -428,6 +428,8 @@ static void sys_evt_dispatch(uint32_t sys_evt) {
 
 static void pres_take_measurement(void * p_context)
 {
+    lps331ap_one_shot_enable();
+
     UNUSED_PARAMETER(p_context);
         
     uint8_t  pres_meas_val[4];
@@ -438,7 +440,6 @@ static void pres_take_measurement(void * p_context)
     float pres;
     memset(&pres, 0, sizeof(pres));
 
-    lps331ap_one_shot_enable();
     lps331ap_readPressure(&pres);
 
     meas = (uint32_t)(pres * 1000);
@@ -884,10 +885,10 @@ static void sensors_init(void)
 
 // init services
 static void services_init (void) {
+
     uint32_t err_code;
+
     ble_ess_init_t ess_init;
-    
-    //Initialize the Environmental Sensing Service
     memset(&ess_init, 0 , sizeof(ess_init));
     
     ess_init.evt_handler = on_ess_evt;
@@ -927,13 +928,14 @@ static void advertising_stop(void) {
 
 static void timers_start(void) {
 
-    uint32_t err_code = app_timer_start(m_temp_timer_id, (uint32_t)(TEMP_TRIGGER_VAL_TIME), NULL);
-    APP_ERROR_CHECK(err_code);
  
-    err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
+    uint32_t err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_start(m_hum_timer_id, (uint32_t)(HUM_TRIGGER_VAL_TIME), NULL);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_start(m_temp_timer_id, (uint32_t)(TEMP_TRIGGER_VAL_TIME), NULL);
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_start(m_lux_timer_id, (uint32_t)(LUX_TRIGGER_VAL_TIME), NULL);
@@ -947,7 +949,10 @@ static void update_timers( ble_evt_t * p_ble_evt ){
 
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-    uint32_t meas_interval = 0;
+    uint32_t meas_interval;
+    memset(&meas_interval, 0 , sizeof(meas_interval));
+    meas_interval = 0;
+
     uint32_t err_code;
 
     if (p_evt_write->handle == m_ess.pressure.trigger_handle)

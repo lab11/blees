@@ -28,9 +28,9 @@
 
 
 //Character lengths
-#define MAX_TEMP_LEN 2
 #define MAX_PRES_LEN 4
 #define MAX_HUM_LEN 2
+#define MAX_TEMP_LEN 2
 #define MAX_LUX_LEN 2
 #define MAX_ACC_LEN 1
 
@@ -45,9 +45,8 @@
 #define TRIG_WHILE_GTE 0x07
 #define TRIG_WHILE_E 0x08
 #define TRIG_WHILE_NE 0x09
-#define MAX_TRIG_LEN 32
 
-int intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed);
+#define MAX_TRIG_LEN 32
 
 /**@brief ESS event type. */
 typedef enum
@@ -76,8 +75,8 @@ typedef void (*ble_ess_evt_handler_t) (ble_ess_t * p_ess, ble_ess_evt_t * p_evt)
 
 typedef struct 
 {
-	uint8_t 	condition;
 	uint32_t 	time_interval;
+	uint8_t 	condition;
 
 } ess_char_trigger_init_data_t;
 
@@ -136,7 +135,7 @@ typedef struct ble_ess_s
 	ble_gatts_char_handles_t     	hum_char_handles;           //< Handles related to the Humidity characteristic. 
 	ble_gatts_char_handles_t      	temp_char_handles;          //< Handles related to the Temperature characteristic. 
 	ble_gatts_char_handles_t     	lux_char_handles;           //< Handles related to the Humidity characteristic. 
-	ble_gatts_char_handles_t     	acc_char_handles;           //< Handles related to the Humidity characteristic. 
+	ble_gatts_char_handles_t     	acc_char_handles;           //< Handles related to the Acceleration characteristic. 
 
 	ess_char_data_t 			  	pressure;
 	ess_char_data_t 			  	humidity;

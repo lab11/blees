@@ -72,8 +72,8 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 
     if (p_evt_write->handle == p_ess->pressure.trigger_handle)
     {
-        memcpy(&(p_ess->temperature.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(&(p_ess->pressure.trigger_val_cond), p_evt_write->data, 1);
+        memcpy(p_ess->pressure.trigger_val_buff, p_evt_write->data, 4);
     }
     else if (p_evt_write->handle == p_ess->humidity.trigger_handle)
     {
@@ -147,7 +147,7 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     char_md.char_props.notify = p_ess_init->is_notify_supported; // optional
     p_ess->is_notify_supported = char_md.char_props.notify;
     
-    
+
     /******** if notify is enabled ******/
     memset(&cccd_md, 0, sizeof(cccd_md));
     
