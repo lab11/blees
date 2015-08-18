@@ -9,138 +9,95 @@
 #include <string.h>
 #include "math.h"
 
-
 // Nordic Libraries
-#include "nordic_common.h"
-#include "softdevice_handler.h"
-#include "nrf.h"
-#include "nrf_sdm.h"
-#include "ble.h"
-#include "ble_db_discovery.h"
 #include "app_util.h"
 #include "app_error.h"
+#include "app_trace.h"
+#include "app_scheduler.h"
+#include "app_util_platform.h"
+#include "app_timer.h"
 #include "ble_advdata_parser.h"
 #include "ble_conn_params.h"
 #include "ble_hci.h"
-#include "nrf_gpio.h"
-#include "pstorage.h"
-#include "app_trace.h"
 #include "ble_hrs_c.h"
 #include "ble_bas_c.h"
-#include "app_util.h"
-#include "app_timer.h"
+#include "ble_advdata.h"
+#include "ble_gap.h"
+#include "ble_gatts.h"
+#include "ble_debug_assert_handler.h"
+#include "ble.h"
+#include "ble_db_discovery.h"
+#include "ble_config.h"
+#include "ble_ess.h"
+#include "device_manager.h"
+#include "device_manager_cnfg.h"
+#include "nordic_common.h"
+#include "nrf.h"
+#include "nrf_sdm.h"
+#include "nrf_gpio.h"
+#include "nrf_soc.h"
+#include "nrf_gpiote.h"
+#include "nrf_drv_config.h"
+#include "nrf_drv_gpiote.h"
+#include "nrf_error.h"
+#include "nrf_assert.h"
+#include "nrf_drv_twi.h"
+#include "pstorage.h"
+#include "pstorage_platform.h"
+#include "softdevice_handler.h"
 
 // Platform, Peripherals, Devices, Services
 #include "blees.h"
 #include "led.h"
-
-#include "ble_ess.h"
-
-#include "ble_advdata.h"
-#include "ble_debug_assert_handler.h"
-#include "app_util_platform.h"
-#include "device_manager.h"
-#include "ble_gap.h"
-#include "ble_gatts.h"
-#include "device_manager_cnfg.h"
-#include "app_scheduler.h"
-#include "nrf_soc.h"
- #include "pstorage_platform.h"
-
-#include "nrf_gpiote.h"
-#include "nrf_drv_config.h"
-#include "nrf_drv_gpiote.h"
-
-#include "nrf_error.h"
-#include "nrf_assert.h"
-
- #define PIN_IN 5
-
-
-/**********************************frombefore****************************/
-
-//#define APP_ADV_TIMEOUT_IN_SECONDS      300                                         /**< The advertising timeout (in units of seconds). */
-
-#define APP_GPIOTE_MAX_USERS            1                                           /**< Maximum number of users of the GPIOTE handler. */
-
-
-#define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)    /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
-#define ESS_MEAS_INTERVAL               APP_TIMER_TICKS(500, APP_TIMER_PRESCALER)
-
-
-#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-//1  ~= 41 micro
-#define INIT_TEMP_DATA              123
-#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
-#define TEMP_TRIGGER_VAL_OPERAND    156
-#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
-
-
-#define INIT_PRES_DATA              456
-#define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
-#define PRES_TRIGGER_VAL_OPERAND    470
-#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)
-
-#define INIT_HUM_DATA               789
-#define HUM_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
-#define HUM_TRIGGER_VAL_OPERAND     799
-#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
-
-#define INIT_LUX_DATA               789
-#define LUX_TRIGGER_CONDITION       TRIG_WHILE_NE
-#define LUX_TRIGGER_VAL_OPERAND     799
-#define LUX_TRIGGER_VAL_TIME        UPDATE_RATE
-
-#define INIT_ACC_DATA               789
-#define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
-#define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)
-
-
-#define BOND_DELETE_ALL_BUTTON_ID            1                                          /**< Button used for deleting all bonded centrals during startup. */
-
-static uint16_t                              m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
-
-static ble_ess_t                             m_ess;
-
-static app_timer_id_t                        m_ess_timer_id;                            /**< ESS timer. */
-
-static app_timer_id_t                        m_temp_timer_id;                           /**< ESS Temperature timer. */
-static app_timer_id_t                        m_pres_timer_id;                           /**< ESS Pressure timer. */
-static app_timer_id_t                        m_hum_timer_id;                            /**< ESS Humidity timer. */
-static app_timer_id_t                        m_lux_timer_id;                            /**< ESS Lux timer. */
-static app_timer_id_t                        m_acc_timer_id;                            /**< ESS Accelerometer timer. */
-
-
-
-static bool                                  m_ess_meas_not_conf_pending = false; /** Flag to keep track of when a notification confirmation is pending */
-
-static bool                                  m_memory_access_in_progress = false;       /**< Flag to keep track of ongoing operations on persistent memory. */
-
-static bool                                   m_ess_updating_advdata = false;
-
-void ess_update(void);
-
-
-#include "nrf_drv_twi.h"
-
 #include "tsl2561.h"
 #include "si7021.h"
 #include "lps331ap.h"
 #include "adxl362.h"
 
-nrf_drv_twi_t twi_instance = NRF_DRV_TWI_INSTANCE(1);
-
 /*******************************************************************************
  *   DEFINES
  ******************************************************************************/
-#include "ble_config.h"
-#include "nrf_drv_config.h"
 
-#define UPDATE_RATE     APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define APP_BEACON_INFO_LENGTH      11
 
-#define APP_BEACON_INFO_LENGTH  11
+#define PIN_IN                      5
+
+#define APP_GPIOTE_MAX_USERS        1                                              /**< Maximum number of users of the GPIOTE handler. */
+
+#define DEAD_BEEF                   0xDEADBEEF                                     /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+
+//1  ~= 41 micro
+#define UPDATE_RATE                 APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+
+//Initial Pressure Parameters
+#define INIT_PRES_DATA              456
+#define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
+#define PRES_TRIGGER_VAL_OPERAND    470
+#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)
+
+//Initial Humidity Parameters
+#define INIT_HUM_DATA               789
+#define HUM_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
+#define HUM_TRIGGER_VAL_OPERAND     799
+#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+
+//Initial Temperature Parameters
+#define INIT_TEMP_DATA              123
+#define TEMP_TRIGGER_CONDITION      TRIG_WHILE_NE
+#define TEMP_TRIGGER_VAL_OPERAND    156
+#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+
+//Initial Lux Parameters
+#define INIT_LUX_DATA               789
+#define LUX_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define LUX_TRIGGER_VAL_OPERAND     799
+#define LUX_TRIGGER_VAL_TIME        UPDATE_RATE
+
+//Initial Acceleration Parameters
+#define INIT_ACC_DATA               789
+#define ACC_TRIGGER_CONDITION       TRIG_WHILE_NE
+#define ACC_TRIGGER_VAL_OPERAND     799
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)
 
 
 /*******************************************************************************
@@ -148,13 +105,27 @@ nrf_drv_twi_t twi_instance = NRF_DRV_TWI_INSTANCE(1);
  ******************************************************************************/
 
 uint8_t MAC_ADDR[6] = {0x00, 0x00, 0x30, 0xe5, 0x98, 0xc0};
+nrf_drv_twi_t twi_instance = NRF_DRV_TWI_INSTANCE(1);
 
-static ble_app_t            app;
-static ble_gap_adv_params_t m_adv_params;
-static ble_advdata_t        advdata;
+static ble_app_t                    app;
+static ble_gap_adv_params_t         m_adv_params;
+static ble_advdata_t                advdata;
+static ble_ess_t                    m_ess;
+static uint8_t                      m_beacon_info[APP_BEACON_INFO_LENGTH];
+static uint16_t                     m_conn_handle = BLE_CONN_HANDLE_INVALID;     /**< Handle of the current connection. */
+
+static app_timer_id_t               m_pres_timer_id;                             /**< ESS Pressure timer. */
+static app_timer_id_t               m_hum_timer_id;                              /**< ESS Humidity timer. */
+static app_timer_id_t               m_temp_timer_id;                             /**< ESS Temperature timer. */
+static app_timer_id_t               m_lux_timer_id;                              /**< ESS Lux timer. */
+static app_timer_id_t               m_acc_timer_id;                              /**< ESS Accelerometer timer. */
+
+static bool                         m_ess_updating_advdata = false;
+static bool                         switch_acc = false;
 
 // Security requirements for this application.
-static ble_gap_sec_params_t m_sec_params = {
+static ble_gap_sec_params_t m_sec_params = 
+{
     SEC_PARAM_BOND,
     SEC_PARAM_MITM,
     SEC_PARAM_IO_CAPABILITIES,
@@ -163,18 +134,13 @@ static ble_gap_sec_params_t m_sec_params = {
     SEC_PARAM_MAX_KEY_SIZE,
 };
 
-static app_timer_id_t sample_timer;
-
 static struct {
     uint32_t pressure;
     uint16_t humidity;
-    uint16_t light;
     int16_t temp;
+    uint16_t light;
     uint8_t acceleration;
 } m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 0.0f};
-
-static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
-
 
 /*******************************************************************************
  *   FUNCTION PROTOTYPES
@@ -182,8 +148,6 @@ static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
 static void advertising_start(void);
 static bool update_advdata(void);
 static void update_timers( ble_evt_t * p_ble_evt );
-
-static uint8_t sensed_activity = 0x00;
 
 /*******************************************************************************
  *   HANDLERS AND CALLBACKS
@@ -305,8 +269,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
             }
             break;
         case BLE_GATTS_EVT_TIMEOUT:
-            //dm_device_delete_all(m_app_handle);
-
             if (p_ble_evt->evt.gatts_evt.params.timeout.src == BLE_GATT_TIMEOUT_SRC_PROTOCOL)
             {
                 err_code = sd_ble_gap_disconnect(m_conn_handle,
@@ -322,31 +284,32 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 
+    //If high to low transition
     if (nrf_gpio_pin_read(PIN_IN) == 0){
+
         m_sensor_info.acceleration = 0x11;
+
         led_on(BLEES_LED_PIN);
 
-        //led_on(SQUALL_LED_PIN);
-        while(!(update_advdata())){
-            //nrf_gpio_pin_clear(PIN_IN);
-            //m_sensor_info.acceleration = 0x09;
+        while( !(update_advdata()) ){
+            m_sensor_info.acceleration = 0x11;
         };
 
-        //nrf_drv_gpiote_out_toggle(PIN_IN);
         adxl362_read_status_reg();
 
-        //led_off(SQUALL_LED_PIN);
         nrf_gpio_pin_clear(PIN_IN);
+        switch_acc = true;
 
-        //nrf_drv_gpiote_in_event_enable(PIN_IN, true);
-        //led_off(SQUALL_LED_PIN);
     }
+    //If low to high transition
     else {
+
         m_sensor_info.acceleration = 0x01;
-        while(!(update_advdata())){
-            //nrf_gpio_pin_clear(PIN_IN);
-            //m_sensor_info.acceleration = 0x01;
+
+        while( !(update_advdata()) ){
+            m_sensor_info.acceleration = 0x01;
         };
+
         led_off(BLEES_LED_PIN);
 
     }
@@ -359,25 +322,16 @@ static void gpio_init(void)
     led_off(BLEES_LED_PIN);
 
     ret_code_t err_code;
-
     err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
-
-    //led_on(BLEES_LED_PIN);
-
 
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
 
     err_code = nrf_drv_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
     APP_ERROR_CHECK(err_code);
 
-    //led_off(BLEES_LED_PIN);
-
     nrf_gpio_pin_clear(PIN_IN);
-
     nrf_drv_gpiote_in_event_enable(PIN_IN, true);
-
-
     nrf_gpio_cfg_input(PIN_IN, NRF_GPIO_PIN_NOPULL);
 
     sd_nvic_SetPriority(GPIOTE_IRQn, 3); 
@@ -389,10 +343,7 @@ static void gpio_init(void)
               | (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos);
     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_IN0_Set << GPIOTE_INTENSET_IN0_Pos;
 
-
     led_on(BLEES_LED_PIN);
-
-    
 
 }
 
@@ -406,21 +357,20 @@ static void gpio_init(void)
  */
 static void on_ess_evt(ble_ess_t * p_ess, ble_ess_evt_t * p_evt)
 {
+    /*
     switch (p_evt->evt_type)
     {
         case BLE_ESS_EVT_NOTIFICATION_ENABLED:
-            // Notification has been enabled, send a single ESS measurement.
-            //ess_meas_send(p_ess);
             break;
             
         case BLE_ESS_EVT_NOTIFICATION_CONFIRMED:
-            m_ess_meas_not_conf_pending = false;
             break;
             
         default:
             // No implementation needed.
             break;
     }
+    */
 }
 
 /**@brief Function for handling the Application's system events.
@@ -430,6 +380,7 @@ static void on_ess_evt(ble_ess_t * p_ess, ble_ess_evt_t * p_evt)
  
 static void on_sys_evt(uint32_t sys_evt)
 {
+    /*
     switch(sys_evt)
     {
         case NRF_EVT_FLASH_OPERATION_SUCCESS:
@@ -446,6 +397,7 @@ static void on_sys_evt(uint32_t sys_evt)
             // No implementation needed.
             break;
     }
+    */
 }
 
 /**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
@@ -457,9 +409,7 @@ static void on_sys_evt(uint32_t sys_evt)
  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
-    //dm_ble_evt_handler(p_ble_evt); // what does this do?
     ble_ess_on_ble_evt(&m_ess, p_ble_evt);
-
     on_ble_evt(p_ble_evt);
     ble_conn_params_on_ble_evt(p_ble_evt);
 }
@@ -477,220 +427,177 @@ static void sys_evt_dispatch(uint32_t sys_evt) {
 
 }
 
-static void temp_take_measurement(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-
-    //if (!m_ess_meas_not_conf_pending) {
-        uint32_t err_code;
-
-        uint8_t  temp_meas_val[2]; 
-        uint32_t meas;
-        memset(&meas, 0, sizeof(meas));
-
-        float temp;
-        memset(&temp, 0, sizeof(temp));
-
-        si7021_read_temp_hold(&temp);
-
-        meas = (int16_t)(temp * 100);
-
-        m_sensor_info.temp = meas;
-        update_advdata();
-
-        memcpy(temp_meas_val, &meas, 2);
-
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val, MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if ( //(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    //}
-
-}
-
-
-
 static void pres_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
-
-    //if (!m_ess_meas_not_conf_pending) {
-        uint32_t err_code;
         
-        uint8_t  pres_meas_val[4]; 
-        uint32_t meas;
-        memset(&meas, 0, sizeof(meas));
-        
-        float pres;
-        memset(&pres, 0, sizeof(pres));
+    uint8_t  pres_meas_val[4];
 
-        lps331ap_one_shot_enable();
-        lps331ap_readPressure(&pres);
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
+    
+    float pres;
+    memset(&pres, 0, sizeof(pres));
 
-        meas = (uint32_t)(pres * 1000);
+    lps331ap_one_shot_enable();
+    lps331ap_readPressure(&pres);
 
-        m_sensor_info.pressure = meas;
-        update_advdata();
+    meas = (uint32_t)(pres * 1000);
+    m_sensor_info.pressure = meas;
 
-        memcpy(pres_meas_val, &meas, 4);
-        
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
+    update_advdata();
 
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    //}
-
+    memcpy(pres_meas_val, &meas, 4);
+    
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, 
+        MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
 }
 
 static void hum_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
+    
+    uint8_t  hum_meas_val[2]; 
 
-    //if (!m_ess_meas_not_conf_pending) {
-        uint32_t err_code;
-        
-        uint8_t  hum_meas_val[2]; 
-        uint32_t meas;
-        memset(&meas, 0, sizeof(meas));
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
 
-        float hum;
-        memset(&hum, 0, sizeof(hum));
+    float hum;
+    memset(&hum, 0, sizeof(hum));
 
-        (si7021_read_RH_hold(&hum));
+    (si7021_read_RH_hold(&hum));
 
-        meas = (uint16_t)(hum * 100);
+    meas = (uint16_t)(hum * 100);
+    m_sensor_info.humidity = meas;
 
-        m_sensor_info.humidity = meas;
-        update_advdata();
+    update_advdata();
 
-        memcpy(hum_meas_val, &meas, 2);
+    memcpy(hum_meas_val, &meas, 2);
 
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val, MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val, 
+        MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
 
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    //}
+static void temp_take_measurement(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
 
+    uint8_t  temp_meas_val[2]; 
+
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
+
+    float temp;
+    memset(&temp, 0, sizeof(temp));
+
+    si7021_read_temp_hold(&temp);
+
+    meas = (int16_t)(temp * 100);
+    m_sensor_info.temp = meas;
+    
+    update_advdata();
+
+    memcpy(temp_meas_val, &meas, 2);
+
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val, 
+        MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
+
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
 }
 
 static void lux_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
+    
+    uint8_t  lux_meas_val[2]; 
 
-    //if (!m_ess_meas_not_conf_pending) {
-        uint32_t err_code;
-        
-        uint8_t  lux_meas_val[2]; 
-        uint32_t meas;
-        memset(&meas, 0, sizeof(meas));
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
 
-        float lux;
-        memset(&lux, 0, sizeof(lux));
+    float lux;
+    memset(&lux, 0, sizeof(lux));
 
-        lux = tsl2561_readLux(tsl2561_MODE0);
+    lux = tsl2561_readLux(tsl2561_MODE0);
 
-        meas = (uint16_t)(lux);
+    meas = (uint16_t)(lux);
+    m_sensor_info.light = meas;
 
-        m_sensor_info.light = meas;
-        update_advdata();
+    update_advdata();
 
+    memcpy(lux_meas_val, &meas, 2);
 
-        memcpy(lux_meas_val, &meas, 2);
-
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    //}
-
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, 
+        MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
 }
 
 static void acc_take_measurement(void * p_context)
 {
     
     UNUSED_PARAMETER(p_context);
+    
+    uint8_t  acc_meas_val[1]; 
 
-    //if (!m_ess_meas_not_conf_pending) {
-        uint32_t err_code;
-        
-        uint8_t  acc_meas_val[1]; 
-        uint32_t meas;
-        memset(&meas, 0, sizeof(meas));
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
 
-        //uint8_t acc;
-        //memset(&acc, 0, sizeof(acc));
+    if (switch_acc){
+        meas = m_sensor_info.acceleration & 0x11;
+        switch_acc = false;
+    }
+    else {
+        meas = m_sensor_info.acceleration & 0x10;
+    }
+    m_sensor_info.acceleration = meas;
 
-        //acc = adxl362_read_status_reg();
+    while(!update_advdata());
 
-        //meas = (uint8_t)((acc & 0x70) >> 6);
+    memcpy(acc_meas_val, &meas, 1);
 
-        //meas = 0x01;
-
-        //meas = acc;
-
-        meas = m_sensor_info.acceleration & 0x80;
-
-        m_sensor_info.acceleration = meas;
-        while(!update_advdata());
-
-        memcpy(acc_meas_val, &meas, 1);
-
-        err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val, MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
-        
-        if (err_code == NRF_SUCCESS) {
-            m_ess_meas_not_conf_pending = true;
-        }
-
-        else if (//(err_code != NRF_SUCCESS) &&
-            (err_code != NRF_ERROR_INVALID_STATE) &&
-            (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            )
-        {
-            APP_ERROR_HANDLER(err_code);
-        }
-    //}
-
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val, 
+        MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
 }
 
 /*******************************************************************************
@@ -772,21 +679,15 @@ static void gap_params_init (void) {
 // initialize advertising
 static void advertising_init(void) {
     memset(&m_adv_params, 0, sizeof(m_adv_params));
-    //m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND; // use this to disable connection abilit
     m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_IND;
     m_adv_params.p_peer_addr        = NULL;
     m_adv_params.fp                 = BLE_GAP_ADV_FP_ANY;
     m_adv_params.interval           = APP_ADV_INTERVAL;
     m_adv_params.timeout            = APP_ADV_TIMEOUT_IN_SECONDS;
 
-    /*Newly added*/
     volatile uint32_t      err_code;
     ble_advdata_t advdata;
-    //ble_advdata_t scanrsp;
     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-    ble_uuid_t adv_uuids[] = {
-        {ESS_UUID_SERVICE, m_ess.uuid_type}
-    };
     
     // Build and set advertising data
     memset(&advdata, 0, sizeof(advdata));
@@ -794,12 +695,6 @@ static void advertising_init(void) {
     advdata.include_appearance      = true;
     advdata.flags = flags;
     
-
-    //memset(&scanrsp, 0, sizeof(scanrsp));
-    //scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
-    //scanrsp.uuids_complete.p_uuids  = adv_uuids;
-    
-    //err_code = ble_advdata_set(&advdata, &scanrsp);
     err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
@@ -826,48 +721,37 @@ static void conn_params_init(void) {
 //Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
     uint32_t err_code;
-
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
-
-    // Initialize timer for Temperature trigger
-    err_code = app_timer_create(&m_temp_timer_id,
-    APP_TIMER_MODE_REPEATED,
-    temp_take_measurement);
-    APP_ERROR_CHECK(err_code);
     
     // Initialize timer for Pressure Trigger
     err_code = app_timer_create(&m_pres_timer_id,
-    APP_TIMER_MODE_REPEATED,
-    pres_take_measurement);
+                    APP_TIMER_MODE_REPEATED,
+                    pres_take_measurement);
     APP_ERROR_CHECK(err_code);
     
     // Initialize timer for Humidity Trigger
     err_code = app_timer_create(&m_hum_timer_id,
-    APP_TIMER_MODE_REPEATED,
-    hum_take_measurement);
+                    APP_TIMER_MODE_REPEATED,
+                    hum_take_measurement);
+    APP_ERROR_CHECK(err_code);
+
+    // Initialize timer for Temperature trigger
+    err_code = app_timer_create(&m_temp_timer_id,
+                    APP_TIMER_MODE_REPEATED,
+                    temp_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Lux Trigger
     err_code = app_timer_create(&m_lux_timer_id,
-    APP_TIMER_MODE_REPEATED,
-    lux_take_measurement);
+                    APP_TIMER_MODE_REPEATED,
+                    lux_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Acc Trigger
     err_code = app_timer_create(&m_acc_timer_id,
-    APP_TIMER_MODE_REPEATED,
-    acc_take_measurement);
+                    APP_TIMER_MODE_REPEATED,
+                    acc_take_measurement);
     APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for initializing the temperature.
- */
-static void temp_char_init(ble_ess_init_t * p_ess_init)
-{
-    p_ess_init->temp_trigger_data.condition = TEMP_TRIGGER_CONDITION;
-    p_ess_init->init_temp_data = (int16_t)(INIT_TEMP_DATA);
-    p_ess_init->temp_trigger_val_var = (int16_t)(TEMP_TRIGGER_VAL_OPERAND);
-    p_ess_init->temp_trigger_data.time_interval = (uint32_t)(TEMP_TRIGGER_VAL_TIME);
 }
 
 /**@brief Function for initializing the pressure.
@@ -888,6 +772,16 @@ static void hum_char_init(ble_ess_init_t * p_ess_init)
     p_ess_init->init_hum_data = (uint16_t)(INIT_HUM_DATA);
     p_ess_init->hum_trigger_val_var = (uint16_t)(HUM_TRIGGER_VAL_OPERAND);
     p_ess_init->hum_trigger_data.time_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
+}
+
+/**@brief Function for initializing the temperature.
+ */
+static void temp_char_init(ble_ess_init_t * p_ess_init)
+{
+    p_ess_init->temp_trigger_data.condition = TEMP_TRIGGER_CONDITION;
+    p_ess_init->init_temp_data = (int16_t)(INIT_TEMP_DATA);
+    p_ess_init->temp_trigger_val_var = (int16_t)(TEMP_TRIGGER_VAL_OPERAND);
+    p_ess_init->temp_trigger_data.time_interval = (uint32_t)(TEMP_TRIGGER_VAL_TIME);
 }
 
 /**@brief Function for initializing lux.
@@ -927,11 +821,6 @@ static void sensors_init(void)
     nrf_drv_twi_init(&twi_instance, &twi_config, NULL);
     nrf_drv_twi_enable(&twi_instance);
 
-    //initialize temperature and humidity
-    si7021_init(&twi_instance);
-    si7021_reset();
-    si7021_heater_off();
-
     //initialize pressure
     lps331ap_init(&twi_instance);
     lps331ap_sw_reset();
@@ -940,6 +829,11 @@ static void sensors_init(void)
     lps331ap_config(lps331ap_MODE1, lps331ap_P_RES_10, lps331ap_T_RES_7);
     lps331ap_one_shot_config();
     lps331ap_power_on();
+
+    //initialize humidity and temperature
+    si7021_init(&twi_instance);
+    si7021_reset();
+    si7021_heater_off();
 
     //initialize lux
     tsl2561_init(&twi_instance);
@@ -956,12 +850,9 @@ static void sensors_init(void)
     uint8_t ia_time = 30;
     adxl362_set_inactivity_time(ia_time);
 
-    //adxl362_read_status_reg();
     adxl362_interrupt_map_t intmap_2;
 
-    
     //adxl362_interrupt_map_t intmap_1, intmap_2;
-
     /*
     intmap_1.DATA_READY = 0;
     intmap_1.FIFO_READY = 0;
@@ -983,17 +874,12 @@ static void sensors_init(void)
     intmap_2.AWAKE = 1;
     intmap_2.INT_LOW = 1;
     adxl362_config_INTMAP(&intmap_2, false);
-    //adxl362_config_interrupt_mode(LINKED, true , true);
-    //adxl362_activity_interrupt_enable();
-    //adxl362_inactivity_interrupt_enable();
 
     adxl362_config_interrupt_mode(LOOP, true , true);
     adxl362_activity_inactivity_interrupt_enable();
 
     adxl362_read_status_reg();
 
-
-    
 }
 
 // init services
@@ -1007,10 +893,9 @@ static void services_init (void) {
     ess_init.evt_handler = on_ess_evt;
     ess_init.is_notify_supported = true;
     
-    
-    temp_char_init(&ess_init); //initialize temp
     pres_char_init(&ess_init); //initialize pres
     hum_char_init(&ess_init); //initialize hum
+    temp_char_init(&ess_init); //initialize temp
     lux_char_init(&ess_init); //initialize lux
     acc_char_init(&ess_init); //initialize acc
     
@@ -1065,18 +950,7 @@ static void update_timers( ble_evt_t * p_ble_evt ){
     uint32_t meas_interval = 0;
     uint32_t err_code;
 
-    if (p_evt_write->handle == m_ess.temperature.trigger_handle)
-    {
-        if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){   
-            memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
-            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
-            app_timer_stop(m_temp_timer_id);
-            err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
-            APP_ERROR_CHECK(err_code);
-        }
-    }
-    else if (p_evt_write->handle == m_ess.pressure.trigger_handle)
+    if (p_evt_write->handle == m_ess.pressure.trigger_handle)
     {
         if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){   
             memcpy(&meas_interval, m_ess.pressure.trigger_val_buff + 1, 3);
@@ -1095,6 +969,17 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_hum_timer_id);
             err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
+            APP_ERROR_CHECK(err_code);
+        }
+    }
+    else if (p_evt_write->handle == m_ess.temperature.trigger_handle)
+    {
+        if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){   
+            memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
+            meas_interval = (uint32_t)(meas_interval);
+            meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
+            app_timer_stop(m_temp_timer_id);
+            err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
         }
     }
@@ -1138,33 +1023,25 @@ static bool update_advdata(void) {
         m_ess_updating_advdata = true;
         uint32_t err_code;
         uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-        //ble_advdata_manuf_data_t manuf_specific_data;
-        //memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
 
         ble_advdata_service_data_t service_data;
 
         memcpy(&m_beacon_info[0],  &m_sensor_info.pressure, 4);
         memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 2);
-        memcpy(&m_beacon_info[6],  &m_sensor_info.light, 2);
-        memcpy(&m_beacon_info[8], &m_sensor_info.temp, 2);
+        memcpy(&m_beacon_info[6], &m_sensor_info.temp, 2);
+        memcpy(&m_beacon_info[8],  &m_sensor_info.light, 2);
         memcpy(&m_beacon_info[10], &m_sensor_info.acceleration, 1);
-
-        //manuf_specific_data.company_identifier = APP_COMPANY_IDENTIFIER;
-        //manuf_specific_data.data.p_data        = (uint8_t *) m_beacon_info;
-        //manuf_specific_data.data.size          = APP_BEACON_INFO_LENGTH;
 
         memset(&service_data, 0, sizeof(service_data));
         service_data.data.p_data = (uint8_t *)m_beacon_info;
         service_data.data.size = APP_BEACON_INFO_LENGTH;
         service_data.service_uuid = ESS_UUID_SERVICE;
-        
 
         // Build and set advertising data.
         memset(&advdata, 0, sizeof(advdata));
 
         advdata.name_type               = BLE_ADVDATA_FULL_NAME;
         advdata.flags                   = flags;
-        //advdata.p_manuf_specific_data   = &manuf_specific_data;
         advdata.p_service_data_array = &service_data;
         advdata.service_data_count = 1;
 
@@ -1172,11 +1049,10 @@ static bool update_advdata(void) {
         APP_ERROR_CHECK(err_code);
         m_ess_updating_advdata = false;
 
-        //led_off(SQUALL_LED_PIN);
-
         return true;
 
     }
+
     return false;
 }
 
@@ -1191,23 +1067,18 @@ int main(void) {
     led_init(BLEES_LED_PIN);
     led_on(SQUALL_LED_PIN);
     led_on(BLEES_LED_PIN);
-    //led_off(SQUALL_LED_PIN);
 
 
     timers_init();
 
-    //gpio_init();
-
     // Setup BLE and services
     ble_stack_init();
-    scheduler_init(); //new
+    scheduler_init();
     gap_params_init();
     services_init();
     advertising_init();
-    sensors_init();//new
+    sensors_init();
     conn_params_init();
-
-    //gpio_init();
 
     // Advertise data
     update_advdata();
@@ -1218,13 +1089,11 @@ int main(void) {
 
     gpio_init();
 
-
     // Initialization complete
     led_off(SQUALL_LED_PIN);
 
     while (1) {
         app_sched_execute();
-
         power_manage();
     }
 }

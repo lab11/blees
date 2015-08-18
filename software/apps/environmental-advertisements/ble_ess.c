@@ -1,12 +1,10 @@
-#include "ble_ess.h"
-
 #include <string.h>
 
+#include "app_util.h"
+#include "ble_srv_common.h"
 #include "nordic_common.h"
 
-#include "ble_srv_common.h"
-
-#include "app_util.h"
+#include "ble_ess.h"
 
 /**@brief Function for handling the Connect event.
  *
@@ -30,11 +28,13 @@ static void on_disconnect(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 }
 
 static bool is_char_value_handle(ble_gatts_evt_hvc_t * p_hvc, ble_ess_t * p_ess){
-    if ((p_hvc->handle == (p_ess->temp_char_handles.value_handle)) ||
-        (p_hvc->handle == (p_ess->pres_char_handles.value_handle))||
-        (p_hvc->handle == (p_ess->hum_char_handles.value_handle))||
-        (p_hvc->handle == (p_ess->lux_char_handles.value_handle))||
-        (p_hvc->handle == (p_ess->acc_char_handles.value_handle)) ){
+
+    if ((p_hvc->handle == (p_ess->pres_char_handles.value_handle))||
+        (p_hvc->handle == (p_ess->hum_char_handles.value_handle)) ||
+        (p_hvc->handle == (p_ess->temp_char_handles.value_handle))||
+        (p_hvc->handle == (p_ess->lux_char_handles.value_handle)) ||
+        (p_hvc->handle == (p_ess->acc_char_handles.value_handle)))
+    {
 
         return true;
     }
@@ -70,12 +70,7 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
 {
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-    if (p_evt_write->handle == p_ess->temperature.trigger_handle)
-    {
-        memcpy(&(p_ess->temperature.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 4);
-    }
-    else if (p_evt_write->handle == p_ess->pressure.trigger_handle)
+    if (p_evt_write->handle == p_ess->pressure.trigger_handle)
     {
         memcpy(&(p_ess->temperature.trigger_val_cond), p_evt_write->data, 1);
         memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 4);
@@ -84,6 +79,11 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
     {
         memcpy(&(p_ess->humidity.trigger_val_cond), p_evt_write->data, 1);
         memcpy(p_ess->humidity.trigger_val_buff, p_evt_write->data, 4);
+    }
+    else if (p_evt_write->handle == p_ess->temperature.trigger_handle)
+    {
+        memcpy(&(p_ess->temperature.trigger_val_cond), p_evt_write->data, 1);
+        memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 4);
     }
     else if (p_evt_write->handle == p_ess->lux.trigger_handle)
     {
@@ -119,13 +119,12 @@ void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
             on_write(p_ess, p_ble_evt);
             break;
         default:
-            // No implementation needed.
             break;
     }
 }
 
 
-/**@brief Function for adding a pressure characteristic.
+/**@brief Function for adding an ESS characteristic.
  *
  * @param[in]   p_ess        Environmental Service structure.
  * @param[in]   p_ess_init   Information needed to initialize the service.
@@ -167,7 +166,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     ble_uuid_t          ble_uuid;
     ble_gatts_attr_md_t attr_md; // attribute metadata
     ble_gatts_attr_md_t cccd_md;
-    //ess_meas_desc_t     attr_char_desc;
     
     memset(&char_md, 0, sizeof(char_md));
     
@@ -175,15 +173,10 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     char_md.char_props.read   = 1; // mandatory
     char_md.char_props.notify = p_ess_init->is_notify_supported; // optional
     p_ess->is_notify_supported = char_md.char_props.notify;
-    //char_md.char_props.write   = 0; // excluded
-    //char_md.char_props.write_wo_resp   = 0; // excluded
-    //char_md.char_props.auth_signed_wr   = 0; // excluded
-    //char_md.char_props.indicate   = 0; // excluded
-    //char_md.char_props.broadcast   = 0; // excluded
     
     /***** external properties are optional ****/
-    char_md.char_ext_props.reliable_wr = 1; // not mentioned in spec?
-    char_md.char_ext_props.wr_aux = 1; // mentioned as past of normal properties?
+    char_md.char_ext_props.reliable_wr = 1;
+    char_md.char_ext_props.wr_aux = 1;
     
     
     /******** if notify is enabled ******/
@@ -191,10 +184,7 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
-    //cccd_md.write_perm = p_ess_init->ess_meas_attr_md.cccd_write_perm;
     cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
-    //cccd_md.rd_auth       = 0;
-    //cccd_md.wr_auth      = 0;
 
     char_md.p_char_pf         = NULL;
     char_md.p_user_desc_md    = NULL;
@@ -205,7 +195,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     ble_uuid.type = uuid_type;
     ble_uuid.uuid = ESS_CHAR_UUID;
     
-    /* I currently cannot find any information about required characteristic value attribute metadata */
     memset(&attr_md, 0, sizeof(attr_md));
     
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
@@ -216,7 +205,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     attr_md.wr_auth    = 0;
     
     /* 2) The Characteristic Value Attribute consists of the actual data */
-    /* for now, we will input fake data */
     memset(&attr_char_value, 0, sizeof(attr_char_value));
     
     
@@ -227,7 +215,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     attr_char_value.max_len   = max_char_len;
     attr_char_value.p_value   = fake_data_p;
     
-    //return
     err_code = sd_ble_gatts_characteristic_add(p_ess->ess_service_handle,
                                               &char_md,
                                               &attr_char_value,
@@ -257,8 +244,6 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
             trigger_des.init_len = max_char_len + 1;
         }
         
-        printf("hi");
-
         BLE_UUID_BLE_ASSIGN(ble_uuid, ESS_UUID_ES_TRIGGER_SETTING);
         trigger_des.p_uuid = &ble_uuid;
 
@@ -280,27 +265,10 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
     }
     
-    if (err_code != NRF_SUCCESS){ return err_code; }
-    
-    /*
-    memset(&attr_char_desc, 0, sizeof(attr_char_desc));
-     
-    BLE_UUID_BLE_ASSIGN(ble_uuid, ESS_UUID_ES_MEAS_DESC);
-    attr_char_desc.desc_uuid = &ble_uuid;
-    attr_char_desc.flags = 0;
-    attr_char_desc.samp_func = 0;
-    attr_char_desc.meas_per = 0;
-    attr_char_desc.up_intv = 0;
-    attr_char_desc.app = 0;
-    attr_char_desc.meas_unc = 0;
-    uint16_t id = ESS_UUID_ES_MEAS_DESC;
-    uint16_t *ble_uuid_ac = (uint16_t*)&id;
-     
-    return sd_ble_gatts_descriptor_add(ESS_CHAR_UUID,
-    &attr_char_desc,
-    &ble_uuid_ac);
-     
-    */
+    if (err_code != NRF_SUCCESS)
+    { 
+        return err_code; 
+    }
     
     return NRF_SUCCESS;
     
@@ -337,28 +305,16 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     {
         return err_code;
     }
-    
-    //Initial data pointer
-    uint8_t *init_data_ptr;
 
-    memcpy(p_ess->temperature.val_last, &(p_ess_init->init_temp_data), 2);
     memcpy(p_ess->pressure.val_last, &(p_ess_init->init_pres_data), 4);
     memcpy(p_ess->humidity.val_last, &(p_ess_init->init_hum_data), 2);
+    memcpy(p_ess->temperature.val_last, &(p_ess_init->init_temp_data), 2);
     memcpy(p_ess->lux.val_last, &(p_ess_init->init_lux_data), 2);
     memcpy(p_ess->acceleration.val_last, &(p_ess_init->init_acc_data), 1);
 
+    //Initial data pointer
+    uint8_t *init_data_ptr;
     
-    /****** Add temperature characteristic *******/
-    init_data_ptr = (uint8_t*)&(p_ess_init->init_temp_data);
-
-    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_TEMP_CHAR, BLE_UUID_TYPE_BLE,  &(p_ess->temperature), init_data_ptr, INIT_TEMP_LEN, MAX_TEMP_LEN, 
-        &(p_ess_init->temp_trigger_data),  (uint8_t*)&(p_ess_init->temp_trigger_val_var), &(p_ess->temp_char_handles) );
-
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
-
     /******* Add pressure characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_pres_data);
     
@@ -381,6 +337,17 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
         return err_code;
     }
     
+    /****** Add temperature characteristic *******/
+    init_data_ptr = (uint8_t*)&(p_ess_init->init_temp_data);
+
+    err_code = ess_char_add(p_ess, p_ess_init, ESS_UUID_TEMP_CHAR, BLE_UUID_TYPE_BLE,  &(p_ess->temperature), init_data_ptr, INIT_TEMP_LEN, MAX_TEMP_LEN, 
+        &(p_ess_init->temp_trigger_data),  (uint8_t*)&(p_ess_init->temp_trigger_val_var), &(p_ess->temp_char_handles) );
+
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
     /******* Add lux characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_lux_data);
     
@@ -391,6 +358,7 @@ uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
     {
         return err_code;
     }
+
     /******* Add acceleration characteristic *******/
     init_data_ptr = (uint8_t*)&(p_ess_init->init_acc_data);
     
@@ -416,13 +384,16 @@ int intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed)
 
             if ((buff_2[len] >> 7) == 0) return -1;
             else return 1;
+
         } 
     }
 
     while( len >= 0){
+
         if (buff_1[len] > buff_2[len]) return 1;
         else if (buff_1[len] < buff_2[len]) return -1;
         len--;
+
     }
 
     return 0;
@@ -459,9 +430,9 @@ uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_dat
     {
         
        if( is_notification_needed(char_data->trigger_val_cond, char_data->trigger_val_buff, ess_meas_val, char_data->val_last, char_len, is_signed) ){
+            
             //send the notification
             ble_gatts_hvx_params_t hvx_params;
-            
             memset(&hvx_params, 0, sizeof(hvx_params));
             
             uint16_t len = sizeof(uint8_t);
@@ -486,10 +457,7 @@ uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_dat
     //update value
     memcpy(char_data->val_last, ess_meas_val, char_len);
 
-    
     return err_code;
-
-
 }
 
 
@@ -497,12 +465,6 @@ bool is_notification_needed(uint8_t condition, uint8_t * operand, uint8_t * ess_
 
         bool notif_needed = false;
         
-        /*
-        if(condition == TRIG_INACTIVE){
-            notif_needed = false;
-        }
-        */
-
         if (condition == TRIG_FIXED_INTERVAL){
             notif_needed = true;
         }
@@ -512,91 +474,51 @@ bool is_notification_needed(uint8_t condition, uint8_t * operand, uint8_t * ess_
         }
 
         else if (condition == TRIG_VALUE_CHANGE){
-
             int n = intcmp(ess_meas_val_new, ess_meas_val_old, char_len, is_signed);
-
             if ( n != 0){
                 notif_needed = true;
             }
-            /*
-            else {
-                notif_needed = false;
-            }
-            */
         }
 
         else {
+
             int n = intcmp(ess_meas_val_new, operand+1, char_len, is_signed);
 
-            if (condition == TRIG_WHILE_LT){
-                
+            if (condition == TRIG_WHILE_LT){ 
                 if (n < 0){
                     notif_needed = true;
                 }
-                /*
-                else {
-                    notif_needed = false;
-                }
-                */
             }
 
             else if (condition == TRIG_WHILE_LTE){
                 if (n <= 0){
                     notif_needed = true;
                 }
-                /*
-                else{
-                    notif_needed = false;
-                } 
-                */
             }
 
             else if (condition == TRIG_WHILE_GT){
-
                 if (n>0){
                    notif_needed = true;
                 }
-                /*
-                else{
-                    notif_needed = false;
-                }
-                */
             }
 
             else if (condition == TRIG_WHILE_GTE){
                 if (n>=0){
                     notif_needed = true;
                 }
-                /*
-                else{
-                    notif_needed = false;
-                }
-                */
             }
 
             else if (condition == TRIG_WHILE_E){
                 if(n==0){
                     notif_needed = true;
                 }
-                /*
-                else{
-                    notif_needed = false;
-                }
-                */
             }
 
             else if (condition == TRIG_WHILE_NE){
                 if(n!=0){
                     notif_needed = true;
                 }
-                /*
-                else {
-                    notif_needed = false;
-                }
-                */
             }
-
-
 
         }
 
