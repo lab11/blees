@@ -29,8 +29,6 @@
 #include "ble_db_discovery.h"
 #include "ble_config.h"
 #include "ble_ess.h"
-#include "device_manager.h"
-#include "device_manager_cnfg.h"
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_sdm.h"
