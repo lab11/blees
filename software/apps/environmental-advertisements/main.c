@@ -1010,6 +1010,25 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             err_code = app_timer_start(m_acc_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
         }
+        else{
+            memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
+            if ( m_ess.acceleration.trigger_val_cond = 0x04 ){
+                uint8_t a_time = (uint8_t)(meas_interval);
+                adxl362_set_activity_time(a_time);
+            }
+            else if ( m_ess.acceleration.trigger_val_cond = 0x05 ){
+                uint16_t act_thresh = (uint16_t)(meas_interval);
+                adxl362_set_activity_threshold(act_thresh);
+            }
+            else if ( m_ess.acceleration.trigger_val_cond = 0x06 ){
+                uint8_t ia_time = (uint8_t)(meas_interval);
+                adxl362_set_inactivity_time(ia_time);
+            }
+            else if ( m_ess.acceleration.trigger_val_cond = 0x07 ){
+                uint16_t inact_thresh = (uint16_t)(meas_interval);
+                adxl362_set_inactivity_threshold(inact_thresh);
+            }
+        }
     }
 
 }

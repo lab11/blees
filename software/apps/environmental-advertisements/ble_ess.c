@@ -243,6 +243,12 @@ static uint32_t ess_char_add(ble_ess_t * p_ess,
     
 }
 
+/*NOTE: If you want to change the acceleration activity time, write to TRIG_WHILE_LT (0x04)
+*       If you want to change the acceleration activity threshold, write to TRIG_WHILE_LTE (0x05)
+*       If you want to change the acceleration inactivity time, write to TRIG_WHILE_GT (0x06)
+*       If you want to change the acceleration inactivity threshold, write to TRIG_WHILE_LT (0x07)
+*       You should set the acceleration trigger back to TRIG_FIXED_INTERVAL(0x01) or TRIG_NO_LESS(0x02) after making these changes
+*/
 static bool is_notification_needed(uint8_t condition, uint8_t * operand, uint8_t * ess_meas_val_new, uint8_t * ess_meas_val_old, uint8_t char_len, bool is_signed){
 
         bool notif_needed = false;
