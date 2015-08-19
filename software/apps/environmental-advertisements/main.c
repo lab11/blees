@@ -72,31 +72,31 @@
 #define INIT_PRES_DATA              456
 #define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define PRES_TRIGGER_VAL_OPERAND    470
-#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 //Initial Humidity Parameters
 #define INIT_HUM_DATA               789
 #define HUM_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define HUM_TRIGGER_VAL_OPERAND     799
-#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 //Initial Temperature Parameters
 #define INIT_TEMP_DATA              123
 #define TEMP_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define TEMP_TRIGGER_VAL_OPERAND    156
-#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 //Initial Lux Parameters
 #define INIT_LUX_DATA               789
 #define LUX_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define LUX_TRIGGER_VAL_OPERAND     799
-#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 //Initial Acceleration Parameters
 #define INIT_ACC_DATA               789
 #define ACC_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 
 /*******************************************************************************
@@ -574,7 +574,7 @@ static void acc_take_measurement(void * p_context)
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
 
-    if (switch_acc){
+    if (switch_acc || (m_sensor_info.acceleration & 0x10) ) {
         meas = m_sensor_info.acceleration & 0x11;
         switch_acc = false;
     }
@@ -583,7 +583,9 @@ static void acc_take_measurement(void * p_context)
     }
     m_sensor_info.acceleration = meas;
 
-    while( !update_advdata() );
+    while( !update_advdata() ){
+        m_sensor_info.acceleration = meas;
+    }
 
     memcpy(acc_meas_val, &meas, 1);
 
