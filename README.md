@@ -42,6 +42,8 @@ To clone both this repository and the required submodules,
 clone with the `--recursive` option: 
 `git clone --recursive git@github.com:lab11/blees.git`
 
-Otherwise, you can initialize the submodule by doing
-`git submodule init` and you can keep the submodule up to 
-date by doing `git submodule update`.
+Otherwise, you can initialize the submodule and keep submodules up to
+date by doing `git submodule update --init --recursive`.
+
+If you think all of this is ridiculous and git should just handle submodules automatically, use this:
+https://gist.github.com/brghena/fc4483a2df83c47660a5
