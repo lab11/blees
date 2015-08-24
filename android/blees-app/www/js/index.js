@@ -1,9 +1,10 @@
-/* JavaScript for Template Summon UI */
+/* JavaScript for ESS Summon UI */
 
 var deviceId = "C0:98:E5:30:45:BF";                                                 // while testing, replace with address of a BLE peripheral
 var deviceName = "BLE Device";                                                      // while testing, replace with desired name
 var serviceUuid = "181A";                                                           // ESS UUID
 var writeValue = "Written Name";                                                    // value to write to characteristic
+var essdescriptorUuid = "290D";
 
 var pressureUuid = "2A6D";                                                          // pressure characteristic UUID to read or write
 var humidityUuid = "2A6F";                                                          // humidity characteristic UUID to read or write
@@ -12,28 +13,18 @@ var luxUuid = "C512";                                                           
 var accelerationUuid = "F801";                                                      // acceleration characteristic UUID to read or write
 
 
-//var allelements = document.getElementsByName('bleesimg');
-//var blees = allelements;
-//var bees = this;
-
 var app = {
     // Application Constructor
     initialize: function() {
         document.addEventListener("deviceready", app.onAppReady, false);
         document.addEventListener("resume", app.onAppReady, false);
         document.addEventListener("pause", app.onPause, false);
-        bleesimg.addEventListener('touchstart', app.onTouch, false);                                          // if bulb image touched, goto: onToggle
-        lightimg.addEventListener('touchstart', app.onTouchLight, false);                                          // if bulb image touched, goto: onToggle
-        tempimg.addEventListener('touchstart', app.onTouchTemp, false);                                          // if bulb image touched, goto: onToggle
-        bulbimg.addEventListener('touchstart', app.onTouchBulb, false);                                          // if bulb image touched, goto: onToggle
-        //blees.onClick(onTouch());
-        //bulb.addEventListener('touchstart', this.onTouch, false);                                          // if bulb image touched, goto: onToggle
+        bleesimg.addEventListener('touchstart', app.onTouch, false);                // if bulb image touched, goto: onToggle
+        lightimg.addEventListener('touchstart', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
+        tempimg.addEventListener('touchstart', app.onTouchTemp, false);             // if bulb image touched, goto: onToggle
+        bulbimg.addEventListener('touchstart', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
+
     },
-    /*
-    onTouch: function(event){
-        app.log("hi");
-    },
-    */
     // App Ready Event Handler
     onAppReady: function() {
         if (window.gateway) {                                                       // if UI opened through Summon,
@@ -41,10 +32,6 @@ var app = {
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
         }
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
-        var num = blees.name;
-        app.log(num);
-        //app.log("In: onAppReady");
-
     },
     // App Paused Event Handler
     onPause: function() {                                                           // if user leaves app, stop BLE
@@ -61,27 +48,18 @@ var app = {
     onDiscover: function(device) {
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")! Connecting.");
-            //app.log("In: onDiscover");
             ble.connect(deviceId, app.onConnect, app.onAppReady);                   // if device matches, connect; if connected, goto: onConnect
         }
     },
     // BLE Device Connected Callback
     onConnect: function(device) {
-        //app.log("In: onConnect");
         app.log("Connected to " + deviceName + " (" + deviceId + ")!");
-        //umichblees.addEventListener("click", app.onTouch, false);                                          // if bulb image touched, goto: onToggle
-        //bleesimg.addEventListener('touchstart', this.onTouch, false);                                          // if bulb image touched, goto: onToggle
         ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
         ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
         ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError); 
         ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
         ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);
-        //bleesimg.addEventListener('touchstart', this.onTouch, false);                                          // if bulb image touched, goto: onToggle
-        // uncomment to read characteristic on connect; if read is good, goto: onRead
-        // uncomment to write writeValue to characteristic on connect; if write is good, goto: onWrite
-        // ble.write(deviceId, serviceUuid, characteristicUuid, app.stringToBytes(writeValue), app.onWrite, app.onError); 
     },
-    
     onTouch: function(device) {
         app.log("Getting sensor data...");
         ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
@@ -114,34 +92,59 @@ var app = {
         window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
     },
     bulbcallback: function(buttonIndex) {
-      //app.log("bulbcallback");
-      // like other Cordova plugins (prompt, confirm) the buttonIndex is 1-based (first button is index 1)
-      app.log('button index clicked: ' + buttonIndex);
-      
+        //app.log("bulbcallback");
+        // like other Cordova plugins (prompt, confirm) the buttonIndex is 1-based (first button is index 1)
+        app.log('button index clicked: ' + buttonIndex);
+        //var buff = new ArrayBuffer(32);
+        //var uint32view = new Uint8Array(buff);
+        app.log("hi");
+        //var params = new Uint64Array(buttonIndex);
+        app.log("ho");
+        if (buttonIndex == 1){
+            app.log("got one");
+            /*
+            var bparams = {
+                'address': deviceId,
+                'serviceUuid': serviceUuid,
+                'characteristicUuid': humidityUuid
+            };
+            app.log("please work");
+            bluetoothle.read(app.bulbwritecallback, app.onError, bparams);
+            */
+            app.log("didn't work");
+            //app.log(readval);
+            //ble.write(deviceId, serviceUuid, luxUuid, buff, app.bulbwritecallback, app.onError);
+        }
+        else{
+            app.log("yono");
+            var input_val = window.prompt("What value?", "0x0000");
+            var output_val = parseInt(input_val, 10);
+            if (input_val) {
+                app.log("gotit");
+            }
+        }
+    },
+    bulbwritecallback: function() {
+        app.log("got input");
     },
     // BLE Characteristic Read Callback
     onReadPres: function(event) {
-        //app.log("In: onReadPres");
         app.log("Pressure: " + (app.buffToUInt32Decimal(data))/10 + " " + "Pa");                 // display read value as string
     },
-        // BLE Characteristic Read Callback
+    // BLE Characteristic Read Callback
     onReadHum: function(data) {
-        //app.log("In: onReadHum");
         app.log("Humidity: " + (app.buffToUInt16Decimal(data))/100 + String.fromCharCode(37));                 // display read value as string
     },
     // BLE Characteristic Read Callback
     onReadTemp: function(data) {
-        //app.log("In: onReadTemp");
         app.log("Temperature: " + (app.buffToInt16Decimal(data))/100 + " " + String.fromCharCode(176) + "C");                 // display read value as string
     },
     // BLE Characteristic Read Callback
     onReadLux: function(data) {
-        //app.log("In: onReadLux");
         app.log("Lux: " + app.buffToInt16Decimal(data) + " lux");                 // display read value as string
     },
     // BLE Characteristic Read Callback
     onReadAcc: function(data) {
-        //app.log("In: onReadAcc");
         var acc = app.buffToUInt8Decimal(data);
         app.log("Immediate Acceleration: " + ((acc & 17) >> 4) );                 // display read value as string
         app.log("Interval Acceleration: " + (acc & 1) );                 // display read value as string
@@ -164,28 +167,23 @@ var app = {
         return array.buffer;
     },
     buffToUInt32Decimal: function(buffer) {
-        //app.log("In: buffTo32Decimal");
         var uint32View = new Uint32Array(buffer);
         return uint32View[0];
     },
     buffToUInt16Decimal: function(buffer) {
-        //app.log("In: buffTo16Decimal");
         var uint16View = new Uint16Array(buffer);
         return uint16View[0];
     },
     buffToInt16Decimal: function(buffer) {
-        //app.log("In: buffTo16Decimal");
         var int16View = new Int16Array(buffer);
         return int16View[0];
     },
     buffToUInt8Decimal: function(buffer) {
-        //app.log("In: buffTo8Decimal");
         var uint8View = new Uint8Array(buffer);
         return uint8View[0];
     },
     // Function to Convert Bytes to String (to Read Characteristics)
     bytesToString: function(buffer) {
-        //app.log("In: bytesToString");
         return String.fromCharCode.apply(null, new Uint8Array(buffer));
     },
     // Function to Log Text to Screen

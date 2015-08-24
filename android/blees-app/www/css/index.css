@@ -15,6 +15,9 @@ body {
 }
 
 #console {
+    margin-left: 75px;
+    text-align: left;
+    position: static;
     padding:10px;
     font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif;
     font-size:12px;
