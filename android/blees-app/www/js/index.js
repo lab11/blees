@@ -19,9 +19,15 @@ var app = {
         document.addEventListener("deviceready", app.onAppReady, false);
         document.addEventListener("resume", app.onAppReady, false);
         document.addEventListener("pause", app.onPause, false);
+
         bleesimg.addEventListener('touchstart', app.onTouch, false);                // if bulb image touched, goto: onToggle
-        lightimg.addEventListener('touchstart', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
+
+        presimg.addEventListener('touchstart', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
+        humimg.addEventListener('touchstart', app.onTouchHum, false);             // if bulb image touched, goto: onToggle
         tempimg.addEventListener('touchstart', app.onTouchTemp, false);             // if bulb image touched, goto: onToggle
+        lightimg.addEventListener('touchstart', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
+        accimg.addEventListener('touchstart', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
+
         bulbimg.addEventListener('touchstart', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
 
     },
@@ -47,7 +53,21 @@ var app = {
     // BLE Device Discovered Callback
     onDiscover: function(device) {
         if (device.id == deviceId) {
-            app.log("Found " + deviceName + " (" + deviceId + ")! Connecting.");
+            app.log("Found " + deviceName + " (" + deviceId + ")!");
+            var adData = new Uint8Array(device.advertising);
+            var pressuredata = ~ ((adData[15] | (adData[14] << 8) | (adData[13]<<16) | (adData[12] << 24) ) & 0x0FFFFFFFF);
+            app.log("why");
+            app.log(pressuredata);
+            app.log(adData[13] << 8);
+            app.log( adData[17] + adData[16] );
+            app.log( adData[18] + adData[19] );
+            app.log(adData[20] + adData[21] );
+            app.log(adData[22]);
+            /*
+            for(var i = 12; i < 25; i++){
+                app.log(adData[i]);
+            } */
+            app.log("Connecting..");
             ble.connect(deviceId, app.onConnect, app.onAppReady);                   // if device matches, connect; if connected, goto: onConnect
         }
     },
@@ -68,13 +88,25 @@ var app = {
         ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
         ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
     },
-    onTouchLight: function(device) {
-        app.log("Getting lux...");
-        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
+    onTouchPres: function(device) {
+        app.log("Getting pressure...");
+        ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);  
+    },
+    onTouchHum: function(device) {
+        app.log("Getting humidity...");
+        ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
     },
     onTouchTemp: function(device) {
         app.log("Getting temperature...");
         ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError);  
+    },
+    onTouchLight: function(device) {
+        app.log("Getting lux...");
+        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
+    },
+    onTouchAcc: function(device) {
+        app.log("Getting acceleration...");
+        ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
     },
     onTouchBulb: function(device) {
         app.log("bulb touched");
@@ -128,7 +160,8 @@ var app = {
         app.log("got input");
     },
     // BLE Characteristic Read Callback
-    onReadPres: function(event) {
+    onReadPres: function(data) {
+        //app.log("where is pressure");
         app.log("Pressure: " + (app.buffToUInt32Decimal(data))/10 + " " + "Pa");                 // display read value as string
     },
     // BLE Characteristic Read Callback
@@ -167,6 +200,7 @@ var app = {
         return array.buffer;
     },
     buffToUInt32Decimal: function(buffer) {
+        //app.log("to32");
         var uint32View = new Uint32Array(buffer);
         return uint32View[0];
     },
@@ -189,6 +223,7 @@ var app = {
     // Function to Log Text to Screen
     log: function(string) {
         document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />"; 
+        document.querySelector("#console").scrollTop = document.querySelector("#console").scrollHeight;
     }
 };
 

@@ -8,18 +8,32 @@ body {
     -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
     -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
     -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
-    height:100%;
-    width:100%;
     margin:0px;
     padding:0px;
+    height: 90vh;
 }
 
 #console {
-    margin-left: 75px;
+    margin-left: 20%;
+    margin-right: 20%;
     text-align: left;
     position: static;
-    padding:10px;
+    padding:2px;
     font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif;
     font-size:12px;
+    border: 2px solid blue;
     color: #08f;
+    height: 40vh;
+    overflow: auto;
+}
+
+#centralblees {
+
+    border: 1px solid blue;
+
+    z-index: 2;
+        border-bottom-right-radius: 2em;
+
+
+
 }

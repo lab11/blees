@@ -9,13 +9,21 @@
         <link rel="stylesheet" type="text/css" href="css/index.css">
         <title>Template</title>
     </head>
-    <body style="text-align:center; font-family:sans-serif-thin; color:#888">        
+    <body style="text-align:center; font-family:sans-serif-thin;color:#888">        
         <h1 id="title">deviceId</h1>
-        <img src="img/light.png" align=center name = "lightimg" class="Dis" style="width:20%; margin:1px 0;"/>
-        <img src="img/temp.png" align=center name = "tempimg" class="Dis" style="width:20%; margin:1px 0;"/></br>
-        <img src="img/umich-blees.png" align=center name = "bleesimg" class="Dis" style="width:50%; margin:12px 0;"/></br>
-        <img src="img/bulb.png" align=left  name = "bulbimg" class="Dis" style="width:20%; margin:1px 0;"/></br>
-        <div id="console"></div>
+
+        <div>
+        <img src="img/temp.png" align=center name = "tempimg" class="Dis" style="width:15%; margin:1px 0;"/></br>
+        <img src="img/humidity.png" align=center name = "humimg" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img id="centralblees" src="img/blees2.png" align=center name = "bleesimg" class="Dis" style="width:30%; margin:5px 0;"/>
+        <img src="img/light.png" align=center name = "lightimg" class="Dis" style="width:15%; margin:1px 0;"/></br>
+        <img src="img/pressure.png" align=center name = "presimg" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/acceleration.png" align=center name = "accimg" class="Dis" style="width:15%; margin:1px 0;"/></br>
+        </div>
+
+
+        <img src="img/bulb.png" align=center  name = "bulbimg" class="Dis" style="width:15%; margin:1px 0;"/></br>
+        <div alight=center id="console"></div>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
     </body>
