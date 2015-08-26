@@ -175,7 +175,7 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     // On assert, the system can only recover with a reset.
     //NVIC_SystemReset();
 
-    led_off(BLEES_LED_PIN);
+    //led_off(BLEES_LED_PIN);
     //while(1);
     ble_debug_assert_handler(error_code, line_num, p_file_name);
 
@@ -284,9 +284,9 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
     //If high to low transition
     if (nrf_gpio_pin_read(PIN_IN) == 0){
 
-        m_sensor_info.acceleration = 0x11;
-
         led_on(BLEES_LED_PIN);
+
+        m_sensor_info.acceleration = 0x11;
 
         while( !(update_advdata()) ){
             m_sensor_info.acceleration = 0x11;
@@ -296,6 +296,10 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
         nrf_gpio_pin_clear(PIN_IN);
         switch_acc = true;
+
+        for(int i = 0; i < 1000; i++);
+        led_off(BLEES_LED_PIN);
+
 
     }
     //If low to high transition
@@ -307,7 +311,7 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
             m_sensor_info.acceleration = 0x01;
         };
 
-        led_off(BLEES_LED_PIN);
+        //led_off(BLEES_LED_PIN);
 
     }
 
@@ -316,7 +320,7 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 static void gpio_init(void)
 {
-    led_off(BLEES_LED_PIN);
+    //led_off(BLEES_LED_PIN);
 
     ret_code_t err_code;
     err_code = nrf_drv_gpiote_init();
@@ -340,7 +344,7 @@ static void gpio_init(void)
               | (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos);
     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_IN0_Set << GPIOTE_INTENSET_IN0_Pos;
 
-    led_on(BLEES_LED_PIN);
+    //led_on(BLEES_LED_PIN);
 
 }
 
@@ -1089,8 +1093,8 @@ int main(void) {
     // Initialization
     led_init(SQUALL_LED_PIN);
     led_init(BLEES_LED_PIN);
-    led_on(SQUALL_LED_PIN);
-    led_on(BLEES_LED_PIN);
+    //led_on(SQUALL_LED_PIN);
+    //led_on(BLEES_LED_PIN);
 
 
     timers_init();
@@ -1114,7 +1118,7 @@ int main(void) {
     gpio_init();
 
     // Initialization complete
-    led_off(SQUALL_LED_PIN);
+    //led_off(SQUALL_LED_PIN);
 
     while (1) {
         app_sched_execute();

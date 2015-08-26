@@ -73,27 +73,27 @@ static void on_write(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
     if (p_evt_write->handle == p_ess->pressure.trigger_handle)
     {
         memcpy(&(p_ess->pressure.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->pressure.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(p_ess->pressure.trigger_val_buff, p_evt_write->data, 5);
     }
     else if (p_evt_write->handle == p_ess->humidity.trigger_handle)
     {
         memcpy(&(p_ess->humidity.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->humidity.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(p_ess->humidity.trigger_val_buff, p_evt_write->data, 5);
     }
     else if (p_evt_write->handle == p_ess->temperature.trigger_handle)
     {
         memcpy(&(p_ess->temperature.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(p_ess->temperature.trigger_val_buff, p_evt_write->data, 5);
     }
     else if (p_evt_write->handle == p_ess->lux.trigger_handle)
     {
         memcpy(&(p_ess->lux.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->lux.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(p_ess->lux.trigger_val_buff, p_evt_write->data, 5);
     }
     else if (p_evt_write->handle == p_ess->acceleration.trigger_handle)
     {
         memcpy(&(p_ess->acceleration.trigger_val_cond), p_evt_write->data, 1);
-        memcpy(p_ess->acceleration.trigger_val_buff, p_evt_write->data, 4);
+        memcpy(p_ess->acceleration.trigger_val_buff, p_evt_write->data, 5);
     }
 }
 
