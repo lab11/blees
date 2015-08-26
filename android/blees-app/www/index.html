@@ -2,7 +2,7 @@
 <!-- HTML for Template Summon UI -->
 <html>
     <head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">
         <meta name="format-detection" content="telephone=no">
         <meta name="msapplication-tap-highlight" content="no">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
@@ -17,7 +17,7 @@
            <text style="color:#009966">E</text>
             <text style="color:#009933">S</text>
              <text style="color:#009900">!</text></h1>        
-        <h1 style="font-size: 90%" id="title">deviceId</h1>
+        <h1 style="font-size: 90%;" id="title">deviceId</h1>
         <div>
         <img id="centralblees" src="img/blees2.png" align=center name = "bleesimg" class="Dis" style="width:40%; margin:5px 0;"/></br>
         <img src="img/temp.png" align=center name = "tempimg" class="Dis" style="width:15%; margin:1px 0;"/>
@@ -28,6 +28,24 @@
         </div></br>
         <img src="img/bulb.png"  name = "bulbimg" class="Dis" style="width:15%; margin:1px 0;"/>
         <div alight=center id="console"></div>
+
+        <div id="popup">
+            <h3>Configure Lux Trigger Settings</h3>
+            <ul>
+                <li><a href="#" onclick="app.bulbcallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.bulbcallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.bulbcallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.bulbcallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.bulbcallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.bulbcallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.bulbcallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.bulbcallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.bulbcallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.bulbcallback(10)">While not equal to</a></li>
+            </ul>
+            <h4 onclick="document.querySelector('#popup').style.display='none'">Cancel</h4>
+        </div>
+
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
     </body>

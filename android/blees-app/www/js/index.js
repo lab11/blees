@@ -37,7 +37,7 @@ var app = {
         lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
-        bulbimg.addEventListener('touchend', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
+        bulbimg.addEventListener('click', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
 
     },
     onStartTimer: function(device){
@@ -198,17 +198,19 @@ var app = {
         app.log("bulb touched");
 
 
-            var lightoptions = {
-                'androidTheme': window.plugins.actionsheet.ANDROID_THEMES.THEME_HOLO_LIGHT, // default is THEME_TRADITIONAL
-                'title': 'Configure Lux Trigger Settings',
-                'buttonLabels': ['Inactive', 'Fixed Interval', 'No Less', 'Value Change', 'While less than', 'While less than or equal to',
-                                    'While greater than', 'While greater than or equal to', 'While equal to', 'While not equal to'],
-                'androidEnableCancelButton' : true, // default false
-                'winphoneEnableCancelButton' : true, // default false
-                'addCancelButtonWithLabel': 'Cancel',
-                'position': [20, 40] // for iPad pass in the [x, y] position of the popover
-            };
-            window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
+            // var lightoptions = {
+            //     'androidTheme': window.plugins.actionsheet.ANDROID_THEMES.THEME_HOLO_LIGHT, // default is THEME_TRADITIONAL
+            //     'title': 'Configure Lux Trigger Settings',
+            //     'buttonLabels': ['Inactive', 'Fixed Interval', 'No Less', 'Value Change', 'While less than', 'While less than or equal to',
+            //                         'While greater than', 'While greater than or equal to', 'While equal to', 'While not equal to'],
+            //     'androidEnableCancelButton' : true, // default false
+            //     'winphoneEnableCancelButton' : true, // default false
+            //     'addCancelButtonWithLabel': 'Cancel',
+            //     'position': [20, 40] // for iPad pass in the [x, y] position of the popover
+            // };
+            // window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
+
+            document.querySelector("#popup").style.display = "block";
 
     },
     bulbcallback: function(buttonIndex) {
@@ -243,6 +245,7 @@ var app = {
                 app.log("gotit");
             }
         }
+        document.querySelector("#popup").style.display = "none";
     },
     bulbwritecallback: function() {
         app.log("got input");
