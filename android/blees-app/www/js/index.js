@@ -73,21 +73,23 @@ var app = {
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
-
+            ble.stopScan(app.onStopScan, app.onError);
             //app.onStartConnection(device);
         }
     },
+    onStopScan: function(device) {
+        app.log("stopped scanning");
+    },
     onStartConnection: function(device) {
-        app.log("Connecting..");
         bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
         bluetoothle.connect(app.onConnectOther, app.onError, { "address": deviceId });                          //connect to peripheral- need this for descriptors
         ble.connect(deviceId, app.onConnect, app.onAppReady);                                                   // if device matches, connect; if connected, goto: onConnect
     },
     onInitialized: function(device) {
-        app.log("Initialized");
+        app.log("Initialized..");
     },
     onConnectOther: function(device) {
-        app.log("Connecting....");
+        app.log("Connecting..");
     },
     // BLE Device Connected Callback
     onConnect: function(device) {
@@ -108,7 +110,7 @@ var app = {
 
     },
     readSuccess: function(device){
-        app.log("success!");
+        app.log("Looks like we can read descriptors...");
         app.log( (bluetoothle.encodedStringToBytes(device.value))[0] );
         app.log( (bluetoothle.encodedStringToBytes(device.value))[1] );
         app.log( (bluetoothle.encodedStringToBytes(device.value))[2] );
@@ -120,7 +122,11 @@ var app = {
         clearTimeout(timer);
         if (device_connected){
             if (should_i_connect){
-                app.log("you should disconnect!!");
+                app.log("Disconnecting from BLEES device!");
+                bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});                
+                ble.disconnect(deviceId);
+                device_connected = false;
+                app.onAppReady();
             }
             else { 
                 app.onReadAllSensors(device);
@@ -128,7 +134,8 @@ var app = {
         }
         else {
             if (should_i_connect) {
-                app.log("you should connect!!");
+                app.log("Connecting to BLEES device!");
+                app.onStartConnection(device);
             }
             else {
                 app.log("Scanning...");
@@ -139,25 +146,53 @@ var app = {
         
 
     },
+    ondisconnectsuccess: function() {
+        app.log("disconnected success!");
+    },
     onTouchPres: function(device) {
-        app.log("Getting pressure...");
-        ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);  
+        if(device_connected){
+            app.log("Getting pressure...");
+            ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
+        } 
+        else{
+            app.log("Please connect to use this feature.")
+        }
     },
     onTouchHum: function(device) {
-        app.log("Getting humidity...");
-        ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
+        if(device_connected){
+            app.log("Getting humidity...");
+            ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);
+        }
+        else{
+            app.log("Please connect to use this feature.")
+        }
     },
     onTouchTemp: function(device) {
-        app.log("Getting temperature...");
-        ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError);  
+        if(device_connected){
+            app.log("Getting temperature...");
+            ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError);
+        }
+        else{
+            app.log("Please connect to use this feature.")
+        }
     },
     onTouchLight: function(device) {
-        app.log("Getting lux...");
-        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
+        if(device_connected){
+            app.log("Getting lux...");
+            ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
+        }
+        else{
+            app.log("Please connect to use this feature.")
+        }
     },
     onTouchAcc: function(device) {
-        app.log("Getting acceleration...");
-        ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
+        if(device_connected){
+            app.log("Getting acceleration...");
+            ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
+        }
+        else{
+            app.log("Please connect to use this feature.")
+        }
     },
     onTouchBulb: function(device) {
         app.log("bulb touched");
