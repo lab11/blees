@@ -12,24 +12,41 @@ var temperatureUuid = "2A6E";                                                   
 var luxUuid = "C512";                                                               // lux characteristic UUID to read or write
 var accelerationUuid = "F801";                                                      // acceleration characteristic UUID to read or write
 
+var device_connected = false;
+var timer;
+var touchduration = 5000; //length of time we want the user to touch before we do something
+var should_i_connect = false;
+var should_i_disconnect = false;
 
 var app = {
     // Application Constructor
     initialize: function() {
+
         document.addEventListener("deviceready", app.onAppReady, false);
         document.addEventListener("resume", app.onAppReady, false);
         document.addEventListener("pause", app.onPause, false);
 
-        bleesimg.addEventListener('touchstart', app.onTouch, false);                // if bulb image touched, goto: onToggle
+        bleesimg.addEventListener('touchend', app.onTouch, false);                // if bulb image touched, goto: onToggle
 
-        presimg.addEventListener('touchstart', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
-        humimg.addEventListener('touchstart', app.onTouchHum, false);             // if bulb image touched, goto: onToggle
-        tempimg.addEventListener('touchstart', app.onTouchTemp, false);             // if bulb image touched, goto: onToggle
-        lightimg.addEventListener('touchstart', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
-        accimg.addEventListener('touchstart', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
+        bleesimg.addEventListener('touchstart', app.onStartTimer, false);                // if bulb image touched, goto: onToggle
 
-        bulbimg.addEventListener('touchstart', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
 
+        presimg.addEventListener('touchend', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
+        humimg.addEventListener('touchend', app.onTouchHum, false);             // if bulb image touched, goto: onToggle
+        tempimg.addEventListener('touchend', app.onTouchTemp, false);             // if bulb image touched, goto: onToggle
+        lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
+        accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
+
+        bulbimg.addEventListener('touchend', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
+
+    },
+    onStartTimer: function(device){
+        should_i_connect = false;
+        timer = setTimeout(app.onLongPress, touchduration); 
+    },
+    onLongPress: function(){
+        app.log("timer expired");
+        should_i_connect = true;
     },
     // App Ready Event Handler
     onAppReady: function() {
@@ -37,6 +54,7 @@ var app = {
             deviceId = window.gateway.getdeviceId();                                // get device ID from Summon
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
         }
+        document.getElementById("title").innerHTML = String(deviceId);
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
     },
     // App Paused Event Handler
@@ -54,39 +72,72 @@ var app = {
     onDiscover: function(device) {
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
-            var adData = new Uint8Array(device.advertising);
-            var pressuredata = ~ ((adData[15] | (adData[14] << 8) | (adData[13]<<16) | (adData[12] << 24) ) & 0x0FFFFFFFF);
-            app.log("why");
-            app.log(pressuredata);
-            app.log(adData[13] << 8);
-            app.log( adData[17] + adData[16] );
-            app.log( adData[18] + adData[19] );
-            app.log(adData[20] + adData[21] );
-            app.log(adData[22]);
-            /*
-            for(var i = 12; i < 25; i++){
-                app.log(adData[i]);
-            } */
-            app.log("Connecting..");
-            ble.connect(deviceId, app.onConnect, app.onAppReady);                   // if device matches, connect; if connected, goto: onConnect
+            app.onParseAdvData(device);
+
+            //app.onStartConnection(device);
         }
+    },
+    onStartConnection: function(device) {
+        app.log("Connecting..");
+        bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
+        bluetoothle.connect(app.onConnectOther, app.onError, { "address": deviceId });                          //connect to peripheral- need this for descriptors
+        ble.connect(deviceId, app.onConnect, app.onAppReady);                                                   // if device matches, connect; if connected, goto: onConnect
+    },
+    onInitialized: function(device) {
+        app.log("Initialized");
+    },
+    onConnectOther: function(device) {
+        app.log("Connecting....");
     },
     // BLE Device Connected Callback
     onConnect: function(device) {
         app.log("Connected to " + deviceName + " (" + deviceId + ")!");
-        ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
-        ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
-        ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError); 
-        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
-        ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);
+        device_connected = true;
+        app.onReadAllSensors(device);
+        bluetoothle.discover(app.onDiscoverDescriptors, app.onError, {"address": deviceId} );        
+    },
+    onDiscoverDescriptors: function(device) {
+
+        bluetoothle.readDescriptor(app.readSuccess, app.onError, {
+              "address": deviceId,
+              "serviceUuid": "181a",
+              "characteristicUuid": "2a6f",
+              "descriptorUuid": "290d"
+
+        });
+
+    },
+    readSuccess: function(device){
+        app.log("success!");
+        app.log( (bluetoothle.encodedStringToBytes(device.value))[0] );
+        app.log( (bluetoothle.encodedStringToBytes(device.value))[1] );
+        app.log( (bluetoothle.encodedStringToBytes(device.value))[2] );
+        app.log( (bluetoothle.encodedStringToBytes(device.value))[3] );
     },
     onTouch: function(device) {
-        app.log("Getting sensor data...");
-        ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
-        ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
-        ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError); 
-        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
-        ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
+        //ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
+        
+        clearTimeout(timer);
+        if (device_connected){
+            if (should_i_connect){
+                app.log("you should disconnect!!");
+            }
+            else { 
+                app.onReadAllSensors(device);
+            }
+        }
+        else {
+            if (should_i_connect) {
+                app.log("you should connect!!");
+            }
+            else {
+                app.log("Scanning...");
+                ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
+            }
+        }
+        should_i_connect = false;
+        
+
     },
     onTouchPres: function(device) {
         app.log("Getting pressure...");
@@ -111,17 +162,19 @@ var app = {
     onTouchBulb: function(device) {
         app.log("bulb touched");
 
-        var lightoptions = {
-            'androidTheme': window.plugins.actionsheet.ANDROID_THEMES.THEME_HOLO_LIGHT, // default is THEME_TRADITIONAL
-            'title': 'Configure Lux Trigger Settings',
-            'buttonLabels': ['Inactive', 'Fixed Interval', 'No Less', 'Value Change', 'While less than', 'While less than or equal to',
-                                'While greater than', 'While greater than or equal to', 'While equal to', 'While not equal to'],
-            'androidEnableCancelButton' : true, // default false
-            'winphoneEnableCancelButton' : true, // default false
-            'addCancelButtonWithLabel': 'Cancel',
-            'position': [20, 40] // for iPad pass in the [x, y] position of the popover
-        };
-        window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
+
+            var lightoptions = {
+                'androidTheme': window.plugins.actionsheet.ANDROID_THEMES.THEME_HOLO_LIGHT, // default is THEME_TRADITIONAL
+                'title': 'Configure Lux Trigger Settings',
+                'buttonLabels': ['Inactive', 'Fixed Interval', 'No Less', 'Value Change', 'While less than', 'While less than or equal to',
+                                    'While greater than', 'While greater than or equal to', 'While equal to', 'While not equal to'],
+                'androidEnableCancelButton' : true, // default false
+                'winphoneEnableCancelButton' : true, // default false
+                'addCancelButtonWithLabel': 'Cancel',
+                'position': [20, 40] // for iPad pass in the [x, y] position of the popover
+            };
+            window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
+
     },
     bulbcallback: function(buttonIndex) {
         //app.log("bulbcallback");
@@ -159,10 +212,30 @@ var app = {
     bulbwritecallback: function() {
         app.log("got input");
     },
+    onParseAdvData: function(device){
+        //Parse Advertised Data
+        var adData = new Uint8Array(device.advertising);
+        app.log("Parsing advertised data...");
+        app.log( "Pressure: " + (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa" );
+        app.log( "Humidity: " + (( (adData[19] * 256) + adData[18] )/100) + String.fromCharCode(37) );
+        app.log( "Temperature: " + (( (adData[21] * 256) + adData[20])/100) + " " + String.fromCharCode(176) + "C");
+        app.log( "Lux: " + ( (adData[23] * 256) + adData[22]) + " lux" );
+        var accdata = adData[24];
+        app.log("Immediate Acceleration: " + ((accdata & 17) >> 4) );
+        app.log("Interval Acceleration: " + (accdata & 1) );
+    },
+    onReadAllSensors: function(device) {
+        app.log("Getting sensor data...");
+        ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
+        ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);  
+        ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError); 
+        ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
+        ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);
+    },
     // BLE Characteristic Read Callback
     onReadPres: function(data) {
         //app.log("where is pressure");
-        app.log("Pressure: " + (app.buffToUInt32Decimal(data))/10 + " " + "Pa");                 // display read value as string
+        app.log("Pressure: " + (app.buffToUInt32Decimal(data))/10 + " Pa");                 // display read value as string
     },
     // BLE Characteristic Read Callback
     onReadHum: function(data) {

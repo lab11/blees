@@ -13,23 +13,29 @@ body {
     height: 90vh;
 }
 
+div.frame {
+    height: 90vh;
+
+}
+
 #console {
-    margin-left: 20%;
-    margin-right: 20%;
+    margin-left: 16%;
+    margin-right: 14%;
     text-align: left;
     position: static;
     padding:2px;
     font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif;
     font-size:12px;
-    border: 2px solid blue;
+    /* border: 2px solid blue; */
     color: #08f;
-    height: 40vh;
+    /*left: 5px; */
+    height: 30vh;
     overflow: auto;
 }
 
 #centralblees {
 
-    border: 1px solid blue;
+    /* border: 1px solid blue; */
 
     z-index: 2;
         border-bottom-right-radius: 2em;
