@@ -37,7 +37,13 @@ var app = {
         lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
-        bulbimg.addEventListener('click', app.onTouchBulb, false);             // if bulb image touched, goto: onToggle
+
+        arrowTemp.addEventListener('click', app.onTouchArrowTemp, false);             // if bulb image touched, goto: onToggle
+        arrowHum.addEventListener('click', app.onTouchArrowHum, false);             // if bulb image touched, goto: onToggle
+        arrowLux.addEventListener('click', app.onTouchArrowLux, false);             // if bulb image touched, goto: onToggl
+        arrowPres.addEventListener('click', app.onTouchArrowPres, false);             // if bulb image touched, goto: onToggle
+        arrowAcc.addEventListener('click', app.onTouchArrowAcc, false);             // if bulb image touched, goto: onToggle
+
 
     },
     onStartTimer: function(device){
@@ -59,8 +65,14 @@ var app = {
     },
     // App Paused Event Handler
     onPause: function() {                                                           // if user leaves app, stop BLE
-        ble.disconnect(deviceId);
+        //ble.disconnect(deviceId);
         ble.stopScan();
+        if (device_connected) {
+	        app.log("Disconnecting from BLEES device!");
+	        bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});                
+	        ble.disconnect(deviceId);
+	        device_connected = false;
+    	}
     },
     // Bluetooth Enabled Callback
     onEnable: function() {
@@ -102,10 +114,9 @@ var app = {
 
         bluetoothle.readDescriptor(app.readSuccess, app.onError, {
               "address": deviceId,
-              "serviceUuid": "181a",
-              "characteristicUuid": "2a6f",
-              "descriptorUuid": "290d"
-
+              "serviceUuid": serviceUuid,
+              "characteristicUuid": humidityUuid,
+              "descriptorUuid": essdescriptorUuid
         });
 
     },
@@ -143,7 +154,6 @@ var app = {
             }
         }
         should_i_connect = false;
-        
 
     },
     ondisconnectsuccess: function() {
@@ -194,48 +204,45 @@ var app = {
             app.log("Please connect to use this feature.")
         }
     },
-    onTouchBulb: function(device) {
-        app.log("bulb touched");
-
-
-            // var lightoptions = {
-            //     'androidTheme': window.plugins.actionsheet.ANDROID_THEMES.THEME_HOLO_LIGHT, // default is THEME_TRADITIONAL
-            //     'title': 'Configure Lux Trigger Settings',
-            //     'buttonLabels': ['Inactive', 'Fixed Interval', 'No Less', 'Value Change', 'While less than', 'While less than or equal to',
-            //                         'While greater than', 'While greater than or equal to', 'While equal to', 'While not equal to'],
-            //     'androidEnableCancelButton' : true, // default false
-            //     'winphoneEnableCancelButton' : true, // default false
-            //     'addCancelButtonWithLabel': 'Cancel',
-            //     'position': [20, 40] // for iPad pass in the [x, y] position of the popover
-            // };
-            // window.plugins.actionsheet.show(lightoptions, app.bulbcallback, app.onError);
-
-            document.querySelector("#popup").style.display = "block";
-
+    onTouchArrowTemp: function(device) {
+    	app.log("touched arrow temperature");
+    },
+    onTouchArrowHum: function(device) {
+    	app.log("touched arrow humidity");
+    },
+    onTouchArrowPres: function(device) {
+    	app.log("touched arrow pressure");
+    },
+    onTouchArrowAcc: function(device) {
+    	app.log("touched arrow acceleration");
+    },
+    onTouchArrowLux: function(device) {
+        app.log("touched arrow lux");
+        document.querySelector("#popup").style.display = "block";
     },
     bulbcallback: function(buttonIndex) {
-        //app.log("bulbcallback");
-        // like other Cordova plugins (prompt, confirm) the buttonIndex is 1-based (first button is index 1)
+    	document.querySelector("#popup").style.display = "none";
+        app.log("bulbcallback");
         app.log('button index clicked: ' + buttonIndex);
-        //var buff = new ArrayBuffer(32);
-        //var uint32view = new Uint8Array(buff);
-        app.log("hi");
-        //var params = new Uint64Array(buttonIndex);
-        app.log("ho");
-        if (buttonIndex == 1){
+        if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-            /*
-            var bparams = {
-                'address': deviceId,
-                'serviceUuid': serviceUuid,
-                'characteristicUuid': humidityUuid
-            };
-            app.log("please work");
-            bluetoothle.read(app.bulbwritecallback, app.onError, bparams);
-            */
-            app.log("didn't work");
-            //app.log(readval);
-            //ble.write(deviceId, serviceUuid, luxUuid, buff, app.bulbwritecallback, app.onError);
+
+			var bytes = new Uint8Array(1);
+		    bytes[0] = 0;
+		    var value = bluetoothle.bytesToEncodedString(bytes);
+
+			app.log("about to write to descriptor");
+
+			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+			    "address": deviceId,
+			    "serviceUuid": serviceUuid,
+			    "characteristicUuid": luxUuid,
+			    "descriptorUuid": essdescriptorUuid,
+			    "value": value
+			});
+
+            app.log("did it work?");
+
         }
         else{
             app.log("yono");
@@ -245,10 +252,9 @@ var app = {
                 app.log("gotit");
             }
         }
-        document.querySelector("#popup").style.display = "none";
     },
-    bulbwritecallback: function() {
-        app.log("got input");
+    writeSuccess: function(device) {
+    	app.log("device written");
     },
     onParseAdvData: function(device){
         //Parse Advertised Data
