@@ -13,8 +13,7 @@ APPLICATION_SRCS += nrf_drv_common.c
 APPLICATION_SRCS += nrf_drv_gpiote.c
 APPLICATION_SRCS += nrf_drv_twi.c
 APPLICATION_SRCS += led.c
-
-DEVICE = NRF51
+APPLICATION_SRCS += app_scheduler.c
 
 ifndef TARGET
 	TARGET = BLEES
@@ -26,17 +25,21 @@ BOARD = BOARD_$(TARGET_UPPER)
 
 APPLICATION_SRCS += $(TARGET_LOWER).c
 
-USE_SOFTDEVICE = s110
-
-SDK_VERSION = 9
-TEMPLATE_PATH ?= ../../nrf5x-base/nrf51-pure-gcc-setup/template/
-
 LIBRARY_PATHS += ./ ../../platform/
 SOURCE_PATHS += ../../platform/
+
+NRF_BASE_PATH ?= ../../nrf5x-base/
+TEMPLATE_PATH ?= $(NRF_BASE_PATH)/nrf51-pure-gcc-setup/template/
+
+DEVICE = NRF51
+USE_SOFTDEVICE = s110
+SOFTDEVICE ?= $(NRF_BASE_PATH)/softdevice/s110_nrf51_8.0.0_softdevice.hex
+
+SDK_VERSION = 9
+SDK_PATH ?= $(NRF_BASE_PATH)/sdk/nrf51_sdk_9.0.0/
 
 CFLAGS = -Os
 GDB_PORT_NUMBER = 2331
 
-include ../../nrf5x-base/Makefile.include
-include ../../Makefile.include
+include $(NRF_BASE_PATH)/Makefile.include
 include $(TEMPLATE_PATH)/Makefile
