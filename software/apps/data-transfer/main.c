@@ -43,7 +43,8 @@
 #define UPDATE_RATE     APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 // Maximum size is 17 characters, counting URLEND if used
-#define PHYSWEB_URL     "goo.gl/XMRl3M"
+//#define PHYSWEB_URL     "goo.gl/XMRl3M"
+#define PHYSWEB_URL     "umich.edu"
 
 #define APP_BEACON_INFO_LENGTH 16
 
@@ -82,6 +83,8 @@ static struct {
 } m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
 
 static uint8_t m_beacon_info[APP_BEACON_INFO_LENGTH];
+
+static data_transfer_t data_transfer;
 
 
 /*******************************************************************************
@@ -171,6 +174,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
 
     switch (p_ble_evt->header.evt_id) {
         case BLE_GAP_EVT_CONNECTED:
+            // continue advertising nonconnectably
             app.conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             m_adv_params.type = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
             advertising_start();
@@ -178,12 +182,32 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
 
         case BLE_GAP_EVT_DISCONNECTED:
             app.conn_handle = BLE_CONN_HANDLE_INVALID;
+
+            // advertise connectivity
             advertising_stop();
             m_adv_params.type   = BLE_GAP_ADV_TYPE_ADV_IND;
             advertising_start();
             break;
 
         case BLE_GATTS_EVT_WRITE:
+            {
+                ble_gatts_evt_write_t* write_data = &(p_ble_evt->evt.gatts_evt.params.write);
+                if (write_data->context.char_uuid.uuid == test_char_uuid16) {
+                    if (write_data->data[0] == 0x42) {
+                        //led_on(BLEES_LED_PIN);
+
+                        // enable higher connection interval. Only lasts for this connection
+                        ble_gap_conn_params_t   gap_conn_params;
+                        memset(&gap_conn_params, 0, sizeof(gap_conn_params));
+                        gap_conn_params.min_conn_interval = 0x06; // 7.5 ms
+                        gap_conn_params.max_conn_interval = MSEC_TO_UNITS(30, UNIT_1_25_MS);
+                        gap_conn_params.slave_latency     = 0;
+                        gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
+                        err_code = sd_ble_gap_conn_param_update(app.conn_handle, &gap_conn_params);
+                        APP_ERROR_CHECK(err_code);
+                    }
+                }
+            }
             break;
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
@@ -250,14 +274,14 @@ static void startup_handler(void* p_context) {
 
 // timer callback
 static void timer_handler (void* p_context) {
-    led_toggle(BLEES_LED_PIN);
+    //led_toggle(BLEES_LED_PIN);
 
     if (PHYSWEB_MODE) {
         PHYSWEB_MODE = false;
         adv_sensors();
     } else {
-        PHYSWEB_MODE = true;
-        adv_physweb();
+        //PHYSWEB_MODE = true;
+        //adv_physweb();
     }
 }
 
@@ -371,6 +395,70 @@ static void conn_params_init(void) {
 
 // init services
 static void services_init (void) {
+    uint32_t err_code;
+
+    // set up service uuid
+    ble_uuid_t data_transfer_uuid;
+    data_transfer_uuid.uuid = data_transfer_srvc_uuid16;
+    err_code = sd_ble_uuid_vs_add(&data_transfer_uuid128, &(data_transfer_uuid.type));
+    APP_ERROR_CHECK(err_code);
+    app.uuid_type = data_transfer_uuid.type;
+
+    // add the custom service to the system
+    err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY,
+            &data_transfer_uuid, &(app.service_handle));
+    APP_ERROR_CHECK(err_code);
+
+    // add test characteristic
+    {
+        ble_gatts_char_md_t char_md;
+        ble_uuid_t          char_uuid;
+        ble_gatts_attr_md_t attr_md;
+        ble_gatts_attr_t    attr_char_value;
+        uint8_t* char_name = (uint8_t*)"Test Characteristic";
+
+        // initial value
+        data_transfer.test_char = 0x23;
+        //memset(data_transfer.test_char, 0xBA, 500);
+
+        // characteristic settings
+        memset(&char_md, 0, sizeof(char_md));
+        char_md.char_props.read         = true;
+        char_md.char_props.write        = true;
+        char_md.p_char_user_desc        = char_name;
+        char_md.char_user_desc_max_size = sizeof(char_name);
+        char_md.char_user_desc_size     = sizeof(char_name);
+
+        // characteristic uuid
+        char_uuid.type = app.uuid_type;
+        char_uuid.uuid = test_char_uuid16;
+
+        // attribute metadata
+        memset(&attr_md, 0, sizeof(attr_md));
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+        //BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+        attr_md.vloc    = BLE_GATTS_VLOC_USER;
+        attr_md.rd_auth = 0;
+        attr_md.wr_auth = 0;
+        attr_md.vlen    = 1;
+
+        // gatt attributes
+        memset(&attr_char_value, 0, sizeof(attr_char_value));
+        attr_char_value.p_uuid    = &char_uuid;
+        attr_char_value.p_attr_md = &attr_md;
+        attr_char_value.init_offs = 0;
+        attr_char_value.init_len  = 1;
+        attr_char_value.max_len   = 1;
+        attr_char_value.p_value   = (uint8_t*)&data_transfer.test_char;
+        //attr_char_value.init_len  = 500;
+        //attr_char_value.max_len   = 500;
+        //attr_char_value.p_value   = (uint8_t*)data_transfer.test_char;
+
+        err_code = sd_ble_gatts_characteristic_add(app.service_handle,
+                &char_md, &attr_char_value, &data_transfer.test_char_handles);
+        APP_ERROR_CHECK(err_code);
+    }
 }
 
 static void timers_init(void) {
@@ -500,6 +588,7 @@ int main(void) {
 
     // Initialization complete
     led_off(SQUALL_LED_PIN);
+    led_off(BLEES_LED_PIN);
     timers_start();
 
     while (1) {
