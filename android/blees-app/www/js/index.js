@@ -17,6 +17,7 @@ var timer;
 var touchduration = 5000; //length of time we want the user to touch before we do something
 var should_i_connect = false;
 var should_i_disconnect = false;
+var is_init = false;
 
 var app = {
     // Application Constructor
@@ -71,6 +72,7 @@ var app = {
 	        app.log("Disconnecting from BLEES device!");
 	        bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});                
 	        ble.disconnect(deviceId);
+	        bluetoothle.close(app.ondisconnectsuccess, app.onError, { "address": deviceId});                
 	        device_connected = false;
     	}
     },
@@ -93,7 +95,10 @@ var app = {
         app.log("stopped scanning");
     },
     onStartConnection: function(device) {
-        bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
+    	if (!is_init){
+        	bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
+        	is_init = true;
+        }
         bluetoothle.connect(app.onConnectOther, app.onError, { "address": deviceId });                          //connect to peripheral- need this for descriptors
         ble.connect(deviceId, app.onConnect, app.onAppReady);                                                   // if device matches, connect; if connected, goto: onConnect
     },
@@ -133,11 +138,8 @@ var app = {
         clearTimeout(timer);
         if (device_connected){
             if (should_i_connect){
-                app.log("Disconnecting from BLEES device!");
-                bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});                
-                ble.disconnect(deviceId);
-                device_connected = false;
-                app.onAppReady();
+            	app.onPause();
+            	app.onAppReady();
             }
             else { 
                 app.onReadAllSensors(device);
@@ -205,47 +207,37 @@ var app = {
         }
     },
     onTouchArrowTemp: function(device) {
-    	app.log("touched arrow temperature");
+    	document.querySelector("#popuptemp").style.display = "block";
     },
     onTouchArrowHum: function(device) {
-    	app.log("touched arrow humidity");
+    	document.querySelector("#popuphum").style.display = "block";
     },
     onTouchArrowPres: function(device) {
-    	app.log("touched arrow pressure");
+    	document.querySelector("#popuppres").style.display = "block";
     },
     onTouchArrowAcc: function(device) {
-    	app.log("touched arrow acceleration");
+        document.querySelector("#popupacc").style.display = "block";
     },
     onTouchArrowLux: function(device) {
-        app.log("touched arrow lux");
         document.querySelector("#popup").style.display = "block";
     },
-    bulbcallback: function(buttonIndex) {
-    	document.querySelector("#popup").style.display = "none";
-        app.log("bulbcallback");
+    accelerationcallback: function(buttonIndex) {
+		document.querySelector("#popupacc").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-
 			var bytes = new Uint8Array(1);
 		    bytes[0] = 0;
 		    var value = bluetoothle.bytesToEncodedString(bytes);
-
-			app.log("about to write to descriptor");
-
 			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
 			    "address": deviceId,
 			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": luxUuid,
+			    "characteristicUuid": accelerationUuid,
 			    "descriptorUuid": essdescriptorUuid,
 			    "value": value
 			});
-
-            app.log("did it work?");
-
         }
         else{
-            app.log("yono");
             var input_val = window.prompt("What value?", "0x0000");
             var output_val = parseInt(input_val, 10);
             if (input_val) {
@@ -253,7 +245,157 @@ var app = {
             }
         }
     },
-    writeSuccess: function(device) {
+    prescallback: function(buttonIndex) {
+		document.querySelector("#popuppres").style.display = "none";
+        app.log('button index clicked: ' + buttonIndex);
+        if (buttonIndex == 1){ // buttonIndex is 1-based
+            app.log("got one");
+			var bytes = new Uint8Array(1);
+		    bytes[0] = 0;
+		    var value = bluetoothle.bytesToEncodedString(bytes);
+			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+			    "address": deviceId,
+			    "serviceUuid": serviceUuid,
+			    "characteristicUuid": pressureUuid,
+			    "descriptorUuid": essdescriptorUuid,
+			    "value": value
+			});
+        }
+        else{
+            var input_val = window.prompt("What value?", 0x00);
+            var output_val = parseInt( input_val * 100 , 10);
+            output_val = output_val / 10;
+            var bytes = new Uint8Array(5);
+		    bytes[0] = buttonIndex-1;
+            if (input_val) {
+                app.log( output_val.toString(16) );
+               	bytes[1] = (output_val & 0x000000ff);
+               	bytes[2] = (output_val & 0x0000ff00) >> 8;
+               	bytes[3] = (output_val & 0x00ff0000) >> 16;
+               	bytes[4] = (output_val & 0xff000000) >> 24;
+               	var value = bluetoothle.bytesToEncodedString(bytes);
+               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+				    "address": deviceId,
+				    "serviceUuid": serviceUuid,
+				    "characteristicUuid": pressureUuid,
+				    "descriptorUuid": essdescriptorUuid,
+				    "value": value
+				});
+            }
+        }
+    },
+    tempcallback: function(buttonIndex) {
+		document.querySelector("#popuptemp").style.display = "none";
+        app.log('button index clicked: ' + buttonIndex);
+        if (buttonIndex == 1){ // buttonIndex is 1-based
+            app.log("got one");
+			var bytes = new Uint8Array(1);
+		    bytes[0] = 0;
+		    var value = bluetoothle.bytesToEncodedString(bytes);
+			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+			    "address": deviceId,
+			    "serviceUuid": serviceUuid,
+			    "characteristicUuid": temperatureUuid,
+			    "descriptorUuid": essdescriptorUuid,
+			    "value": value
+			});
+        }
+        else{
+            var input_val = window.prompt("What value?", 0x00);
+            var output_val = parseInt( input_val * 1000 , 10);
+            output_val = output_val / 10;
+            var bytes = new Uint8Array(3);
+		    bytes[0] = buttonIndex-1;
+            if (input_val) {
+                app.log( output_val.toString(16) );
+               	bytes[1] = (output_val & 0x000000ff);
+               	bytes[2] = (output_val & 0x0000ff00) >> 8;
+               	var value = bluetoothle.bytesToEncodedString(bytes);
+               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+				    "address": deviceId,
+				    "serviceUuid": serviceUuid,
+				    "characteristicUuid": temperatureUuid,
+				    "descriptorUuid": essdescriptorUuid,
+				    "value": value
+				});
+            }
+        }
+    },
+    humcallback: function(buttonIndex) {
+		document.querySelector("#popuphum").style.display = "none";
+        app.log('button index clicked: ' + buttonIndex);
+        if (buttonIndex == 1){ // buttonIndex is 1-based
+            app.log("got one");
+			var bytes = new Uint8Array(1);
+		    bytes[0] = 0;
+		    var value = bluetoothle.bytesToEncodedString(bytes);
+			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+			    "address": deviceId,
+			    "serviceUuid": serviceUuid,
+			    "characteristicUuid": humidityUuid,
+			    "descriptorUuid": essdescriptorUuid,
+			    "value": value
+			});
+        }
+        else{
+            var input_val = window.prompt("What value?", 0x00);
+            var output_val = parseInt( input_val * 1000 , 10);
+            output_val = output_val / 10;
+            var bytes = new Uint8Array(3);
+		    bytes[0] = buttonIndex-1;
+            if (input_val) {
+                app.log( output_val.toString(16) );
+               	bytes[1] = (output_val & 0x000000ff);
+               	bytes[2] = (output_val & 0x0000ff00) >> 8;
+               	var value = bluetoothle.bytesToEncodedString(bytes);
+               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+				    "address": deviceId,
+				    "serviceUuid": serviceUuid,
+				    "characteristicUuid": humidityUuid,
+				    "descriptorUuid": essdescriptorUuid,
+				    "value": value
+				});
+            }
+        }
+    },
+    luxcallback: function(buttonIndex) {
+    	document.querySelector("#popup").style.display = "none";
+        app.log('button index clicked: ' + buttonIndex);
+        if (buttonIndex == 1){ // buttonIndex is 1-based
+            app.log("got one");
+			var bytes = new Uint8Array(1);
+		    bytes[0] = 0;
+		    var value = bluetoothle.bytesToEncodedString(bytes);
+			app.log("about to write to descriptor");
+			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+			    "address": deviceId,
+			    "serviceUuid": serviceUuid,
+			    "characteristicUuid": luxUuid,
+			    "descriptorUuid": essdescriptorUuid,
+			    "value": value
+			});
+        }
+        else{
+            var input_val = window.prompt("What value?", 0x00);
+            var output_val = parseInt( input_val , 10);
+            var bytes = new Uint8Array(3);
+		    bytes[0] = buttonIndex-1;
+            if (input_val) {
+                app.log( output_val.toString(16) );
+               	bytes[1] = (output_val & 0x000000ff);
+               	bytes[2] = (output_val & 0x0000ff00) >> 8;
+               	var value = bluetoothle.bytesToEncodedString(bytes);
+               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+				    "address": deviceId,
+				    "serviceUuid": serviceUuid,
+				    "characteristicUuid": luxUuid,
+				    "descriptorUuid": essdescriptorUuid,
+				    "value": value
+				});
+            }
+        }
+    },
+    writeSuccess: function() {
     	app.log("device written");
     },
     onParseAdvData: function(device){

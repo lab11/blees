@@ -20,16 +20,16 @@
         <h1 style="font-size: 90%;" id="title">deviceId</h1>
         <div>
         <img id="centralblees" src="img/blees2.png" align=center name = "bleesimg" class="Dis" style="width:40%; margin:5px 0;"/></br>
-        <img src="img/temp.png" align=center name = "tempimg" class="Dis" style="width:15%; margin:1px 0;"/>
-        <img src="img/humidity.png" align=center name = "humimg" class="Dis" style="width:15%; margin:1px 0;"/>
-        <img src="img/light.png" align=center name = "lightimg" class="Dis" style="width:15%; margin:1px 0;"/>
         <img src="img/pressure.png" align=center name = "presimg" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/humidity.png" align=center name = "humimg" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/temp.png" align=center name = "tempimg" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/light.png" align=center name = "lightimg" class="Dis" style="width:15%; margin:1px 0;"/>
         <img src="img/acceleration.png" align=center name = "accimg" class="Dis" style="width:15%; margin:1px 0;"/>
         </div></br>
-        <img src="img/arrow1.png"  name = "arrowTemp" class="Dis" style="width:15%; margin:1px 0;"/>
-        <img src="img/arrow2.png"  name = "arrowHum" class="Dis" style="width:15%; margin:1px 0;"/>
-        <img src="img/arrow5.png"  name = "arrowLux" class="Dis" style="width:15%; margin:1px 0;"/>
         <img src="img/arrow3.png"  name = "arrowPres" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/arrow2.png"  name = "arrowHum" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/arrow1.png"  name = "arrowTemp" class="Dis" style="width:15%; margin:1px 0;"/>
+        <img src="img/arrow5.png"  name = "arrowLux" class="Dis" style="width:15%; margin:1px 0;"/>
         <img src="img/arrow4.png"  name = "arrowAcc" class="Dis" style="width:15%; margin:1px 0;"/></br>
 
         <div alight=center id="console"></div>
@@ -37,18 +37,86 @@
         <div id="popup">
             <h3>Configure Lux Trigger Settings</h3>
             <ul>
-                <li><a href="#" onclick="app.bulbcallback(1)">Inactive</a></li>
-                <li><a href="#" onclick="app.bulbcallback(2)">Fixed Interval</a></li>
-                <li><a href="#" onclick="app.bulbcallback(3)">No Less</a></li>
-                <li><a href="#" onclick="app.bulbcallback(4)">Value Change</a></li>
-                <li><a href="#" onclick="app.bulbcallback(5)">While less than</a></li>
-                <li><a href="#" onclick="app.bulbcallback(6)">While less than or equal to</a></li>
-                <li><a href="#" onclick="app.bulbcallback(7)">While greater than</a></li>
-                <li><a href="#" onclick="app.bulbcallback(8)">While greater than or equal to</a></li>
-                <li><a href="#" onclick="app.bulbcallback(9)">While equal to</a></li>
-                <li><a href="#" onclick="app.bulbcallback(10)">While not equal to</a></li>
+                <li><a href="#" onclick="app.luxcallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.luxcallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.luxcallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.luxcallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.luxcallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.luxcallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.luxcallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.luxcallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.luxcallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.luxcallback(10)">While not equal to</a></li>
             </ul>
             <h4 onclick="document.querySelector('#popup').style.display='none'">Cancel</h4>
+        </div>
+
+        <div id="popuptemp">
+            <h3>Configure Temperature Trigger Settings</h3>
+            <ul>
+                <li><a href="#" onclick="app.tempcallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.tempcallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.tempcallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.tempcallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.tempcallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.tempcallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.tempcallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.tempcallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.tempcallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.tempcallback(10)">While not equal to</a></li>
+            </ul>
+            <h4 onclick="document.querySelector('#popuptemp').style.display='none'">Cancel</h4>
+        </div>
+
+        <div id="popuphum">
+            <h3>Configure Humidity Trigger Settings</h3>
+            <ul>
+                <li><a href="#" onclick="app.humcallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.humcallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.humcallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.humcallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.humcallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.humcallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.humcallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.humcallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.humcallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.humcallback(10)">While not equal to</a></li>
+            </ul>
+            <h4 onclick="document.querySelector('#popuphum').style.display='none'">Cancel</h4>
+        </div>
+
+        <div id="popuppres">
+            <h3>Configure Pressure Trigger Settings</h3>
+            <ul>
+                <li><a href="#" onclick="app.prescallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.prescallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.prescallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.prescallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.prescallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.prescallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.prescallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.prescallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.prescallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.prescallback(10)">While not equal to</a></li>
+            </ul>
+            <h4 onclick="document.querySelector('#popuppres').style.display='none'">Cancel</h4>
+        </div>
+
+        <div id="popupacc">
+            <h3>Configure Acceleration Trigger Settings</h3>
+            <ul>
+                <li><a href="#" onclick="app.acccallback(1)">Inactive</a></li>
+                <li><a href="#" onclick="app.acccallback(2)">Fixed Interval</a></li>
+                <li><a href="#" onclick="app.acccallback(3)">No Less</a></li>
+                <li><a href="#" onclick="app.acccallback(4)">Value Change</a></li>
+                <li><a href="#" onclick="app.acccallback(5)">While less than</a></li>
+                <li><a href="#" onclick="app.acccallback(6)">While less than or equal to</a></li>
+                <li><a href="#" onclick="app.acccallback(7)">While greater than</a></li>
+                <li><a href="#" onclick="app.acccallback(8)">While greater than or equal to</a></li>
+                <li><a href="#" onclick="app.acccallback(9)">While equal to</a></li>
+                <li><a href="#" onclick="app.acccallback(10)">While not equal to</a></li>
+            </ul>
+            <h4 onclick="document.querySelector('#popupacc').style.display='none'">Cancel</h4>
         </div>
 
         <script type="text/javascript" src="cordova.js"></script>
