@@ -516,7 +516,7 @@ static void adv_physweb(void) {
         m_url_frame[i+3] = PHYSWEB_URL[i];
     }
     //m_url_frame[url_frame_length-1] = PHYSWEB_URLEND_COMSLASH; // Remember to change url_frame_length
-    
+
     // Physical web service
     ble_advdata_service_data_t service_data;
     service_data.service_uuid   = PHYSWEB_SERVICE_ID;
