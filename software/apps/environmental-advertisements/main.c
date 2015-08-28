@@ -97,6 +97,10 @@
 #define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 
+// Maximum size is 17 characters, counting URLEND if used
+#define PHYSWEB_URL     "goo.gl/DjpTci"
+
+
 /*******************************************************************************
  *   STATIC AND GLOBAL VARIABLES
  ******************************************************************************/
@@ -111,6 +115,7 @@ static ble_ess_t                    m_ess;
 static uint8_t                      m_beacon_info[APP_BEACON_INFO_LENGTH];
 static uint16_t                     m_conn_handle = BLE_CONN_HANDLE_INVALID;     /**< Handle of the current connection. */
 
+static app_timer_id_t               sample_timer;                                /**< Advertisement timer. */
 static app_timer_id_t               m_pres_timer_id;                             /**< ESS Pressure timer. */
 static app_timer_id_t               m_hum_timer_id;                              /**< ESS Humidity timer. */
 static app_timer_id_t               m_temp_timer_id;                             /**< ESS Temperature timer. */
@@ -119,6 +124,8 @@ static app_timer_id_t               m_acc_timer_id;                             
 
 static bool                         m_ess_updating_advdata = false;
 static bool                         switch_acc = false;
+
+static bool PHYSWEB_MODE = false;
 
 // Security requirements for this application.
 static ble_gap_sec_params_t m_sec_params = 
@@ -145,6 +152,7 @@ static struct {
 static void advertising_start(void);
 static bool update_advdata(void);
 static void update_timers( ble_evt_t * p_ble_evt );
+static void adv_physweb(void);
 
 /*******************************************************************************
  *   HANDLERS AND CALLBACKS
@@ -604,6 +612,17 @@ static void acc_take_measurement(void * p_context)
     }
 }
 
+// timer callback
+static void timer_handler (void* p_context) {
+    if (PHYSWEB_MODE) {
+        PHYSWEB_MODE = false;
+        update_advdata();
+    } else {
+        PHYSWEB_MODE = true;
+        adv_physweb();
+    }
+}
+
 /*******************************************************************************
  *   INIT FUNCTIONS
  ******************************************************************************/
@@ -728,6 +747,10 @@ static void timers_init(void) {
     uint32_t err_code;
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
     
+    err_code = app_timer_create(&sample_timer, APP_TIMER_MODE_REPEATED,
+            timer_handler);
+    APP_ERROR_CHECK(err_code);
+
     // Initialize timer for Pressure Trigger
     err_code = app_timer_create(&m_pres_timer_id,
                     APP_TIMER_MODE_REPEATED,
@@ -932,8 +955,10 @@ static void advertising_stop(void) {
 
 static void timers_start(void) {
 
+    uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
+    APP_ERROR_CHECK(err_code);
  
-    uint32_t err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_start(m_hum_timer_id, (uint32_t)(HUM_TRIGGER_VAL_TIME), NULL);
@@ -1041,6 +1066,38 @@ static void update_timers( ble_evt_t * p_ble_evt ){
  */
 static void power_manage(void) {
     uint32_t err_code = sd_app_evt_wait();
+    APP_ERROR_CHECK(err_code);
+}
+
+static void adv_physweb(void) {
+    uint32_t err_code;
+
+    // Physical Web data
+    uint8_t url_frame_length = 3 + strlen(PHYSWEB_URL); // Change to 4 if URLEND is applied
+    uint8_t m_url_frame[url_frame_length];
+    m_url_frame[0] = PHYSWEB_URL_TYPE;
+    m_url_frame[1] = PHYSWEB_TX_POWER;
+    m_url_frame[2] = PHYSWEB_URLSCHEME_HTTP;
+    for (uint8_t i=0; i<strlen(PHYSWEB_URL); i++) {
+        m_url_frame[i+3] = PHYSWEB_URL[i];
+    }
+    //m_url_frame[url_frame_length-1] = PHYSWEB_URLEND_COMSLASH; // Remember to change url_frame_length
+    
+    // Physical web service
+    ble_advdata_service_data_t service_data;
+    service_data.service_uuid   = PHYSWEB_SERVICE_ID;
+    service_data.data.p_data    = m_url_frame;
+    service_data.data.size      = url_frame_length;
+
+    // Build and set advertising data
+    memset(&advdata, 0, sizeof(advdata));
+    advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    advdata.p_service_data_array    = &service_data;
+    advdata.service_data_count      = 1;
+    advdata.uuids_complete          = PHYSWEB_SERVICE_LIST;
+
+    // Actually set advertisement data
+    err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
