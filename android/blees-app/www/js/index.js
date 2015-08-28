@@ -14,9 +14,8 @@ var accelerationUuid = "F801";                                                  
 
 var device_connected = false;
 var timer;
-var touchduration = 5000; //length of time we want the user to touch before we do something
-var should_i_connect = false;
-var should_i_disconnect = false;
+var touchduration = 3000; //length of time we want the user to touch before we do something
+var connection_toggle = false;
 var is_init = false;
 
 var app = {
@@ -28,8 +27,7 @@ var app = {
         document.addEventListener("pause", app.onPause, false);
 
         bleesimg.addEventListener('touchend', app.onTouch, false);                // if bulb image touched, goto: onToggle
-
-        bleesimg.addEventListener('touchstart', app.onStartTimer, false);                // if bulb image touched, goto: onToggle
+        bleesimg.addEventListener('touchstart', app.onStartTimer, false);         // if bulb image touched, goto: onToggle
 
 
         presimg.addEventListener('touchend', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
@@ -39,21 +37,14 @@ var app = {
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
 
-        arrowTemp.addEventListener('click', app.onTouchArrowTemp, false);             // if bulb image touched, goto: onToggle
-        arrowHum.addEventListener('click', app.onTouchArrowHum, false);             // if bulb image touched, goto: onToggle
-        arrowLux.addEventListener('click', app.onTouchArrowLux, false);             // if bulb image touched, goto: onToggl
-        arrowPres.addEventListener('click', app.onTouchArrowPres, false);             // if bulb image touched, goto: onToggle
-        arrowAcc.addEventListener('click', app.onTouchArrowAcc, false);             // if bulb image touched, goto: onToggle
-
-
     },
     onStartTimer: function(device){
-        should_i_connect = false;
+       	connection_toggle = false;
         timer = setTimeout(app.onLongPress, touchduration); 
     },
     onLongPress: function(){
         app.log("timer expired");
-        should_i_connect = true;
+        connection_toggle = true;
     },
     // App Ready Event Handler
     onAppReady: function() {
@@ -113,31 +104,13 @@ var app = {
         app.log("Connected to " + deviceName + " (" + deviceId + ")!");
         device_connected = true;
         app.onReadAllSensors(device);
-        bluetoothle.discover(app.onDiscoverDescriptors, app.onError, {"address": deviceId} );        
-    },
-    onDiscoverDescriptors: function(device) {
-
-        bluetoothle.readDescriptor(app.readSuccess, app.onError, {
-              "address": deviceId,
-              "serviceUuid": serviceUuid,
-              "characteristicUuid": humidityUuid,
-              "descriptorUuid": essdescriptorUuid
-        });
-
-    },
-    readSuccess: function(device){
-        app.log("Looks like we can read descriptors...");
-        app.log( (bluetoothle.encodedStringToBytes(device.value))[0] );
-        app.log( (bluetoothle.encodedStringToBytes(device.value))[1] );
-        app.log( (bluetoothle.encodedStringToBytes(device.value))[2] );
-        app.log( (bluetoothle.encodedStringToBytes(device.value))[3] );
     },
     onTouch: function(device) {
         //ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         
         clearTimeout(timer);
         if (device_connected){
-            if (should_i_connect){
+            if (connection_toggle){
             	app.onPause();
             	app.onAppReady();
             }
@@ -146,7 +119,7 @@ var app = {
             }
         }
         else {
-            if (should_i_connect) {
+            if (connection_toggle) {
                 app.log("Connecting to BLEES device!");
                 app.onStartConnection(device);
             }
@@ -155,11 +128,145 @@ var app = {
                 ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
             }
         }
-        should_i_connect = false;
+        connection_toggle = false;
+
+    },
+    onTouchEyePres: function() {
+    	if(device_connected){
+    		bluetoothle.discover(app.onDiscoverDescriptors(pressureUuid), app.onError, {"address": deviceId} );
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
+    },
+    onTouchEyeHum: function() {    	
+    	if(device_connected){
+    		bluetoothle.discover(app.onDiscoverDescriptors(humidityUuid), app.onError, {"address": deviceId} );
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
+    },
+    onTouchEyeTemp: function() {
+    	if(device_connected){
+			bluetoothle.discover(app.onDiscoverDescriptors(temperatureUuid), app.onError, {"address": deviceId} );
+		}
+    	else{
+    		app.onPleaseConnect();
+    	}
+    },
+    onTouchEyeLux: function() {    	
+    	if(device_connected){
+			bluetoothle.discover(app.onDiscoverDescriptors(luxUuid), app.onError, {"address": deviceId} );
+		}
+    	else{
+    		app.onPleaseConnect();
+    	}
+    },
+    onTouchEyeAcc: function() {
+    	if(device_connected){
+    		bluetoothle.discover(app.onDiscoverDescriptors(accelerationUuid), app.onError, {"address": deviceId} );
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
+    },
+    onDiscoverDescriptors: function(char_Uuid) {
+
+        bluetoothle.readDescriptor(app.readSuccess, app.onError, {
+              "address": deviceId,
+              "serviceUuid": serviceUuid,
+              "characteristicUuid": char_Uuid,
+              "descriptorUuid": essdescriptorUuid
+        });
+
+    },
+    readSuccess: function(device){
+        app.log("Reading descriptor...");
+        var bytesArray = new Uint8Array(5);
+        bytesArray[0] = (bluetoothle.encodedStringToBytes(device.value))[0] ;
+        bytesArray[1] = (bluetoothle.encodedStringToBytes(device.value))[1] ;
+        bytesArray[2] = (bluetoothle.encodedStringToBytes(device.value))[2] ;
+        bytesArray[3] = (bluetoothle.encodedStringToBytes(device.value))[3] ;
+        bytesArray[4] = (bluetoothle.encodedStringToBytes(device.value))[4] ;
+
+        var output_string;
+        //Trigger condition types
+        if (bytesArray[0] == 0x00) output_string = "Trigger Inactive";
+        else if (bytesArray[0] == 0x03) output_string = "Trigger Value change";
+
+        else{
+	        if (bytesArray[0] == 0x01) output_string = "Trigger Fixed interval: ";
+	        else if (bytesArray[0] == 0x02) output_string = "Trigger No less than: ";
+	        else if (bytesArray[0] == 0x04) output_string = "Trigger While less than: ";
+	        else if (bytesArray[0] == 0x05) output_string = "Trigger While less than or equal to: ";
+	        else if (bytesArray[0] == 0x06) output_string = "Trigger While greater than: ";
+	        else if (bytesArray[0] == 0x07) output_string = "Trigger While greater than or equal to: ";
+	        else if (bytesArray[0] == 0x08) output_string = "Trigger While equal to: ";
+	        else if (bytesArray[0] == 0x09) output_string = "Trigger While not equal to: ";
+	        else output_string = "error";
+
+	        var operand = 0;
+	        for(var i = 1; (i < 5) && bytesArray[i]; i++){
+	        	operand = operand | (bytesArray[i] << ( (i-1) * 8));
+	        }
+
+	        //Uuids need to be lowercase for some reason
+	        if(device.characteristicUuid == "2a6d"){ // pressureUuid
+	        	if(bytesArray[0] < 0x04){
+	        		output_string += operand + " ms";
+	        	}
+				else {
+					output_string += (operand/10) + " Pa";
+				}
+			}
+			
+			else if(device.characteristicUuid == "2a6f"){ //humidity Uuid
+				if(bytesArray[0] < 0x04){
+	        		output_string += operand + " ms";
+	        	}
+				else {
+					output_string += (operand/100) + String.fromCharCode(37);
+				}
+			}
+
+			else if(device.characteristicUuid == "2a6e"){ //temperature Uuid
+				if(bytesArray[0] < 0x04){
+	        		output_string += operand + " ms";
+	        	}
+				else {
+					output_string += (operand/100) + " " + String.fromCharCode(176) + "C";
+				}
+			}
+
+			else if(device.characteristicUuid == "c512"){ //luxUuid
+				if(bytesArray[0] < 0x04){
+	        		output_string += operand + " ms";
+	        	}
+				else {
+					output_string += (operand) + " " + String.fromCharCode(176) + " lux";
+				}
+			}
+
+			else if(device.characteristicUuid == "f801"){ //accelerationUuid
+				if(bytesArray[0] < 0x04){
+	        		output_string += operand + " ms";
+	        	}
+				else {
+					output_string += "Need to implement this!";
+				}
+			}
+			
+    	}
+
+    	app.log(output_string);
 
     },
     ondisconnectsuccess: function() {
         app.log("disconnected success!");
+    },
+    onPleaseConnect: function(){
+		app.log("Please connect to use this feature");
     },
     onTouchPres: function(device) {
         if(device_connected){
@@ -167,7 +274,7 @@ var app = {
             ble.read(deviceId, serviceUuid, pressureUuid, app.onReadPres, app.onError);
         } 
         else{
-            app.log("Please connect to use this feature.")
+            app.onPleaseConnect();
         }
     },
     onTouchHum: function(device) {
@@ -176,7 +283,7 @@ var app = {
             ble.read(deviceId, serviceUuid, humidityUuid, app.onReadHum, app.onError);
         }
         else{
-            app.log("Please connect to use this feature.")
+            app.onPleaseConnect;
         }
     },
     onTouchTemp: function(device) {
@@ -185,7 +292,7 @@ var app = {
             ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError);
         }
         else{
-            app.log("Please connect to use this feature.")
+            app.onPleaseConnect();
         }
     },
     onTouchLight: function(device) {
@@ -194,7 +301,7 @@ var app = {
             ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
         }
         else{
-            app.log("Please connect to use this feature.")
+            app.onPleaseConnect();
         }
     },
     onTouchAcc: function(device) {
@@ -203,23 +310,48 @@ var app = {
             ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);  
         }
         else{
-            app.log("Please connect to use this feature.")
+            app.onPleaseConnect;
         }
     },
-    onTouchArrowTemp: function(device) {
-    	document.querySelector("#popuptemp").style.display = "block";
+    onTouchPencilPres: function() {
+    	if(device_connected){
+    		document.querySelector("#popuppres").style.display = "block";
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
     },
-    onTouchArrowHum: function(device) {
-    	document.querySelector("#popuphum").style.display = "block";
+    onTouchPencilHum: function() {
+    	if(device_connected){
+    		document.querySelector("#popuphum").style.display = "block";
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
     },
-    onTouchArrowPres: function(device) {
-    	document.querySelector("#popuppres").style.display = "block";
+    onTouchPencilTemp: function() {
+    	if(device_connected){
+    		document.querySelector("#popuptemp").style.display = "block";
+    	}
+    	else{
+    		app.onPleaseConnect();
+    	}
     },
-    onTouchArrowAcc: function(device) {
-        document.querySelector("#popupacc").style.display = "block";
+    onTouchPencilLux: function() {
+    	if(device_connected){
+       		document.querySelector("#popup").style.display = "block";
+        }
+    	else{
+    		app.onPleaseConnect();
+    	}
     },
-    onTouchArrowLux: function(device) {
-        document.querySelector("#popup").style.display = "block";
+    onTouchPencilAcc: function() {
+    	if(device_connected){
+        	document.querySelector("#popupacc").style.display = "block";
+        }
+    	else{
+    		app.onPleaseConnect();
+    	}
     },
     accelerationcallback: function(buttonIndex) {
 		document.querySelector("#popupacc").style.display = "none";
@@ -268,7 +400,7 @@ var app = {
             var bytes = new Uint8Array(5);
 		    bytes[0] = buttonIndex-1;
             if (input_val) {
-                app.log( output_val.toString(16) );
+                //app.log( output_val.toString(16) );
                	bytes[1] = (output_val & 0x000000ff);
                	bytes[2] = (output_val & 0x0000ff00) >> 8;
                	bytes[3] = (output_val & 0x00ff0000) >> 16;
@@ -307,7 +439,7 @@ var app = {
             var bytes = new Uint8Array(3);
 		    bytes[0] = buttonIndex-1;
             if (input_val) {
-                app.log( output_val.toString(16) );
+                //app.log( output_val.toString(16) );
                	bytes[1] = (output_val & 0x000000ff);
                	bytes[2] = (output_val & 0x0000ff00) >> 8;
                	var value = bluetoothle.bytesToEncodedString(bytes);
@@ -402,13 +534,27 @@ var app = {
         //Parse Advertised Data
         var adData = new Uint8Array(device.advertising);
         app.log("Parsing advertised data...");
-        app.log( "Pressure: " + (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa" );
-        app.log( "Humidity: " + (( (adData[19] * 256) + adData[18] )/100) + String.fromCharCode(37) );
-        app.log( "Temperature: " + (( (adData[21] * 256) + adData[20])/100) + " " + String.fromCharCode(176) + "C");
-        app.log( "Lux: " + ( (adData[23] * 256) + adData[22]) + " lux" );
+
+       	var pressureOut = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa";
+        app.log( "Pressure: " + pressureOut);
+        document.getElementById("presVal").innerHTML = String(pressureOut);
+
+        var humidityOut = (( (adData[19] * 256) + adData[18] )/100) + String.fromCharCode(37);
+        app.log( "Humidity: " + humidityOut);
+        document.getElementById("humVal").innerHTML = String(humidityOut);
+
+        var temperatureOut = (( (adData[21] * 256) + adData[20])/100) + " " + String.fromCharCode(176) + "C";
+        app.log( "Temperature: " + temperatureOut);
+        document.getElementById("tempVal").innerHTML = String(temperatureOut);
+
+        var luxOut = ( (adData[23] * 256) + adData[22]) + " lux" ;
+        app.log( "Lux: " + luxOut);
+        document.getElementById("luxVal").innerHTML = String(luxOut);
+
         var accdata = adData[24];
         app.log("Immediate Acceleration: " + ((accdata & 17) >> 4) );
         app.log("Interval Acceleration: " + (accdata & 1) );
+
     },
     onReadAllSensors: function(device) {
         app.log("Getting sensor data...");
@@ -421,19 +567,27 @@ var app = {
     // BLE Characteristic Read Callback
     onReadPres: function(data) {
         //app.log("where is pressure");
-        app.log("Pressure: " + (app.buffToUInt32Decimal(data))/10 + " Pa");                 // display read value as string
+        var pressureOut = (app.buffToUInt32Decimal(data))/10 + " Pa";                 // display read value as string
+        app.log("Pressure: " + pressureOut);
+        document.getElementById("presVal").innerHTML = String(pressureOut);
     },
     // BLE Characteristic Read Callback
     onReadHum: function(data) {
-        app.log("Humidity: " + (app.buffToUInt16Decimal(data))/100 + String.fromCharCode(37));                 // display read value as string
+        var humidityOut = (app.buffToUInt16Decimal(data))/100 + String.fromCharCode(37);                 // display read value as string
+        app.log("Humidity: " + humidityOut);
+		document.getElementById("humVal").innerHTML = String(humidityOut);
     },
     // BLE Characteristic Read Callback
     onReadTemp: function(data) {
-        app.log("Temperature: " + (app.buffToInt16Decimal(data))/100 + " " + String.fromCharCode(176) + "C");                 // display read value as string
+        var temperatureOut = (app.buffToInt16Decimal(data))/100 + " " + String.fromCharCode(176) + "C";                 // display read value as string
+        app.log("Temperature: " + temperatureOut);
+		document.getElementById("tempVal").innerHTML = String(temperatureOut);
     },
     // BLE Characteristic Read Callback
     onReadLux: function(data) {
-        app.log("Lux: " + app.buffToInt16Decimal(data) + " lux");                 // display read value as string
+        var luxOut = app.buffToInt16Decimal(data) + " lux";                 // display read value as string
+        app.log("Lux: " + luxOut);
+		document.getElementById("luxVal").innerHTML = String(luxOut);
     },
     // BLE Characteristic Read Callback
     onReadAcc: function(data) {

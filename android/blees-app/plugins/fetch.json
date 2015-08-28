@@ -23,13 +23,29 @@
         "is_top_level": true,
         "variables": {}
     },
-    "nl.x-services.plugins.actionsheet": {
+    "com.randdusing.bluetoothle": {
         "source": {
             "type": "git",
-            "url": "https://github.com/EddyVerbruggen/cordova-plugin-actionsheet",
+            "url": "https://github.com/randdusing/BluetoothLE",
             "subdir": "."
         },
         "is_top_level": true,
+        "variables": {}
+    },
+    "org.chromium.bluetooth": {
+        "source": {
+            "type": "registry",
+            "id": "org.chromium.bluetooth"
+        },
+        "is_top_level": false,
+        "variables": {}
+    },
+    "org.chromium.common": {
+        "source": {
+            "type": "registry",
+            "id": "org.chromium.common"
+        },
+        "is_top_level": false,
         "variables": {}
     }
 }

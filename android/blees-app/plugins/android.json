@@ -13,7 +13,7 @@
                             "count": 1
                         },
                         {
-                            "xml": "<feature name=\"ActionSheet\"><param name=\"android-package\" value=\"nl.xservices.plugins.actionsheet.ActionSheet\" /></feature>",
+                            "xml": "<feature name=\"BluetoothLePlugin\"><param name=\"android-package\" value=\"com.randdusing.bluetoothle.BluetoothLePlugin\" /></feature>",
                             "count": 1
                         }
                     ],
@@ -30,13 +30,14 @@
                     "/manifest": [
                         {
                             "xml": "<uses-permission android:name=\"android.permission.BLUETOOTH\" />",
-                            "count": 1
+                            "count": 2
                         },
                         {
                             "xml": "<uses-permission android:name=\"android.permission.BLUETOOTH_ADMIN\" />",
-                            "count": 1
+                            "count": 2
                         }
-                    ]
+                    ],
+                    "/manifest/application": []
                 }
             }
         }
@@ -51,7 +52,7 @@
         "cordova-plugin-console": {
             "PACKAGE_NAME": "edu.umich.eecs.lab11.bleesApp"
         },
-        "nl.x-services.plugins.actionsheet": {
+        "com.randdusing.bluetoothle": {
             "PACKAGE_NAME": "edu.umich.eecs.lab11.bleesApp"
         }
     },

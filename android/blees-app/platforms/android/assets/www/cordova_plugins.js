@@ -27,10 +27,10 @@ module.exports = [
         ]
     },
     {
-        "file": "plugins/nl.x-services.plugins.actionsheet/www/ActionSheet.js",
-        "id": "nl.x-services.plugins.actionsheet.ActionSheet",
+        "file": "plugins/com.randdusing.bluetoothle/www/bluetoothle.js",
+        "id": "com.randdusing.bluetoothle.BluetoothLe",
         "clobbers": [
-            "window.plugins.actionsheet"
+            "window.bluetoothle"
         ]
     }
 ];
@@ -40,7 +40,7 @@ module.exports.metadata =
     "cordova-plugin-whitelist": "1.0.0",
     "com.megster.cordova.ble": "0.1.9",
     "cordova-plugin-console": "1.0.1",
-    "nl.x-services.plugins.actionsheet": "1.1.7"
+    "com.randdusing.bluetoothle": "2.1.0"
 }
 // BOTTOM OF METADATA
 });
