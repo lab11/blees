@@ -36,7 +36,7 @@ var app = {
         lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
-
+        app.onAppReady();
     },
     onStartTimer: function(device){
        	connection_toggle = false;
@@ -48,16 +48,20 @@ var app = {
     },
     // App Ready Event Handler
     onAppReady: function() {
-        if (window.gateway) {                                                       // if UI opened through Summon,
-            deviceId = window.gateway.getdeviceId();                                // get device ID from Summon
+        //if (typeof window.gateway != "undefined") {                               // if UI opened through Summon,
+            deviceId = window.gateway.getDeviceId();                                // get device ID from Summon
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
-            app.log("Opened via Summon");
-        }
+            app.log("Opened via Summon..");
+        //}
+        app.log("Opened via Summon...");
         document.getElementById("title").innerHTML = String(deviceId);
+        app.log("Checking if ble is enabled...");
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
+        app.onEnable();
     },
     // App Paused Event Handler
-    onPause: function() {                                                           // if user leaves app, stop BLE
+    onPause: function() {
+    	app.log("on Pause");                                                           // if user leaves app, stop BLE
         //ble.disconnect(deviceId);
         ble.stopScan();
         if (device_connected) {
@@ -70,12 +74,14 @@ var app = {
     },
     // Bluetooth Enabled Callback
     onEnable: function() {
+    	app.log("onEnable");
         app.onPause();                                                              // halt any previously running BLE processes
         ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
     // BLE Device Discovered Callback
     onDiscover: function(device) {
+    	app.log("onDiscover");
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
