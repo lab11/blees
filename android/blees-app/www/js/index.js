@@ -51,6 +51,7 @@ var app = {
         if (window.gateway) {                                                       // if UI opened through Summon,
             deviceId = window.gateway.getdeviceId();                                // get device ID from Summon
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
+            app.log("Opened via Summon");
         }
         document.getElementById("title").innerHTML = String(deviceId);
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
