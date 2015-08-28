@@ -98,7 +98,7 @@
 
 
 // Maximum size is 17 characters, counting URLEND if used
-#define PHYSWEB_URL     "goo.gl/DjpTci"
+#define PHYSWEB_URL     "goo.gl/3ZnCTp"
 
 
 /*******************************************************************************
