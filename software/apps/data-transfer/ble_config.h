@@ -28,7 +28,7 @@
 
 
 //10ms
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(10, UNIT_1_25_MS)
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(100, UNIT_1_25_MS)
 
 //1s
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(1000, UNIT_1_25_MS)
@@ -40,7 +40,7 @@
 
 //time from initiating event(conn or notify start) to first time param_update c
 //called
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)
+#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(500, APP_TIMER_PRESCALER)
 
 
 #define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)
@@ -78,13 +78,9 @@
 
 typedef struct ble_app_s
 {
-    uint16_t                     conn_handle;           /**< Handle of the current connection (as provided by the S110 SoftDevice). This will be BLE_CONN_HANDLE_INVALID when not in a connection. */
-    // uint16_t                     revision;           /**< Handle of DFU Service (as provided by the S110 SoftDevice). */
-    uint16_t                     service_handle;        /**< Handle of DFU Service (as provided by the S110 SoftDevice). */
-    uint8_t                      uuid_type;             /**< UUID type assigned for DFU Service by the S110 SoftDevice. */
-    ble_gatts_char_handles_t     char_location_handles; /**< Handles related to the DFU Packet characteristic. */
-    ble_srv_error_handler_t      error_handler;         /**< Function to be called in case of an error. */
-    uint8_t                      current_location[6];    /** Value of num characteristic */
+    uint16_t                     conn_handle;           // Handle of the current connection. This will be BLE_CONN_HANDLE_INVALID when not in a connection.
+    uint16_t                     service_handle;
+    uint8_t                      uuid_type;
 } ble_app_t;
 
 
@@ -107,5 +103,26 @@ typedef struct ble_app_s
 
 ble_uuid_t PHYSWEB_SERVICE_UUID[] = {{PHYSWEB_SERVICE_ID, BLE_UUID_TYPE_BLE}};
 ble_advdata_uuid_list_t PHYSWEB_SERVICE_LIST = {1, PHYSWEB_SERVICE_UUID};
+
+
+// Data Transfer Service
+
+// Full uuid. Bytes 12 and 13 are ignored
+const ble_uuid128_t data_transfer_uuid128 = {{
+    0x2a, 0x39, 0x43, 0x51, 0x55, 0x41, 0x4a, 0xae,
+    0x8a, 0x42, 0x25, 0xa4, 0x00, 0x00, 0x0f, 0x99
+}};
+
+// Short uuid for the service. Placed in bytes 12 and 13
+const uint16_t data_transfer_srvc_uuid16 = 0x7e40;
+
+// Short uuids for characteristics
+const uint16_t test_char_uuid16 = 0x7e41;
+
+typedef struct data_transfer_struct {
+    ble_gatts_char_handles_t    test_char_handles;
+    uint8_t test_char;
+    //uint8_t test_char[500];
+} data_transfer_t;
 
 #endif
