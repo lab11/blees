@@ -87,7 +87,7 @@ void si7021_read_temp_hold(float * temp){
         sizeof(command),
         true
     );
-	uint8_t temp_hum_data[3] = {0, 0, 0};
+	uint8_t temp_hum_data[3] = {0x00, 0x00, 0x00};
     nrf_drv_twi_rx(
         m_instance, 
         TEMP_HUM_ADDR_THIS, 

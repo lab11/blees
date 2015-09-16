@@ -2,7 +2,6 @@
 
 #define LP331AP_H
 
-
 typedef enum
 {
     lps331ap_MODE0, 	// Pressure = One Shot, Temperature = One Shot

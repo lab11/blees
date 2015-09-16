@@ -10,6 +10,7 @@
 #include "ble_srv_common.h"
 #include "stdio.h"
 
+
 //ESS UUIDs
 #define ESS_UUID_BASE {0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 #define ESS_UUID_SERVICE 0x181A
@@ -163,7 +164,7 @@ void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt);
  *
  * @return      NRF_SUCCESS on successful initialization of service, otherwise an error code.
  */
-uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init);
+uint32_t ble_ess_init(ble_ess_t * p_ess, ble_ess_init_t * p_ess_init);
 
 uint32_t ble_ess_char_value_update(	ble_ess_t * p_ess, 
 									ess_char_data_t * char_data, 
@@ -172,7 +173,7 @@ uint32_t ble_ess_char_value_update(	ble_ess_t * p_ess,
 									bool is_signed,  
 									ble_gatts_char_handles_t * char_handles );
 
-int ble_ess_intcmp( int8_t * buff_1, int8_t * buff_2, uint16_t length, bool is_signed);
+int ble_ess_intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed);
 
 #endif // BLE_ESS_H__
 

@@ -183,7 +183,7 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     // On assert, the system can only recover with a reset.
     //NVIC_SystemReset();
 
-    //led_off(BLEES_LED_PIN);
+    //led_on(BLEES_LED_PIN);
     //while(1);
     ble_debug_assert_handler(error_code, line_num, p_file_name);
 
@@ -438,6 +438,7 @@ static void sys_evt_dispatch(uint32_t sys_evt) {
 
 static void pres_take_measurement(void * p_context)
 {
+
     lps331ap_one_shot_enable();
 
     UNUSED_PARAMETER(p_context);
@@ -458,7 +459,7 @@ static void pres_take_measurement(void * p_context)
     update_advdata();
 
     memcpy(pres_meas_val, &meas, 4);
-    
+
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, 
         MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
     
@@ -475,7 +476,7 @@ static void pres_take_measurement(void * p_context)
 static void hum_take_measurement(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
-    
+
     uint8_t  hum_meas_val[2]; 
 
     uint32_t meas;
@@ -484,7 +485,7 @@ static void hum_take_measurement(void * p_context)
     float hum;
     memset(&hum, 0, sizeof(hum));
 
-    (si7021_read_RH_hold(&hum));
+    (si7021_read_RH(&hum));
 
     meas = (uint16_t)(hum * 100);
     m_sensor_info.humidity = meas;
@@ -518,7 +519,7 @@ static void temp_take_measurement(void * p_context)
     float temp;
     memset(&temp, 0, sizeof(temp));
 
-    si7021_read_temp_hold(&temp);
+    si7021_read_temp(&temp);
 
     meas = (int16_t)(temp * 100);
     m_sensor_info.temp = meas;
@@ -1041,19 +1042,19 @@ static void update_timers( ble_evt_t * p_ble_evt ){
         }
         else{
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
-            if ( m_ess.acceleration.trigger_val_cond = 0x04 ){
+            if ( m_ess.acceleration.trigger_val_cond == 0x04 ){
                 uint8_t a_time = (uint8_t)(meas_interval);
                 adxl362_set_activity_time(a_time);
             }
-            else if ( m_ess.acceleration.trigger_val_cond = 0x05 ){
+            else if ( m_ess.acceleration.trigger_val_cond == 0x05 ){
                 uint16_t act_thresh = (uint16_t)(meas_interval);
                 adxl362_set_activity_threshold(act_thresh);
             }
-            else if ( m_ess.acceleration.trigger_val_cond = 0x06 ){
+            else if ( m_ess.acceleration.trigger_val_cond == 0x06 ){
                 uint8_t ia_time = (uint8_t)(meas_interval);
                 adxl362_set_inactivity_time(ia_time);
             }
-            else if ( m_ess.acceleration.trigger_val_cond = 0x07 ){
+            else if ( m_ess.acceleration.trigger_val_cond == 0x07 ){
                 uint16_t inact_thresh = (uint16_t)(meas_interval);
                 adxl362_set_inactivity_threshold(inact_thresh);
             }
@@ -1163,6 +1164,14 @@ int main(void) {
     services_init();
     advertising_init();
     sensors_init();
+
+
+    lps331ap_one_shot_enable();
+    float pres;
+    memset(&pres, 0, sizeof(pres));
+    lps331ap_readPressure(&pres);
+
+
     conn_params_init();
 
     // Advertise data

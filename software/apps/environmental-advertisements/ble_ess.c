@@ -337,7 +337,7 @@ void ble_ess_on_ble_evt(ble_ess_t * p_ess, ble_evt_t * p_ble_evt)
     }
 }
 
-uint32_t ble_ess_init(ble_ess_t * p_ess, const ble_ess_init_t * p_ess_init)
+uint32_t ble_ess_init(ble_ess_t * p_ess, ble_ess_init_t * p_ess_init)
 
 {
     
@@ -505,7 +505,8 @@ uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_dat
     {
         
        if( is_notification_needed(char_data->trigger_val_cond, char_data->trigger_val_buff, ess_meas_val, char_data->val_last, char_len, is_signed) ){
-            
+            //led_toggle(BLEES_LED_PIN);
+
             //send the notification
             ble_gatts_hvx_params_t hvx_params;
             memset(&hvx_params, 0, sizeof(hvx_params));
@@ -530,13 +531,14 @@ uint32_t ble_ess_char_value_update(ble_ess_t * p_ess, ess_char_data_t * char_dat
     }       
        
     //update value
+    //led_toggle(BLEES_LED_PIN);
     memcpy(char_data->val_last, ess_meas_val, char_len);
 
     return err_code;
 }
 
-int ble_ess_intcmp( int8_t * buff_1, int8_t * buff_2, uint16_t length, bool is_signed){
-
+//uint or int?
+int ble_ess_intcmp( uint8_t * buff_1, uint8_t * buff_2, uint16_t length, bool is_signed){
     int len = length-1;
 
     if (is_signed){

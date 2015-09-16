@@ -46,6 +46,7 @@ static nrf_drv_twi_t * m_instance;
 // must only be called after lps331ap_on has been called
 void lps331ap_readPressure(float *pres){
 
+
     uint8_t command[1] = {PRESS_OUT_XL | AUTO_INCR};
     
     nrf_drv_twi_tx(
@@ -55,11 +56,10 @@ void lps331ap_readPressure(float *pres){
             sizeof(command),
             true
     );
+    
+    uint8_t pressure_data[3] = {0x00, 0x00, 0x00};
 
-
-    uint8_t pressure_data[3];
-
-    nrf_drv_twi_rx(
+   nrf_drv_twi_rx(
             m_instance, 
             SENSOR_ADDR,
             pressure_data,
@@ -72,7 +72,6 @@ void lps331ap_readPressure(float *pres){
                         ((uint32_t) pressure_data[0]))) / 4096.0;
 
     *pres = pressure;
-
 }
 
 //does not return correct temperature
@@ -143,6 +142,7 @@ void lps331ap_sw_reset(){
         sizeof(command),
         false
     );
+
 
 }
 
@@ -510,6 +510,7 @@ void lps331ap_power_on(){
         false
     );
 
+
 }
 
 //need to test this
@@ -541,7 +542,7 @@ void lps331ap_one_shot_enable(){
 
     };
 
-     nrf_drv_twi_tx(
+    nrf_drv_twi_tx(
             m_instance, 
             SENSOR_ADDR,
             command2,

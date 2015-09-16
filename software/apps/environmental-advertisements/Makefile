@@ -38,7 +38,7 @@ SOFTDEVICE ?= $(NRF_BASE_PATH)/softdevice/s110_nrf51_8.0.0_softdevice.hex
 SDK_VERSION = 9
 SDK_PATH ?= $(NRF_BASE_PATH)/sdk/nrf51_sdk_9.0.0/
 
-CFLAGS = -O0
+CFLAGS = -Os
 GDB_PORT_NUMBER = 2331
 
 include $(NRF_BASE_PATH)/Makefile.include
