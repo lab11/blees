@@ -1,6 +1,6 @@
 /* JavaScript for ESS Summon UI */
 
-var deviceId = "C0:98:E5:30:45:BF";                                                 // while testing, replace with address of a BLE peripheral
+var deviceId = "C0:98:E5:30:DA:E4";                                                 // while testing, replace with address of a BLE peripheral
 var deviceName = "BLE Device";                                                      // while testing, replace with desired name
 var serviceUuid = "181A";                                                           // ESS UUID
 var writeValue = "Written Name";                                                    // value to write to characteristic
@@ -11,6 +11,8 @@ var humidityUuid = "2A6F";                                                      
 var temperatureUuid = "2A6E";                                                       // temperature characteristic UUID to read or write
 var luxUuid = "C512";                                                               // lux characteristic UUID to read or write
 var accelerationUuid = "F801";                                                      // acceleration characteristic UUID to read or write
+
+var ess_service = "181A";
 
 var device_connected = false;
 var timer;
@@ -36,7 +38,7 @@ var app = {
         lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
-
+        app.onAppReady();
     },
     onStartTimer: function(device){
        	connection_toggle = false;
@@ -48,15 +50,20 @@ var app = {
     },
     // App Ready Event Handler
     onAppReady: function() {
-        if (window.gateway) {                                                       // if UI opened through Summon,
-            deviceId = window.gateway.getdeviceId();                                // get device ID from Summon
+        //if (typeof window.gateway != "undefined") {                               // if UI opened through Summon,
+            deviceId = window.gateway.getDeviceId();                                // get device ID from Summon
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
-        }
+            app.log("Opened via Summon..");
+        //}
+        app.log("Opened via Summon...");
         document.getElementById("title").innerHTML = String(deviceId);
+        app.log("Checking if ble is enabled...");
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
+        app.onEnable();
     },
     // App Paused Event Handler
-    onPause: function() {                                                           // if user leaves app, stop BLE
+    onPause: function() {
+    	app.log("on Pause");                                                           // if user leaves app, stop BLE
         //ble.disconnect(deviceId);
         ble.stopScan();
         if (device_connected) {
@@ -69,16 +76,17 @@ var app = {
     },
     // Bluetooth Enabled Callback
     onEnable: function() {
+    	app.log("onEnable");
         app.onPause();                                                              // halt any previously running BLE processes
         ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
     // BLE Device Discovered Callback
     onDiscover: function(device) {
+    	app.log("onDiscover");
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
-            ble.stopScan(app.onStopScan, app.onError);
             //app.onStartConnection(device);
         }
     },
@@ -533,6 +541,17 @@ var app = {
     onParseAdvData: function(device){
         //Parse Advertised Data
         var adData = new Uint8Array(device.advertising);
+
+		if ((adData[12] != 0x1A) || (adData[13] != 0x18)){
+			app.log("not right");
+			app.onEnable();
+			return;
+		}
+
+		else{
+			ble.stopScan(app.onStopScan, app.onError);
+		}
+
         app.log("Parsing advertised data...");
 
        	var pressureOut = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa";
@@ -633,6 +652,16 @@ var app = {
     bytesToString: function(buffer) {
         return String.fromCharCode.apply(null, new Uint8Array(buffer));
     },
+    /*onTouchEyePres: function() {
+    	var console = document.getElementById("console");
+    	if (console.style.visibility == "hidden"){
+    		console.style.visibility = "visible";
+    	} 
+    	else {
+    		console.style.visibility = "hidden";
+    	}
+    },
+    */
     // Function to Log Text to Screen
     log: function(string) {
         document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />"; 
