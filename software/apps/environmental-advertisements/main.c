@@ -1164,14 +1164,6 @@ int main(void) {
     services_init();
     advertising_init();
     sensors_init();
-
-
-    lps331ap_one_shot_enable();
-    float pres;
-    memset(&pres, 0, sizeof(pres));
-    lps331ap_readPressure(&pres);
-
-
     conn_params_init();
 
     // Advertise data
