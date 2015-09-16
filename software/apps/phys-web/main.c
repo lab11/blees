@@ -1,5 +1,5 @@
 /*
- * Advertises Sensor Data
+ * Eddystone URL advertisement
  */
 
 // Standard Libraries
