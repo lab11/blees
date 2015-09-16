@@ -17,6 +17,23 @@ div.frame {
     height: 90vh;
 }
 
+.charImg{
+    width: 80%;
+}
+
+.charImgCell{
+    width: 15%;
+}
+
+.charTitleCell{
+    width: 30%;
+    font-size: 120%;
+}
+
+.charValueCell{
+    width: 30%;
+}
+
 #console {
     margin-left: 16%;
     margin-right: 14%;

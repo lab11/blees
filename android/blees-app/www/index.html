@@ -21,7 +21,7 @@
             <text style="color:#009900">!</text></h1>        
         <h1 style="font-size: 90%;" id="title">deviceId</h1>
 
-        <img id="centralblees" alt = "blees_img" src="img/blees2.png" align=center name = "bleesimg" class="Dis" style="width:40%; margin:5px 0;"/></br>
+        <img id="centralblees" alt = "blees_img" src="img/blees2.png" align=center name = "bleesimg" class="Dis" style="width:25%; margin:5px 0;"/></br>
 
 
 
@@ -35,7 +35,7 @@
         </div></br>
         -->
 
-
+        <!--
         <table align=center style="width:90%">
             <tr>
                 <td><span style="color:#8DD174">
@@ -71,24 +71,61 @@
                 <td><img src="img/acceleration.png" alt = "acc_img" name = "accimg" class="Dis" style="width:90%; margin:1px 0;"/></td>
             </tr>
         </table>
-        <table style="font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif" align=center>
-            <tr style="font-size: 90%;">
-                <td>Pressure: </td>
-                <td>Humidity: </td>      
-                <td>Temperature: </td>
-                <td>Lux: </td>
+        -->
+
+        <!-- font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif, -->
+
+        <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#8DD174">
+                        <tr><td><i style="font-size: 1.7em; " name = "eyePres" class="fa fa-eye" onclick="app.onTouchEyePres()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.7em; "name = "pencilPres" class="fa fa-pencil"  onclick="app.onTouchPencilPres()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/pressure.png" alt="pressure_img" name="presimg"/></td>
+                <td align=left class="charTitleCell">Pressure: </td>
+                <td align=left class="charValueCell" id="presVal">pres_val</td>
             </tr>
-            <tr style="font-size: 80%;">
-                <td id="presVal">pres_val</td>
-                <td id="humVal">hum_val</td>        
-                <td id="tempVal">temp_val</td>
-                <td id="luxVal">lux_val</td>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#49BBD4">
+                        <tr><td><i style="font-size: 1.7em;" name = "eyeHum" class="fa fa-eye" onclick="app.onTouchEyeHum()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.7em;" name = "pencilHum" class="fa fa-pencil" onclick="app.onTouchPencilHum()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/humidity.png" alt="humidity_img" name="humimg"/></td>
+                <td align=left class="charTitleCell">Humidity: </td>    
+                <td align=left class="charValueCell" id="humVal">hum_val</td>        
+            </tr>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#F39541">
+                        <tr><td><i style="font-size: 1.7em;" name = "eyeTemp" class="fa fa-eye" onclick="app.onTouchEyeTemp()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.7em;" name = "pencilTemp" class="fa fa-pencil" onclick="app.onTouchPencilTemp()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/temp.png" alt="temp_img" name="tempimg"/></td>
+                <td align=left class="charTitleCell">Temperature: </td>
+                <td align=left class="charValueCell" id="tempVal">temp_val</td>
+            </tr>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#F1C40F">
+                        <tr><td><i style="font-size: 1.7em;" name = "eyeLux" class="fa fa-eye" onclick="app.onTouchEyeLux()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.7em;" name = "pencilLux" class="fa fa-pencil" onclick="app.onTouchPencilLux()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/light.png" alt="light_img" name="lightimg"/></td>
+                <td align=left class="charTitleCell">Lux: </td>
+                <td align=left class="charValueCell" id="luxVal">lux_val</td>
             </tr>
         </table>
+
         <i name = "logbook" class="fa fa-book fa-2x"></i>
         </br>
     
-        <div id="console" style="visibility:visible"></div>
+        <div id="console" ></div>
 
         <div id="popup">
             <h3>Configure Lux Trigger Settings</h3>
