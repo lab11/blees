@@ -20,6 +20,10 @@ var touchduration = 3000; //length of time we want the user to touch before we d
 var connection_toggle = false;
 var is_init = false;
 
+var switch_visibility_console_check = "visible";
+var switch_visibility_steadyscan_check = "visible";
+
+
 var app = {
     // Application Constructor
     initialize: function() {
@@ -359,6 +363,27 @@ var app = {
         }
     	else{
     		app.onPleaseConnect();
+    	}
+    },
+    onTouchConsoleCheck: function(){
+    	app.log("check");
+    	document.querySelector("#show_console_check").style.visibility = switch_visibility_console_check;
+    	document.querySelector("#console").style.visibility = switch_visibility_console_check;
+    	if(switch_visibility_console_check == "visible") {
+    		switch_visibility_console_check = "hidden";
+    	}
+    	else{
+    		switch_visibility_console_check = "visible";
+    	}
+    },
+    onTouchSteadyScanCheck: function(){
+    	app.log("check2");
+    	document.querySelector("#show_steadyscan_check").style.visibility = switch_visibility_steadyscan_check;
+    	if(switch_visibility_steadyscan_check == "visible") {
+    		switch_visibility_steadyscan_check = "hidden";
+    	}
+    	else{
+    		switch_visibility_steadyscan_check = "visible";
     	}
     },
     accelerationcallback: function(buttonIndex) {

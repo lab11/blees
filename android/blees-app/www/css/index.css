@@ -35,8 +35,9 @@ div.frame {
 }
 
 #console {
-    margin-left: 16%;
-    margin-right: 14%;
+    visibility: hidden;
+    /*margin-left: 16%;
+    margin-right: 14%;*/
     text-align: left;
     position: static;
     padding:2px;
@@ -51,13 +52,18 @@ div.frame {
 
 #centralblees {
 
-    /* border: 1px solid blue; */
-
+    /*border: 1px solid blue; */
+    vertical-align: top;
     z-index: 2;
         border-bottom-right-radius: 2em;
+}
 
+#show_console_check{
+    visibility: hidden;
+}
 
-
+#show_steadyscan_check{
+    visibility: hidden;
 }
 
 /* Lux popup */
