@@ -150,6 +150,7 @@ static struct {
  *   FUNCTION PROTOTYPES
  ******************************************************************************/
 static void advertising_start(void);
+static void advertising_stop(void);
 static bool update_advdata(void);
 static void update_timers( ble_evt_t * p_ble_evt );
 static void adv_physweb(void);
@@ -235,11 +236,16 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
     switch (p_ble_evt->header.evt_id) {
         case BLE_GAP_EVT_CONNECTED:
             app.conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-            //advertising_stop();
+            // Resume advertising, but non-connectably
+            m_adv_params.type = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
+            advertising_start();
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             app.conn_handle = BLE_CONN_HANDLE_INVALID;
+            // Go back to advertising connectably
+            advertising_stop();
+            m_adv_params.type = BLE_GAP_ADV_TYPE_ADV_IND;
             advertising_start();
             break;
 
