@@ -22,19 +22,21 @@ var is_init = false;
 
 var switch_visibility_console_check = "visible";
 var switch_visibility_steadyscan_check = "visible";
-
+var steadyscan_on = true;
 
 var app = {
     // Application Constructor
     initialize: function() {
+        app.log("whereami");
 
         document.addEventListener("deviceready", app.onAppReady, false);
         document.addEventListener("resume", app.onAppReady, false);
         document.addEventListener("pause", app.onPause, false);
 
-        bleesimg.addEventListener('touchend', app.onTouch, false);                // if bulb image touched, goto: onToggle
-        bleesimg.addEventListener('touchstart', app.onStartTimer, false);         // if bulb image touched, goto: onToggle
+        //bleesimg.addEventListener('touchend', app.onTouch, false);                // if bulb image touched, goto: onToggle
+        //bleesimg.addEventListener('touchstart', app.onStartTimer, false);         // if bulb image touched, goto: onToggle
 
+        toggleOff.addEventListener('touchend', app.onTouchToggleOff, false);
 
         presimg.addEventListener('touchend', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
         humimg.addEventListener('touchend', app.onTouchHum, false);             // if bulb image touched, goto: onToggle
@@ -42,6 +44,7 @@ var app = {
         lightimg.addEventListener('touchend', app.onTouchLight, false);           // if bulb image touched, goto: onToggle
         accimg.addEventListener('touchend', app.onTouchAcc, false);             // if bulb image touched, goto: onToggle
 
+        app.log("where");
         app.onAppReady();
     },
     onStartTimer: function(device){
@@ -54,11 +57,13 @@ var app = {
     },
     // App Ready Event Handler
     onAppReady: function() {
-        //if (typeof window.gateway != "undefined") {                               // if UI opened through Summon,
+    	app.log("amihere");
+
+        if (typeof window.gateway != "undefined") {                               // if UI opened through Summon,
             deviceId = window.gateway.getDeviceId();                                // get device ID from Summon
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
             app.log("Opened via Summon..");
-        //}
+        }
         app.log("Opened via Summon...");
         document.getElementById("title").innerHTML = String(deviceId);
         app.log("Checking if ble is enabled...");
@@ -80,14 +85,14 @@ var app = {
     },
     // Bluetooth Enabled Callback
     onEnable: function() {
-    	app.log("onEnable");
+    	//app.log("onEnable");
         app.onPause();                                                              // halt any previously running BLE processes
         ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
     // BLE Device Discovered Callback
     onDiscover: function(device) {
-    	app.log("onDiscover");
+    	//app.log("onDiscover");
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
@@ -95,7 +100,7 @@ var app = {
         }
     },
     onStopScan: function(device) {
-        app.log("stopped scanning");
+        //app.log("stopped scanning");
     },
     onStartConnection: function(device) {
     	if (!is_init){
@@ -113,6 +118,7 @@ var app = {
     },
     // BLE Device Connected Callback
     onConnect: function(device) {
+    	app.log("connected!");
         app.log("Connected to " + deviceName + " (" + deviceId + ")!");
         device_connected = true;
         app.onReadAllSensors(device);
@@ -142,6 +148,23 @@ var app = {
         }
         connection_toggle = false;
 
+    },
+    onTouchToggleOff: function(device) {
+    	document.getElementById('toggleOff').style.visibility = "hidden"; 
+    	document.getElementById('toggleOn').style.visibility = "visible"; 
+    	document.getElementById('connection_status').innerHTML = " Connected"; 
+    	app.log("Connecting to BLEES device!");
+        ble.stopScan();
+        app.onStartConnection(device);
+
+    },
+    onTouchToggleOn: function() {
+    	/*
+    	document.getElementById('toggleOff').style.visibility = "visible"; 
+    	document.getElementById('toggleOn').style.visibility = "hidden"; 
+    	app.onPause();
+        app.onAppReady();
+		*/
     },
     onTouchEyePres: function() {
     	if(device_connected){
@@ -381,9 +404,12 @@ var app = {
     	document.querySelector("#show_steadyscan_check").style.visibility = switch_visibility_steadyscan_check;
     	if(switch_visibility_steadyscan_check == "visible") {
     		switch_visibility_steadyscan_check = "hidden";
+    		steadyscan_on = true;
+    		app.onEnable();
     	}
     	else{
     		switch_visibility_steadyscan_check = "visible";
+    		steadyscan_on = false;
     	}
     },
     accelerationcallback: function(buttonIndex) {
@@ -577,7 +603,7 @@ var app = {
 			ble.stopScan(app.onStopScan, app.onError);
 		}
 
-        app.log("Parsing advertised data...");
+        //app.log("Parsing advertised data...");
 
        	var pressureOut = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa";
         app.log( "Pressure: " + pressureOut);
@@ -596,8 +622,41 @@ var app = {
         document.getElementById("luxVal").innerHTML = String(luxOut);
 
         var accdata = adData[24];
+        var immAcc = ((accdata & 17) >> 4);
+        var intAcc = (accdata & 1);
         app.log("Immediate Acceleration: " + ((accdata & 17) >> 4) );
         app.log("Interval Acceleration: " + (accdata & 1) );
+
+        
+        if (immAcc) {
+        	document.getElementById('accLastAdCell').style.color = "#ED97B9"; 
+        	document.getElementById('accNotSpinnerAd').style.visibility = "hidden"; 
+        	document.getElementById('accSpinnerAd').style.visibility = "visible"; 
+        }
+        else {
+			document.getElementById('accLastAdCell').style.color = "grey"; 
+			document.getElementById('accSpinnerAd').style.visibility = "hidden"; 
+        	document.getElementById('accNotSpinnerAd').style.visibility = "visible"; 
+        }
+
+
+        if (intAcc) {
+        	document.getElementById('accLastIntCell').style.color = "#ED97B9";
+        	document.getElementById('accSpinnerInt').style.visibility = "visible"; 
+        	document.getElementById('accNotSpinnerInt').style.visibility = "hidden"; 
+ 
+        }
+        else {
+			document.getElementById('accLastIntCell').style.color = "grey"; 
+			document.getElementById('accSpinnerInt').style.visibility = "hidden"; 
+        	document.getElementById('accNotSpinnerInt').style.visibility = "visible"; 
+        }
+
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
+        if(steadyscan_on){
+        	app.onEnable();
+        }
 
     },
     onReadAllSensors: function(device) {
@@ -607,6 +666,8 @@ var app = {
         ble.read(deviceId, serviceUuid, temperatureUuid, app.onReadTemp, app.onError); 
         ble.read(deviceId, serviceUuid, luxUuid, app.onReadLux, app.onError);  
         ble.read(deviceId, serviceUuid, accelerationUuid, app.onReadAcc, app.onError);
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
     },
     // BLE Characteristic Read Callback
     onReadPres: function(data) {
@@ -614,30 +675,40 @@ var app = {
         var pressureOut = (app.buffToUInt32Decimal(data))/10 + " Pa";                 // display read value as string
         app.log("Pressure: " + pressureOut);
         document.getElementById("presVal").innerHTML = String(pressureOut);
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
     },
     // BLE Characteristic Read Callback
     onReadHum: function(data) {
         var humidityOut = (app.buffToUInt16Decimal(data))/100 + String.fromCharCode(37);                 // display read value as string
         app.log("Humidity: " + humidityOut);
 		document.getElementById("humVal").innerHTML = String(humidityOut);
+		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
     },
     // BLE Characteristic Read Callback
     onReadTemp: function(data) {
         var temperatureOut = (app.buffToInt16Decimal(data))/100 + " " + String.fromCharCode(176) + "C";                 // display read value as string
         app.log("Temperature: " + temperatureOut);
 		document.getElementById("tempVal").innerHTML = String(temperatureOut);
+		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
     },
     // BLE Characteristic Read Callback
     onReadLux: function(data) {
         var luxOut = app.buffToInt16Decimal(data) + " lux";                 // display read value as string
         app.log("Lux: " + luxOut);
 		document.getElementById("luxVal").innerHTML = String(luxOut);
+		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
     },
     // BLE Characteristic Read Callback
     onReadAcc: function(data) {
         var acc = app.buffToUInt8Decimal(data);
         app.log("Immediate Acceleration: " + ((acc & 17) >> 4) );                 // display read value as string
         app.log("Interval Acceleration: " + (acc & 1) );                 // display read value as string
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString(); 
+
 
     },
     // BLE Characteristic Write Callback
@@ -689,7 +760,7 @@ var app = {
     */
     // Function to Log Text to Screen
     log: function(string) {
-        document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />"; 
+    	document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />"; 
         document.querySelector("#console").scrollTop = document.querySelector("#console").scrollHeight;
     }
 };

@@ -7,80 +7,49 @@
         <meta name="msapplication-tap-highlight" content="no">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
         <link rel="stylesheet" type="text/css" href="css/index.css">
+        <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css">
+        <script src="js/jquery-1.11.3.min.js"></script>
+        <script src="js/jquery.mobile-1.4.5.min.js"></script>     
         <link rel="stylesheet" href="css/font-awesome-4.4.0/css/font-awesome.min.css">
         <title>Template</title>
     </head>
-    <body class="frame" style="text-align:center; font-family:sans-serif-thin;color:#888">
+    <body id="main_view" data-role="main" class="frame" style="text-align:center; font-family:sans-serif-thin;color:#888">
 
-        <h1 style="font-size: 250%" >
-            <text style="color:#0099FF">B</text>
-            <text style="color:#0099CC">L</text>
-            <text style="color:#009999">E</text>
-            <text style="color:#009966">E</text>
-            <text style="color:#009933">S</text>
-            <text style="color:#009900">!</text></h1>        
-        <h1 style="font-size: 90%;" id="title">deviceId</h1>
+        <div data-role="header" data-theme="b">
+                </br>
+                <text align=center style="font-size: 250%"> 
+                    <span style="font-weight: bold; color:#0099FF">B</span>
+                    <span style="font-weight: bold; color:#0099CC">L</span>
+                    <span style="font-weight: bold; color:#009999">E</span>
+                    <span style="font-weight: bold; color:#009966">E</span>
+                    <span style="font-weight: bold; color:#009933">S</span>
+                    <!--<text style="color:#009900">!</text>-->
+                </text></br>
+                <h1 style="font-size: 90%;" id="title">deviceId</h1>
 
-        <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
-            <tr>
-                <td style="width:5%">
-                    <table style="color:#8DD174">
-                        <tr><td><i style="font-size: 1.7em; " name = "eyePres" class="fa fa-eye" onclick="app.onTouchEyePres()"></i></td></tr>
-                        <tr><td><i style="font-size: 1.7em; "name = "pencilPres" class="fa fa-pencil"  onclick="app.onTouchPencilPres()"></i></td></tr>
-                    </table>
-                </td>
-                <td align=left class="charImgCell"><img class="charImg" src="img/pressure.png" alt="pressure_img" name="presimg"/></td>
-                <td align=center class="charTitleCell">Pressure: </td>
-                <td align=center class="charValueCell" id="presVal">pres_val</td>
+        </div>
+
+        <!--<i id="centralblees" name="bleesimg" alt = "blees_img" class="fa fa-play"></i>-->
+        <!--
+        <table border="1" style="width:90%" align=center border="1">
+
+            <tr><td style="width:13%">
+                                <span onclick="app.onTouchSteadyScanCheck()" style="font-size: 1" class="fa-stack">
+                                    <i class="fa fa-square-o fa-stack-2x"></i>
+                                    <i id="show_steadyscan_check" class="fa fa-check fa-stack-1x"></i>
+                                </span>
+                            </td>
+                            <td align=left style="font-size:13px; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">Steady scan</td>
             </tr>
-            <tr>
-                <td style="width:5%">
-                    <table style="color:#49BBD4">
-                        <tr><td><i style="font-size: 1.7em;" name = "eyeHum" class="fa fa-eye" onclick="app.onTouchEyeHum()"></i></td></tr>
-                        <tr><td><i style="font-size: 1.7em;" name = "pencilHum" class="fa fa-pencil" onclick="app.onTouchPencilHum()"></i></td></tr>
-                    </table>
-                </td>
-                <td align=left class="charImgCell"><img class="charImg" src="img/humidity.png" alt="humidity_img" name="humimg"/></td>
-                <td align=center class="charTitleCell">Humidity: </td>    
-                <td align=center class="charValueCell" id="humVal">hum_val</td>        
-            </tr>
-            <tr>
-                <td style="width:5%">
-                    <table style="color:#F39541">
-                        <tr><td><i style="font-size: 1.7em;" name = "eyeTemp" class="fa fa-eye" onclick="app.onTouchEyeTemp()"></i></td></tr>
-                        <tr><td><i style="font-size: 1.7em;" name = "pencilTemp" class="fa fa-pencil" onclick="app.onTouchPencilTemp()"></i></td></tr>
-                    </table>
-                </td>
-                <td align=left class="charImgCell"><img class="charImg" src="img/temp.png" alt="temp_img" name="tempimg"/></td>
-                <td align=center class="charTitleCell">Temperature: </td>
-                <td align=center class="charValueCell" id="tempVal">temp_val</td>
-            </tr>
-            <tr>
-                <td style="width:5%">
-                    <table style="color:#F1C40F">
-                        <tr><td><i style="font-size: 1.7em;" name = "eyeLux" class="fa fa-eye" onclick="app.onTouchEyeLux()"></i></td></tr>
-                        <tr><td><i style="font-size: 1.7em;" name = "pencilLux" class="fa fa-pencil" onclick="app.onTouchPencilLux()"></i></td></tr>
-                    </table>
-                </td>
-                <td align=left class="charImgCell"><img class="charImg" src="img/light.png" alt="light_img" name="lightimg"/></td>
-                <td align=center class="charTitleCell">Lux: </td>
-                <td align=center class="charValueCell" id="luxVal">lux_val</td>
-            </tr>
+
         </table>
+        </div>
+        -->
 
-        <!-- <i name = "logbook" class="fa fa-book fa-2x"></i><br> -->
-
-
-        <div>
-        
-        <!--<img id="centralblees" alt = "blees_img" src="img/blees2.png" name = "bleesimg" style="width:25%; float:left; margin:5px 0;"/> -->
-
+        <!--
         <table border="0" style="width:90%" align=center border="1">
             <tr>
                 <td style="width:37%">
-                    <table border="0">
-                        <tr><td><img id="centralblees" alt = "blees_img" src="img/blees2.png" name="bleesimg" style="width:70%; margin:5px 0;"/></td></tr>
-                    </table>
                     <table border="0">
                         <tr><td style="width:13%">
                                 <span onclick="app.onTouchConsoleCheck()" style="font-size: 1" class="fa-stack">
@@ -100,10 +69,156 @@
                         </tr>
                     </table>
                 </td>
-                <td align=left ><p id="console" ></p></td>
             </tr>
         </table>
         </div>
+        -->
+        </br>
+        <div id="connection_status" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
+            <span class="fa-stack"><i id="toggleOff" style="visibility:visible" class="fa fa-toggle-off fa-stack-2x"></i><i id="toggleOn" onclick="app.onTouchToggleOn()" style="visibility:hidden" class="fa fa-toggle-on fa-stack-2x"></i></span>  Disconnected</div>
+        </br>
+
+        <div>
+        <span align=center>Last Updated: </span>
+        <span align=center id="time_stamp">00:00:00 --</span>
+        </div>
+
+        <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
+            <tr>
+                <td style="width:5%">
+                    <table border="0" style="color:#8DD174">
+                        <tr><td><i style="font-size: 1.6em; " name = "eyePres" class="fa fa-eye" onclick="app.onTouchEyePres()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.6em; "name = "pencilPres" class="fa fa-pencil"  onclick="app.onTouchPencilPres()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/pressure.png" alt="pressure_img" name="presimg"/></td>
+                <td align=center class="charTitleCell">Pressure: </td>
+                <td align=center class="charValueCell" id="presVal">0</td>
+            </tr>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#49BBD4">
+                        <tr><td><i style="font-size: 1.6em;" name = "eyeHum" class="fa fa-eye" onclick="app.onTouchEyeHum()"></i></td></tr>
+                        <tr><td align=right><i style="font-size: 1.6em;" name = "pencilHum" class="fa fa-pencil" onclick="app.onTouchPencilHum()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/humidity.png" alt="humidity_img" name="humimg"/></td>
+                <td align=center class="charTitleCell">Humidity: </td>    
+                <td align=center class="charValueCell" id="humVal">0</td>        
+            </tr>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#F39541">
+                        <tr><td><i style="font-size: 1.6em;" name = "eyeTemp" class="fa fa-eye" onclick="app.onTouchEyeTemp()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.6em;" name = "pencilTemp" class="fa fa-pencil" onclick="app.onTouchPencilTemp()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/temp.png" alt="temp_img" name="tempimg"/></td>
+                <td align=center class="charTitleCell">Temperature: </td>
+                <td align=center class="charValueCell" id="tempVal">0</td>
+            </tr>
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#F1C40F">
+                        <tr><td><i style="font-size: 1.6em;" name = "eyeLux" class="fa fa-eye" onclick="app.onTouchEyeLux()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.6em;" name = "pencilLux" class="fa fa-pencil" onclick="app.onTouchPencilLux()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/light.png" alt="light_img" name="lightimg"/></td>
+                <td align=center class="charTitleCell">Lux: </td>
+                <td align=center class="charValueCell" id="luxVal">0</td>
+            </tr>
+        </table>
+
+        <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#ED97B9">
+                        <tr><td><i style="font-size: 1.6em;" name = "eyeAcc" class="fa fa-eye" onclick="app.onTouchEyeAcc()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.6em;" name = "pencilAcc" class="fa fa-pencil" onclick="app.onTouchPencilAcc()"></i></td></tr>
+                    </table>
+                </td>
+                <td id="accLastIntCell" style="color:grey; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif" align=center >
+                    Movement within last interval 
+                    <span class="fa-stack">
+                        <i style="visibility:visible" id="accNotSpinnerInt" class="fa fa-sun-o fa-stack-2x"></i>
+                        <spinit><i style="visibility:hidden" id="accSpinnerInt" class="fa fa-sun-o fa-stack-2x"></i></spinit>
+                    </span>
+                </td>
+                <td id="accLastAdCell" style="color:grey; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif" align=center>
+                    Movement since last advertisement 
+                    <span class="fa-stack">
+                        <i style="visibility:visible" id="accNotSpinnerAd" class="fa fa-sun-o fa-stack-2x"></i>
+                        <spinit><i style="visibility:hidden" id="accSpinnerAd" class="fa fa-sun-o fa-stack-2x"></i></spinit>
+                    </span>
+                </td>
+            </tr>
+        </table>
+        </br>
+
+
+        <!--
+        <table border="1" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif">
+            <tr>
+                <td style="width:5%">
+                    <table style="color:#ED97B9">
+                        <tr><td><i style="font-size: 1.6em;" name = "eyeAcc" class="fa fa-eye" onclick="app.onTouchEyeAcc()"></i></td></tr>
+                        <tr><td><i style="font-size: 1.6em;" name = "pencilAcc" class="fa fa-pencil" onclick="app.onTouchPencilAcc()"></i></td></tr>
+                    </table>
+                </td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/acceleration.png" alt="acc_img" name="accimg"/></td>
+                <td align=center >
+                    <table border="1">
+                        <tr><td align=center >Movement:</td></tr>
+                        <tr><td align=center>Hi<i id="accNotSpinner" class="fa fa-sun-o"></i></td></tr>
+                        <i id="accSpinner" class="fa fa-sun-o fa-spin fa-stack-2x"></i></td></tr></span>
+                    </table>
+                </td>
+                <td align=center>
+                    <table border="1">
+                        <tr><td align=center >Movement2:</td></tr>
+                        <tr><td align=center >Ho<i id="accNotSpinner2" class="fa fa-sun-o"></i></td></tr>
+                        <i id="accSpinner2" class="fa fa-sun-o fa-spin fa-stack-2x"></i></td></tr></span>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        </br>
+        -->
+
+
+       <div data-display="overlay" data-swipe-close="true" data-dismissible="false" data-position="right" data-role="panel" id="logPanel"> 
+            <h2>Log</h2>
+            <p id="console" ></p>
+       </div> 
+
+        <div data-role="popup" data-overlay-theme="b" id="about_page">
+            <img id="centralblees" alt = "blees_img" src="img/blees2.png" name="bleesimg" style="width:15%; margin:5px 0;"/></br>
+            <p>BLEES stands for Bluetooth Low Energy Environmental Sensing.</p>
+            <p>App created by Deepika Natarajan in collaboration with lab11.</p>
+        </div>
+
+       <div data-role="footer" data-theme="b">
+          <div data-role="navbar">
+            <ul>
+                <li><a href="#anylink"><i class="fa fa-cog fa-2x"></i></br>Settings</a></li>
+                <li><a href="#about_page" data-rel="popup" data-position-to="window"><i class="fa fa-info-circle fa-2x"></i></br>About</a></li>
+                <li><a href="#anylink"><i class="fa fa-question-circle fa-2x"></i></br>Help</a></li>
+                <li><a href="#logPanel"><i name = "logbook" class="fa fa-book fa-2x"></i></br>Log</a></li>            
+            </ul>
+          </div>
+        </div>
+
+
+
+        <script type='text/javascript'>
+        $(document).on('pageinit',function(){
+            $("#main_view").on("swipeleft",function(){
+                $("#logPanel").panel( "open");
+            });
+        });
+        </script>
+
 
         <div id="popup">
             <h3>Configure Lux Trigger Settings</h3>
