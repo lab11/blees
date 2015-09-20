@@ -26,11 +26,14 @@ static const simple_ble_config_t ble_config = {
     .adv_interval      = MSEC_TO_UNITS(1000, UNIT_0_625_MS),
     .min_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
     .max_conn_interval = MSEC_TO_UNITS(1000, UNIT_1_25_MS),
-    .error_pin         = ERROR_LED_PIN,     // driven low on error (connect to LED)
 };
 
 // Maximum size is 17 characters
 #define PHYSWEB_URL     "goo.gl/XMRl3M"
+
+void ble_error(uint32_t error_code) {
+    led_on(SQUALL_LED_PIN);
+}
 
 void ble_evt_connected(ble_evt_t* p_ble_evt) {
     led_on(BLEES_LED_PIN);

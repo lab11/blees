@@ -18,7 +18,6 @@ extern uint8_t MAC_ADDR[6];
 
 // Blue led on squall
 #define SQUALL_LED_PIN 13
-#define ERROR_LED_PIN 13
 
 // Blue led on BLEES
 #define BLEES_LED_PIN 25
