@@ -9,23 +9,8 @@
 #include <string.h>
 
 // Nordic Libraries
-#include "nordic_common.h"
-#include "softdevice_handler.h"
-#include "nrf.h"
-#include "nrf_sdm.h"
 #include "ble.h"
-#include "ble_db_discovery.h"
-#include "app_util.h"
-#include "app_error.h"
-#include "ble_advdata_parser.h"
-#include "ble_conn_params.h"
-#include "ble_hci.h"
-#include "nrf_gpio.h"
-#include "pstorage.h"
-#include "app_trace.h"
-#include "ble_hrs_c.h"
-#include "ble_bas_c.h"
-#include "app_util.h"
+#include "ble_advdata.h"
 #include "app_timer.h"
 
 // Platform, Peripherals, Devices, Services
@@ -54,7 +39,6 @@ void ble_evt_connected(ble_evt_t* p_ble_evt) {
 void ble_evt_disconnected(ble_evt_t* p_ble_evt) {
     led_off(BLEES_LED_PIN);
 }
-
 
 int main(void) {
 
