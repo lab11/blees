@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 extern uint8_t MAC_ADDR[6];
+#define PLATFORM_ID_BYTE 0x30
 
 // FTDI chip for bootloader
 #define BOOTLOADER_CTRL_PIN  3
@@ -17,6 +18,7 @@ extern uint8_t MAC_ADDR[6];
 
 // Blue led on squall
 #define SQUALL_LED_PIN 13
+#define ERROR_LED_PIN 13
 
 // Blue led on BLEES
 #define BLEES_LED_PIN 25
