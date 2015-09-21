@@ -14,6 +14,7 @@
 #include "app_timer.h"
 
 // Platform, Peripherals, Devices, Services
+#include "nrf_drv_config.h"
 #include "blees.h"
 #include "led.h"
 #include "simple_ble.h"
