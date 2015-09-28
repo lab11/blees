@@ -23,6 +23,7 @@
 // Intervals for advertising and connections
 static const simple_ble_config_t ble_config = {
     .platform_id       = PLATFORM_ID_BYTE,  // used as 4th octect in device BLE address
+    .device_id         = DEVICE_ID_DEFAULT, // 5th and 6th octets in device BLE address
     .adv_name          = DEVICE_NAME,       // used in advertisements if there is room
     .adv_interval      = MSEC_TO_UNITS(1000, UNIT_0_625_MS),
     .min_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
@@ -31,6 +32,8 @@ static const simple_ble_config_t ble_config = {
 
 // Maximum size is 17 characters
 #define PHYSWEB_URL     "goo.gl/XMRl3M"
+
+simple_ble_app_t* simple_ble_app;
 
 void ble_error(uint32_t error_code) {
     led_on(SQUALL_LED_PIN);
@@ -52,7 +55,7 @@ int main(void) {
     led_on(SQUALL_LED_PIN);
     led_off(BLEES_LED_PIN);
 
-    simple_ble_init(&ble_config);
+    simple_ble_app = simple_ble_init(&ble_config);
     eddystone_adv(PHYSWEB_URL, NULL);
 
     // Initialization complete
