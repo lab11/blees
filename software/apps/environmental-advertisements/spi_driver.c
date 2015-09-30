@@ -18,12 +18,15 @@ void spi_init(){
                         (SPI_CONFIG_CPOL_ActiveHigh << SPI_CONFIG_CPOL_Pos) |
                         (SPI_CONFIG_ORDER_MsbFirst << SPI_CONFIG_ORDER_Pos);
     NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
+    //NRF_SPI0->ENABLE = 0;
     NRF_SPI->EVENTS_READY = 0;
 
 }
 
 void spi_write(uint8_t buf) {
     //clear the ready event
+    //NRF_SPI0->ENABLE = 1;
+
     NRF_SPI->EVENTS_READY = 0;
 
     NRF_SPI->TXD = buf;
@@ -34,9 +37,14 @@ void spi_write(uint8_t buf) {
     uint8_t throw = NRF_SPI->RXD;
 
     NRF_SPI->EVENTS_READY = 0;
+
+    //NRF_SPI0->ENABLE = 0;
+
 }
 
 void spi_read(uint8_t* buf) {
+
+    //NRF_SPI0->ENABLE = 1;
 
     //clear ready event
     NRF_SPI->EVENTS_READY = 0;
@@ -49,9 +57,15 @@ void spi_read(uint8_t* buf) {
     buf[0] = NRF_SPI->RXD;
 
     NRF_SPI->EVENTS_READY = 0;
+
+    //NRF_SPI0->ENABLE = 0;
+
 }
 
 void spi_write_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
+
+    //NRF_SPI0->ENABLE = 1;
+
 
     nrf_gpio_pin_clear(SPI_SS_PIN);
     spi_write(WRITE_REG);
@@ -65,9 +79,15 @@ void spi_write_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
 
     nrf_gpio_pin_set(SPI_SS_PIN);
 
+    //NRF_SPI0->ENABLE = 0;
+
+
 }
 
 void spi_read_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
+
+    //NRF_SPI0->ENABLE = 1;
+
 
 	nrf_gpio_pin_clear(SPI_SS_PIN);
     spi_write(READ_REG);
@@ -81,6 +101,20 @@ void spi_read_reg(uint8_t reg_addr, uint8_t * data, uint8_t num_bytes){
 
     nrf_gpio_pin_set(SPI_SS_PIN);
 
+    //NRF_SPI0->ENABLE = 0;
+
+
 }
 
 
+void spi_disable(){
+
+    NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Disabled << SPI_ENABLE_ENABLE_Pos);
+
+}
+
+void spi_enable(){
+
+    NRF_SPI->ENABLE = (SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
+
+}

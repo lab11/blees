@@ -66,6 +66,10 @@ void lps331ap_sw_reset_disable();
 
 void lps331ap_init(nrf_drv_twi_t * p_instance);
 
+
+
+void lps331ap_amp_control(bool selmain);
+
 void lps331ap_set_pressure_threshold(uint16_t p_thresh);
 
 void lps331ap_config(lps331ap_data_rate data_rate, lps331ap_p_res p_res, lps331ap_t_res t_res);

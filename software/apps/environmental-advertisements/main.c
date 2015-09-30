@@ -51,6 +51,7 @@
 #include "si7021.h"
 #include "lps331ap.h"
 #include "adxl362.h"
+#include "spi_driver.h" // take this out eventually!
 
 /*******************************************************************************
  *   DEFINES
@@ -88,7 +89,7 @@
 #define INIT_LUX_DATA               789
 #define LUX_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define LUX_TRIGGER_VAL_OPERAND     799
-#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(6000, APP_TIMER_PRESCALER)
 
 //Initial Acceleration Parameters
 #define INIT_ACC_DATA               789
@@ -98,7 +99,7 @@
 
 
 // Maximum size is 17 characters, counting URLEND if used
-#define PHYSWEB_URL     "goo.gl/3ZnCTp"
+#define PHYSWEB_URL     "goo.gl/tM8s2Y"
 
 
 /*******************************************************************************
@@ -120,6 +121,8 @@ static app_timer_id_t               m_pres_timer_id;                            
 static app_timer_id_t               m_hum_timer_id;                              /**< ESS Humidity timer. */
 static app_timer_id_t               m_temp_timer_id;                             /**< ESS Temperature timer. */
 static app_timer_id_t               m_lux_timer_id;                              /**< ESS Lux timer. */
+static app_timer_id_t               m_lux_wait_timer_id;                              /**< ESS Lux timer. */
+
 static app_timer_id_t               m_acc_timer_id;                              /**< ESS Accelerometer timer. */
 
 static bool                         m_ess_updating_advdata = false;
@@ -298,7 +301,7 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
     //If high to low transition
     if (nrf_gpio_pin_read(PIN_IN) == 0){
 
-        led_on(BLEES_LED_PIN);
+        //led_on(BLEES_LED_PIN);
 
         m_sensor_info.acceleration = 0x11;
 
@@ -306,7 +309,12 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
             m_sensor_info.acceleration = 0x11;
         };
 
+        spi_enable();
+
         adxl362_read_status_reg();
+
+
+        spi_disable();
 
         nrf_gpio_pin_clear(PIN_IN);
         switch_acc = true;
@@ -445,7 +453,7 @@ static void sys_evt_dispatch(uint32_t sys_evt) {
 static void pres_take_measurement(void * p_context)
 {
 
-    lps331ap_one_shot_enable();
+    //lps331ap_power_on();
 
     UNUSED_PARAMETER(p_context);
         
@@ -457,7 +465,15 @@ static void pres_take_measurement(void * p_context)
     float pres;
     memset(&pres, 0, sizeof(pres));
 
+    nrf_drv_twi_enable(&twi_instance);
+
+    lps331ap_one_shot_enable();
+
     lps331ap_readPressure(&pres);
+
+    //lps331ap_power_off();
+
+    nrf_drv_twi_disable(&twi_instance);
 
     meas = (uint32_t)(pres * 1000);
     m_sensor_info.pressure = meas;
@@ -491,7 +507,12 @@ static void hum_take_measurement(void * p_context)
     float hum;
     memset(&hum, 0, sizeof(hum));
 
+    nrf_drv_twi_enable(&twi_instance);
+
     (si7021_read_RH(&hum));
+
+    nrf_drv_twi_disable(&twi_instance);
+
 
     meas = (uint16_t)(hum * 100);
     m_sensor_info.humidity = meas;
@@ -525,7 +546,11 @@ static void temp_take_measurement(void * p_context)
     float temp;
     memset(&temp, 0, sizeof(temp));
 
+    nrf_drv_twi_enable(&twi_instance);
+
     si7021_read_temp(&temp);
+
+    nrf_drv_twi_disable(&twi_instance);
 
     meas = (int16_t)(temp * 100);
     m_sensor_info.temp = meas;
@@ -547,19 +572,27 @@ static void temp_take_measurement(void * p_context)
     }
 }
 
-static void lux_take_measurement(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-    
+static void lux_take_actual_measurement(void * p_context){
+
+    app_timer_stop(m_lux_wait_timer_id);
+
+    volatile float lux;
+    memset(&lux, 0, sizeof(lux));
+
+    nrf_drv_twi_enable(&twi_instance);
+
+    //do {
+        lux = tsl2561_readLux(tsl2561_MODE0);
+    //}while(!lux);
+
+    tsl2561_off();
+
+    nrf_drv_twi_disable(&twi_instance);
+
     uint8_t  lux_meas_val[2]; 
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
-
-    float lux;
-    memset(&lux, 0, sizeof(lux));
-
-    lux = tsl2561_readLux(tsl2561_MODE0);
 
     meas = (uint16_t)(lux);
     m_sensor_info.light = meas;
@@ -579,6 +612,58 @@ static void lux_take_measurement(void * p_context)
     {
         APP_ERROR_HANDLER(err_code);
     }
+
+    UNUSED_PARAMETER(p_context);
+
+}
+
+
+static void lux_take_measurement(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    nrf_drv_twi_enable(&twi_instance);
+    tsl2561_on();
+    app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(400, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
+
+    /*    
+    uint8_t  lux_meas_val[2]; 
+
+    uint32_t meas;
+    memset(&meas, 0, sizeof(meas));
+
+    volatile float lux;
+    memset(&lux, 0, sizeof(lux));
+
+    nrf_drv_twi_enable(&twi_instance);
+
+    //do {
+        lux = tsl2561_readLux(tsl2561_MODE0);
+    //}while(!lux);
+
+    tsl2561_off();
+
+    nrf_drv_twi_disable(&twi_instance);
+
+    meas = (uint16_t)(lux);
+    m_sensor_info.light = meas;
+
+    update_advdata();
+
+    memcpy(lux_meas_val, &meas, 2);
+
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, 
+        MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+    */
+
 }
 
 static void acc_take_measurement(void * p_context)
@@ -787,6 +872,13 @@ static void timers_init(void) {
                     APP_TIMER_MODE_REPEATED,
                     acc_take_measurement);
     APP_ERROR_CHECK(err_code);
+
+    
+    err_code = app_timer_create(&m_lux_wait_timer_id,
+                    APP_TIMER_MODE_REPEATED,
+                    lux_take_actual_measurement);
+    APP_ERROR_CHECK(err_code);
+    
 }
 
 /**@brief Function for initializing the pressure.
@@ -863,7 +955,10 @@ static void sensors_init(void)
     lps331ap_power_off();
     lps331ap_config(lps331ap_MODE1, lps331ap_P_RES_10, lps331ap_T_RES_7);
     lps331ap_one_shot_config();
+    lps331ap_amp_control(true);
     lps331ap_power_on();
+    //lps331ap_power_off();
+
 
     //initialize humidity and temperature
     si7021_init(&twi_instance);
@@ -873,10 +968,13 @@ static void sensors_init(void)
     //initialize lux
     tsl2561_init(&twi_instance);
     tsl2561_on();
+    tsl2561_off();
+    //tsl2561_on();
+
 
     //initialize accelerometer
     adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
-    uint16_t act_thresh = 0x000C;
+    uint16_t act_thresh = 0x00FF;
     adxl362_set_activity_threshold(act_thresh);
     uint16_t inact_thresh = 0x0096;
     adxl362_set_inactivity_threshold(inact_thresh);
@@ -914,6 +1012,10 @@ static void sensors_init(void)
     adxl362_activity_inactivity_interrupt_enable();
 
     adxl362_read_status_reg();
+
+    spi_disable();
+    nrf_drv_twi_disable(&twi_instance);
+
 
 }
 
@@ -1050,19 +1152,27 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
             if ( m_ess.acceleration.trigger_val_cond == 0x04 ){
                 uint8_t a_time = (uint8_t)(meas_interval);
+                spi_enable();
                 adxl362_set_activity_time(a_time);
+                spi_disable();
             }
             else if ( m_ess.acceleration.trigger_val_cond == 0x05 ){
                 uint16_t act_thresh = (uint16_t)(meas_interval);
+                spi_enable();
                 adxl362_set_activity_threshold(act_thresh);
+                spi_disable();
             }
             else if ( m_ess.acceleration.trigger_val_cond == 0x06 ){
                 uint8_t ia_time = (uint8_t)(meas_interval);
+                spi_enable();
                 adxl362_set_inactivity_time(ia_time);
+                spi_disable();
             }
             else if ( m_ess.acceleration.trigger_val_cond == 0x07 ){
                 uint16_t inact_thresh = (uint16_t)(meas_interval);
+                spi_enable();
                 adxl362_set_inactivity_threshold(inact_thresh);
+                spi_disable();
             }
         }
     }
@@ -1155,7 +1265,7 @@ static bool update_advdata(void) {
 int main(void) {
 
     // Initialization
-    led_init(SQUALL_LED_PIN);
+    //led_init(SQUALL_LED_PIN);
     led_init(BLEES_LED_PIN);
     //led_on(SQUALL_LED_PIN);
     //led_on(BLEES_LED_PIN);

@@ -43,6 +43,32 @@
 static nrf_drv_twi_t * m_instance;
 
 
+void lps331ap_amp_control(bool selmain){
+
+
+    uint8_t command[2] = {
+        AMP_CTRL, 
+        0x00
+    };
+
+    if (selmain){
+        command[2] = 0x01;
+    }
+
+    nrf_drv_twi_tx(
+        m_instance, 
+        SENSOR_ADDR,
+        command,
+        sizeof(command),
+        false
+    );
+
+
+
+
+}
+
+
 // must only be called after lps331ap_on has been called
 void lps331ap_readPressure(float *pres){
 

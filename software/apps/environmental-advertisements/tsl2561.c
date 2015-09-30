@@ -192,7 +192,10 @@ float tsl2561_readLux(tsl2561_integration_time_mode_t int_mode){
 
 	float ratio = ((float) chan1) / chan0;
 
-   	if (ratio <= 0.50) {
+	if (ratio == 0){
+		lux = 0;
+	}
+   	else if (ratio <= 0.50) {
         lux = (0.0304 * chan0) - (0.062 * chan0 * (pow(ratio, 1.4)));
     } else if (ratio <= 0.61) {
         lux = (0.0224 * chan0) - (0.031 * chan1);
