@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 extern uint8_t MAC_ADDR[6];
+#define PLATFORM_ID_BYTE 0x30
 
 // FTDI chip for bootloader
 #define BOOTLOADER_CTRL_PIN  3
