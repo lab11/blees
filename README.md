@@ -1,6 +1,15 @@
 BLEES
 =====
-BLEES stands for Bluetooth Low Energy Environment Sensors.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/lab11/blees/master/media/blees.png" alt="BLEES" width="20%;">
+</p>
+
+BLEES: Bluetooth Low Energy Environment Sensors.
+
+BLEES is a 1 inch round sensor tag for sensing the ambient environment. It monitors
+temperature, humidity, light, pressure, and movement and reports its readings
+over BLE.
 
 Hardware
 --------
@@ -29,12 +38,14 @@ the sensor data to many different scanning devices at once.
 
 [Here's a useful BLE Advertisement primer](http://www.argenox.com/bluetooth-low-energy-ble-v4-0-development/library/a-ble-advertising-primer/)
 
-Android App
+Summon App
 -----------
-We include an Android app in the `Android` directory. The app parses all BLE advertisements it sees
-over a short period of time, and if it finds any BLEES device advertisements,
-it parses the "manufacturer data" section of the advertisement to get the sensor data from that device,
-and prints it out on the screen.
+[Summon](https://github.com/lab11/summon) is a UI application for BLE devices.
+Rather than requiring every user
+to install a new app for every BLE device, Summon allows BLE devices to
+point to their own HTML/JS based interface and loads it in a single
+application. BLEES supports the summon architecture and provides
+a Summon application.
 
 Cloning
 -------
