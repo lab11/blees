@@ -57,7 +57,7 @@ var app = {
         app.onAppReady();
     },
     onStartTimer: function(device){
-       	connection_toggle = false;
+        connection_toggle = false;
         timer = setTimeout(app.onLongPress, touchduration);
     },
     onLongPress: function(){
@@ -66,7 +66,7 @@ var app = {
     },
     // App Ready Event Handler
     onAppReady: function() {
-    	app.log("amihere");
+        app.log("amihere");
 
         // Setup update for last data time
         setInterval(app.update_time_ago, 5000);
@@ -84,27 +84,27 @@ var app = {
     },
     // App Paused Event Handler
     onPause: function() {
-    	app.log("on Pause");                                                           // if user leaves app, stop BLE
+        app.log("on Pause");                                                           // if user leaves app, stop BLE
         //ble.disconnect(deviceId);
         ble.stopScan();
         if (device_connected) {
-	        app.log("Disconnecting from BLEES device!");
-	        bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});
-	        ble.disconnect(deviceId);
-	        bluetoothle.close(app.ondisconnectsuccess, app.onError, { "address": deviceId});
-	        device_connected = false;
-    	}
+            app.log("Disconnecting from BLEES device!");
+            bluetoothle.disconnect(app.ondisconnectsuccess, app.onError, { "address": deviceId});
+            ble.disconnect(deviceId);
+            bluetoothle.close(app.ondisconnectsuccess, app.onError, { "address": deviceId});
+            device_connected = false;
+        }
     },
     // Bluetooth Enabled Callback
     onEnable: function() {
-    	//app.log("onEnable");
+        //app.log("onEnable");
         app.onPause();                                                              // halt any previously running BLE processes
         ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
     // BLE Device Discovered Callback
     onDiscover: function(device) {
-    	//app.log("onDiscover");
+        //app.log("onDiscover");
         if (device.id == deviceId) {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
@@ -115,9 +115,9 @@ var app = {
         //app.log("stopped scanning");
     },
     onStartConnection: function(device) {
-    	if (!is_init){
-        	bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
-        	is_init = true;
+        if (!is_init){
+            bluetoothle.initialize(app.onInitialized, app.onError, {"request": false, "statusReceiver": false});    //initialize plugin
+            is_init = true;
         }
         bluetoothle.connect(app.onConnectOther, app.onError, { "address": deviceId });                          //connect to peripheral- need this for descriptors
         ble.connect(deviceId, app.onConnect, app.onAppReady);                                                   // if device matches, connect; if connected, goto: onConnect
@@ -130,7 +130,7 @@ var app = {
     },
     // BLE Device Connected Callback
     onConnect: function(device) {
-    	app.log("connected!");
+        app.log("connected!");
         app.log("Connected to " + deviceName + " (" + deviceId + ")!");
         device_connected = true;
         app.onReadAllSensors(device);
@@ -141,8 +141,8 @@ var app = {
         clearTimeout(timer);
         if (device_connected){
             if (connection_toggle){
-            	app.onPause();
-            	app.onAppReady();
+                app.onPause();
+                app.onAppReady();
             }
             else {
                 app.onReadAllSensors(device);
@@ -162,61 +162,61 @@ var app = {
 
     },
     onTouchToggleOff: function(device) {
-    	document.getElementById('toggleOff').style.visibility = "hidden";
-    	document.getElementById('toggleOn').style.visibility = "visible";
-    	document.getElementById('connection_status').innerHTML = " Connected";
-    	app.log("Connecting to BLEES device!");
+        document.getElementById('toggleOff').style.visibility = "hidden";
+        document.getElementById('toggleOn').style.visibility = "visible";
+        document.getElementById('connection_status').innerHTML = " Connected";
+        app.log("Connecting to BLEES device!");
         ble.stopScan();
         app.onStartConnection(device);
 
     },
     onTouchToggleOn: function() {
-    	/*
-    	document.getElementById('toggleOff').style.visibility = "visible";
-    	document.getElementById('toggleOn').style.visibility = "hidden";
-    	app.onPause();
+        /*
+        document.getElementById('toggleOff').style.visibility = "visible";
+        document.getElementById('toggleOn').style.visibility = "hidden";
+        app.onPause();
         app.onAppReady();
-		*/
+        */
     },
     onTouchEyePres: function() {
-    	if(device_connected){
-    		bluetoothle.discover(app.onDiscoverDescriptors(pressureUuid), app.onError, {"address": deviceId} );
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            bluetoothle.discover(app.onDiscoverDescriptors(pressureUuid), app.onError, {"address": deviceId} );
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchEyeHum: function() {
-    	if(device_connected){
-    		bluetoothle.discover(app.onDiscoverDescriptors(humidityUuid), app.onError, {"address": deviceId} );
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            bluetoothle.discover(app.onDiscoverDescriptors(humidityUuid), app.onError, {"address": deviceId} );
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchEyeTemp: function() {
-    	if(device_connected){
-			bluetoothle.discover(app.onDiscoverDescriptors(temperatureUuid), app.onError, {"address": deviceId} );
-		}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            bluetoothle.discover(app.onDiscoverDescriptors(temperatureUuid), app.onError, {"address": deviceId} );
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchEyeLux: function() {
-    	if(device_connected){
-			bluetoothle.discover(app.onDiscoverDescriptors(luxUuid), app.onError, {"address": deviceId} );
-		}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            bluetoothle.discover(app.onDiscoverDescriptors(luxUuid), app.onError, {"address": deviceId} );
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchEyeAcc: function() {
-    	if(device_connected){
-    		bluetoothle.discover(app.onDiscoverDescriptors(accelerationUuid), app.onError, {"address": deviceId} );
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            bluetoothle.discover(app.onDiscoverDescriptors(accelerationUuid), app.onError, {"address": deviceId} );
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onDiscoverDescriptors: function(char_Uuid) {
 
@@ -243,77 +243,77 @@ var app = {
         else if (bytesArray[0] == 0x03) output_string = "Trigger Value change";
 
         else{
-	        if (bytesArray[0] == 0x01) output_string = "Trigger Fixed interval: ";
-	        else if (bytesArray[0] == 0x02) output_string = "Trigger No less than: ";
-	        else if (bytesArray[0] == 0x04) output_string = "Trigger While less than: ";
-	        else if (bytesArray[0] == 0x05) output_string = "Trigger While less than or equal to: ";
-	        else if (bytesArray[0] == 0x06) output_string = "Trigger While greater than: ";
-	        else if (bytesArray[0] == 0x07) output_string = "Trigger While greater than or equal to: ";
-	        else if (bytesArray[0] == 0x08) output_string = "Trigger While equal to: ";
-	        else if (bytesArray[0] == 0x09) output_string = "Trigger While not equal to: ";
-	        else output_string = "error";
+            if (bytesArray[0] == 0x01) output_string = "Trigger Fixed interval: ";
+            else if (bytesArray[0] == 0x02) output_string = "Trigger No less than: ";
+            else if (bytesArray[0] == 0x04) output_string = "Trigger While less than: ";
+            else if (bytesArray[0] == 0x05) output_string = "Trigger While less than or equal to: ";
+            else if (bytesArray[0] == 0x06) output_string = "Trigger While greater than: ";
+            else if (bytesArray[0] == 0x07) output_string = "Trigger While greater than or equal to: ";
+            else if (bytesArray[0] == 0x08) output_string = "Trigger While equal to: ";
+            else if (bytesArray[0] == 0x09) output_string = "Trigger While not equal to: ";
+            else output_string = "error";
 
-	        var operand = 0;
-	        for(var i = 1; (i < 5) && bytesArray[i]; i++){
-	        	operand = operand | (bytesArray[i] << ( (i-1) * 8));
-	        }
+            var operand = 0;
+            for(var i = 1; (i < 5) && bytesArray[i]; i++){
+                operand = operand | (bytesArray[i] << ( (i-1) * 8));
+            }
 
-	        //Uuids need to be lowercase for some reason
-	        if(device.characteristicUuid == "2a6d"){ // pressureUuid
-	        	if(bytesArray[0] < 0x04){
-	        		output_string += operand + " ms";
-	        	}
-				else {
-					output_string += (operand/10) + " Pa";
-				}
-			}
+            //Uuids need to be lowercase for some reason
+            if(device.characteristicUuid == "2a6d"){ // pressureUuid
+                if(bytesArray[0] < 0x04){
+                    output_string += operand + " ms";
+                }
+                else {
+                    output_string += (operand/10) + " Pa";
+                }
+            }
 
-			else if(device.characteristicUuid == "2a6f"){ //humidity Uuid
-				if(bytesArray[0] < 0x04){
-	        		output_string += operand + " ms";
-	        	}
-				else {
-					output_string += (operand/100) + String.fromCharCode(37);
-				}
-			}
+            else if(device.characteristicUuid == "2a6f"){ //humidity Uuid
+                if(bytesArray[0] < 0x04){
+                    output_string += operand + " ms";
+                }
+                else {
+                    output_string += (operand/100) + String.fromCharCode(37);
+                }
+            }
 
-			else if(device.characteristicUuid == "2a6e"){ //temperature Uuid
-				if(bytesArray[0] < 0x04){
-	        		output_string += operand + " ms";
-	        	}
-				else {
-					output_string += (operand/100) + " " + String.fromCharCode(176) + "C";
-				}
-			}
+            else if(device.characteristicUuid == "2a6e"){ //temperature Uuid
+                if(bytesArray[0] < 0x04){
+                    output_string += operand + " ms";
+                }
+                else {
+                    output_string += (operand/100) + " " + String.fromCharCode(176) + "C";
+                }
+            }
 
-			else if(device.characteristicUuid == "c512"){ //luxUuid
-				if(bytesArray[0] < 0x04){
-	        		output_string += operand + " ms";
-	        	}
-				else {
-					output_string += (operand) + " " + String.fromCharCode(176) + " lux";
-				}
-			}
+            else if(device.characteristicUuid == "c512"){ //luxUuid
+                if(bytesArray[0] < 0x04){
+                    output_string += operand + " ms";
+                }
+                else {
+                    output_string += (operand) + " " + String.fromCharCode(176) + " lux";
+                }
+            }
 
-			else if(device.characteristicUuid == "f801"){ //accelerationUuid
-				if(bytesArray[0] < 0x04){
-	        		output_string += operand + " ms";
-	        	}
-				else {
-					output_string += "Need to implement this!";
-				}
-			}
+            else if(device.characteristicUuid == "f801"){ //accelerationUuid
+                if(bytesArray[0] < 0x04){
+                    output_string += operand + " ms";
+                }
+                else {
+                    output_string += "Need to implement this!";
+                }
+            }
 
-    	}
+        }
 
-    	app.log(output_string);
+        app.log(output_string);
 
     },
     ondisconnectsuccess: function() {
         app.log("disconnected success!");
     },
     onPleaseConnect: function(){
-		app.log("Please connect to use this feature");
+        app.log("Please connect to use this feature");
     },
     onTouchPres: function(device) {
         if(device_connected){
@@ -361,84 +361,84 @@ var app = {
         }
     },
     onTouchPencilPres: function() {
-    	if(device_connected){
-    		document.querySelector("#popuppres").style.display = "block";
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            document.querySelector("#popuppres").style.display = "block";
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchPencilHum: function() {
-    	if(device_connected){
-    		document.querySelector("#popuphum").style.display = "block";
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            document.querySelector("#popuphum").style.display = "block";
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchPencilTemp: function() {
-    	if(device_connected){
-    		document.querySelector("#popuptemp").style.display = "block";
-    	}
-    	else{
-    		app.onPleaseConnect();
-    	}
+        if(device_connected){
+            document.querySelector("#popuptemp").style.display = "block";
+        }
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchPencilLux: function() {
-    	if(device_connected){
-       		document.querySelector("#popup").style.display = "block";
+        if(device_connected){
+            document.querySelector("#popup").style.display = "block";
         }
-    	else{
-    		app.onPleaseConnect();
-    	}
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchPencilAcc: function() {
-    	if(device_connected){
-        	document.querySelector("#popupacc").style.display = "block";
+        if(device_connected){
+            document.querySelector("#popupacc").style.display = "block";
         }
-    	else{
-    		app.onPleaseConnect();
-    	}
+        else{
+            app.onPleaseConnect();
+        }
     },
     onTouchConsoleCheck: function(){
-    	app.log("check");
-    	document.querySelector("#show_console_check").style.visibility = switch_visibility_console_check;
-    	document.querySelector("#console").style.visibility = switch_visibility_console_check;
-    	if(switch_visibility_console_check == "visible") {
-    		switch_visibility_console_check = "hidden";
-    	}
-    	else{
-    		switch_visibility_console_check = "visible";
-    	}
+        app.log("check");
+        document.querySelector("#show_console_check").style.visibility = switch_visibility_console_check;
+        document.querySelector("#console").style.visibility = switch_visibility_console_check;
+        if(switch_visibility_console_check == "visible") {
+            switch_visibility_console_check = "hidden";
+        }
+        else{
+            switch_visibility_console_check = "visible";
+        }
     },
     onTouchSteadyScanCheck: function(){
-    	app.log("check2");
-    	document.querySelector("#show_steadyscan_check").style.visibility = switch_visibility_steadyscan_check;
-    	if(switch_visibility_steadyscan_check == "visible") {
-    		switch_visibility_steadyscan_check = "hidden";
-    		steadyscan_on = true;
-    		app.onEnable();
-    	}
-    	else{
-    		switch_visibility_steadyscan_check = "visible";
-    		steadyscan_on = false;
-    	}
+        app.log("check2");
+        document.querySelector("#show_steadyscan_check").style.visibility = switch_visibility_steadyscan_check;
+        if(switch_visibility_steadyscan_check == "visible") {
+            switch_visibility_steadyscan_check = "hidden";
+            steadyscan_on = true;
+            app.onEnable();
+        }
+        else{
+            switch_visibility_steadyscan_check = "visible";
+            steadyscan_on = false;
+        }
     },
     accelerationcallback: function(buttonIndex) {
-		document.querySelector("#popupacc").style.display = "none";
+        document.querySelector("#popupacc").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-			var bytes = new Uint8Array(1);
-		    bytes[0] = 0;
-		    var value = bluetoothle.bytesToEncodedString(bytes);
-			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-			    "address": deviceId,
-			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": accelerationUuid,
-			    "descriptorUuid": essdescriptorUuid,
-			    "value": value
-			});
+            var bytes = new Uint8Array(1);
+            bytes[0] = 0;
+            var value = bluetoothle.bytesToEncodedString(bytes);
+            bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                "address": deviceId,
+                "serviceUuid": serviceUuid,
+                "characteristicUuid": accelerationUuid,
+                "descriptorUuid": essdescriptorUuid,
+                "value": value
+            });
         }
         else{
             var input_val = window.prompt("What value?", "0x0000");
@@ -449,171 +449,171 @@ var app = {
         }
     },
     prescallback: function(buttonIndex) {
-		document.querySelector("#popuppres").style.display = "none";
+        document.querySelector("#popuppres").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-			var bytes = new Uint8Array(1);
-		    bytes[0] = 0;
-		    var value = bluetoothle.bytesToEncodedString(bytes);
-			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-			    "address": deviceId,
-			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": pressureUuid,
-			    "descriptorUuid": essdescriptorUuid,
-			    "value": value
-			});
+            var bytes = new Uint8Array(1);
+            bytes[0] = 0;
+            var value = bluetoothle.bytesToEncodedString(bytes);
+            bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                "address": deviceId,
+                "serviceUuid": serviceUuid,
+                "characteristicUuid": pressureUuid,
+                "descriptorUuid": essdescriptorUuid,
+                "value": value
+            });
         }
         else{
             var input_val = window.prompt("What value?", 0x00);
             var output_val = parseInt( input_val * 100 , 10);
             output_val = output_val / 10;
             var bytes = new Uint8Array(5);
-		    bytes[0] = buttonIndex-1;
+            bytes[0] = buttonIndex-1;
             if (input_val) {
                 //app.log( output_val.toString(16) );
-               	bytes[1] = (output_val & 0x000000ff);
-               	bytes[2] = (output_val & 0x0000ff00) >> 8;
-               	bytes[3] = (output_val & 0x00ff0000) >> 16;
-               	bytes[4] = (output_val & 0xff000000) >> 24;
-               	var value = bluetoothle.bytesToEncodedString(bytes);
-               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-				    "address": deviceId,
-				    "serviceUuid": serviceUuid,
-				    "characteristicUuid": pressureUuid,
-				    "descriptorUuid": essdescriptorUuid,
-				    "value": value
-				});
+                bytes[1] = (output_val & 0x000000ff);
+                bytes[2] = (output_val & 0x0000ff00) >> 8;
+                bytes[3] = (output_val & 0x00ff0000) >> 16;
+                bytes[4] = (output_val & 0xff000000) >> 24;
+                var value = bluetoothle.bytesToEncodedString(bytes);
+                bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                    "address": deviceId,
+                    "serviceUuid": serviceUuid,
+                    "characteristicUuid": pressureUuid,
+                    "descriptorUuid": essdescriptorUuid,
+                    "value": value
+                });
             }
         }
     },
     tempcallback: function(buttonIndex) {
-		document.querySelector("#popuptemp").style.display = "none";
+        document.querySelector("#popuptemp").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-			var bytes = new Uint8Array(1);
-		    bytes[0] = 0;
-		    var value = bluetoothle.bytesToEncodedString(bytes);
-			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-			    "address": deviceId,
-			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": temperatureUuid,
-			    "descriptorUuid": essdescriptorUuid,
-			    "value": value
-			});
+            var bytes = new Uint8Array(1);
+            bytes[0] = 0;
+            var value = bluetoothle.bytesToEncodedString(bytes);
+            bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                "address": deviceId,
+                "serviceUuid": serviceUuid,
+                "characteristicUuid": temperatureUuid,
+                "descriptorUuid": essdescriptorUuid,
+                "value": value
+            });
         }
         else{
             var input_val = window.prompt("What value?", 0x00);
             var output_val = parseInt( input_val * 1000 , 10);
             output_val = output_val / 10;
             var bytes = new Uint8Array(3);
-		    bytes[0] = buttonIndex-1;
+            bytes[0] = buttonIndex-1;
             if (input_val) {
                 //app.log( output_val.toString(16) );
-               	bytes[1] = (output_val & 0x000000ff);
-               	bytes[2] = (output_val & 0x0000ff00) >> 8;
-               	var value = bluetoothle.bytesToEncodedString(bytes);
-               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-				    "address": deviceId,
-				    "serviceUuid": serviceUuid,
-				    "characteristicUuid": temperatureUuid,
-				    "descriptorUuid": essdescriptorUuid,
-				    "value": value
-				});
+                bytes[1] = (output_val & 0x000000ff);
+                bytes[2] = (output_val & 0x0000ff00) >> 8;
+                var value = bluetoothle.bytesToEncodedString(bytes);
+                bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                    "address": deviceId,
+                    "serviceUuid": serviceUuid,
+                    "characteristicUuid": temperatureUuid,
+                    "descriptorUuid": essdescriptorUuid,
+                    "value": value
+                });
             }
         }
     },
     humcallback: function(buttonIndex) {
-		document.querySelector("#popuphum").style.display = "none";
+        document.querySelector("#popuphum").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-			var bytes = new Uint8Array(1);
-		    bytes[0] = 0;
-		    var value = bluetoothle.bytesToEncodedString(bytes);
-			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-			    "address": deviceId,
-			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": humidityUuid,
-			    "descriptorUuid": essdescriptorUuid,
-			    "value": value
-			});
+            var bytes = new Uint8Array(1);
+            bytes[0] = 0;
+            var value = bluetoothle.bytesToEncodedString(bytes);
+            bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                "address": deviceId,
+                "serviceUuid": serviceUuid,
+                "characteristicUuid": humidityUuid,
+                "descriptorUuid": essdescriptorUuid,
+                "value": value
+            });
         }
         else{
             var input_val = window.prompt("What value?", 0x00);
             var output_val = parseInt( input_val * 1000 , 10);
             output_val = output_val / 10;
             var bytes = new Uint8Array(3);
-		    bytes[0] = buttonIndex-1;
+            bytes[0] = buttonIndex-1;
             if (input_val) {
                 app.log( output_val.toString(16) );
-               	bytes[1] = (output_val & 0x000000ff);
-               	bytes[2] = (output_val & 0x0000ff00) >> 8;
-               	var value = bluetoothle.bytesToEncodedString(bytes);
-               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-				    "address": deviceId,
-				    "serviceUuid": serviceUuid,
-				    "characteristicUuid": humidityUuid,
-				    "descriptorUuid": essdescriptorUuid,
-				    "value": value
-				});
+                bytes[1] = (output_val & 0x000000ff);
+                bytes[2] = (output_val & 0x0000ff00) >> 8;
+                var value = bluetoothle.bytesToEncodedString(bytes);
+                bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                    "address": deviceId,
+                    "serviceUuid": serviceUuid,
+                    "characteristicUuid": humidityUuid,
+                    "descriptorUuid": essdescriptorUuid,
+                    "value": value
+                });
             }
         }
     },
     luxcallback: function(buttonIndex) {
-    	document.querySelector("#popup").style.display = "none";
+        document.querySelector("#popup").style.display = "none";
         app.log('button index clicked: ' + buttonIndex);
         if (buttonIndex == 1){ // buttonIndex is 1-based
             app.log("got one");
-			var bytes = new Uint8Array(1);
-		    bytes[0] = 0;
-		    var value = bluetoothle.bytesToEncodedString(bytes);
-			app.log("about to write to descriptor");
-			bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-			    "address": deviceId,
-			    "serviceUuid": serviceUuid,
-			    "characteristicUuid": luxUuid,
-			    "descriptorUuid": essdescriptorUuid,
-			    "value": value
-			});
+            var bytes = new Uint8Array(1);
+            bytes[0] = 0;
+            var value = bluetoothle.bytesToEncodedString(bytes);
+            app.log("about to write to descriptor");
+            bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                "address": deviceId,
+                "serviceUuid": serviceUuid,
+                "characteristicUuid": luxUuid,
+                "descriptorUuid": essdescriptorUuid,
+                "value": value
+            });
         }
         else{
             var input_val = window.prompt("What value?", 0x00);
             var output_val = parseInt( input_val , 10);
             var bytes = new Uint8Array(3);
-		    bytes[0] = buttonIndex-1;
+            bytes[0] = buttonIndex-1;
             if (input_val) {
                 app.log( output_val.toString(16) );
-               	bytes[1] = (output_val & 0x000000ff);
-               	bytes[2] = (output_val & 0x0000ff00) >> 8;
-               	var value = bluetoothle.bytesToEncodedString(bytes);
-               	bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
-				    "address": deviceId,
-				    "serviceUuid": serviceUuid,
-				    "characteristicUuid": luxUuid,
-				    "descriptorUuid": essdescriptorUuid,
-				    "value": value
-				});
+                bytes[1] = (output_val & 0x000000ff);
+                bytes[2] = (output_val & 0x0000ff00) >> 8;
+                var value = bluetoothle.bytesToEncodedString(bytes);
+                bluetoothle.writeDescriptor(app.writeSuccess, app.onError, {
+                    "address": deviceId,
+                    "serviceUuid": serviceUuid,
+                    "characteristicUuid": luxUuid,
+                    "descriptorUuid": essdescriptorUuid,
+                    "value": value
+                });
             }
         }
     },
     writeSuccess: function() {
-    	app.log("device written");
+        app.log("device written");
     },
     onParseAdvData: function(device){
         //Parse Advertised Data
         var adData = new Uint8Array(device.advertising);
 
-		if ((adData[12] != 0x1A) || (adData[13] != 0x18)){
-			app.log("not right");
-			app.onEnable();
-			return;
-		}
+        if ((adData[12] != 0x1A) || (adData[13] != 0x18)){
+            app.log("not right");
+            app.onEnable();
+            return;
+        }
 
-		else{
-			ble.stopScan(app.onStopScan, app.onError);
-		}
+        else{
+            ble.stopScan(app.onStopScan, app.onError);
+        }
 
         // Save when we got this.
         last_update = Date.now();
@@ -622,7 +622,7 @@ var app = {
         var pressure_pascals = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10);
         var pressure_mmHg = (pressure_pascals*0.007500616827042).toFixed(2);
         var pressure_atm = (pressure_pascals*0.00000986923266716).toFixed(4);
-       	var pressureOut = pressure_mmHg + ' mmHg<br />' + pressure_atm + ' atm';
+        var pressureOut = pressure_mmHg + ' mmHg<br />' + pressure_atm + ' atm';
         app.log( "Pressure: " + pressureOut);
         document.getElementById("presVal").innerHTML = String(pressureOut);
 
@@ -661,22 +661,24 @@ var app = {
 
 
         if (intAcc) {
-        	document.getElementById('accLastIntCell').style.color = "#ED97B9";
-        	document.getElementById('accSpinnerInt').style.visibility = "visible";
-        	document.getElementById('accNotSpinnerInt').style.visibility = "hidden";
+            document.getElementById('accLastIntCell').style.color = "#ED97B9";
+            document.getElementById('accLastIntCell2').style.color = "#ED97B9";
+            document.getElementById('accSpinnerInt').style.visibility = "visible";
+            document.getElementById('accNotSpinnerInt').style.visibility = "hidden";
 
         }
         else {
-			document.getElementById('accLastIntCell').style.color = "black";
-			document.getElementById('accSpinnerInt').style.visibility = "hidden";
-        	document.getElementById('accNotSpinnerInt').style.visibility = "visible";
+            document.getElementById('accLastIntCell').style.color = "black";
+            document.getElementById('accLastIntCell2').style.color = "black";
+            document.getElementById('accSpinnerInt').style.visibility = "hidden";
+            document.getElementById('accNotSpinnerInt').style.visibility = "visible";
         }
 
         app.update_time_ago();
         // document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
 
         if(steadyscan_on){
-        	app.onEnable();
+            app.onEnable();
         }
 
     },
@@ -703,24 +705,24 @@ var app = {
     onReadHum: function(data) {
         var humidityOut = (app.buffToUInt16Decimal(data))/100 + String.fromCharCode(37);                 // display read value as string
         app.log("Humidity: " + humidityOut);
-		document.getElementById("humVal").innerHTML = String(humidityOut);
-		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
+        document.getElementById("humVal").innerHTML = String(humidityOut);
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
 
     },
     // BLE Characteristic Read Callback
     onReadTemp: function(data) {
         var temperatureOut = (app.buffToInt16Decimal(data))/100 + " " + String.fromCharCode(176) + "C";                 // display read value as string
         app.log("Temperature: " + temperatureOut);
-		document.getElementById("tempVal").innerHTML = String(temperatureOut);
-		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
+        document.getElementById("tempVal").innerHTML = String(temperatureOut);
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
 
     },
     // BLE Characteristic Read Callback
     onReadLux: function(data) {
         var luxOut = app.buffToInt16Decimal(data) + " lux";                 // display read value as string
         app.log("Lux: " + luxOut);
-		document.getElementById("luxVal").innerHTML = String(luxOut);
-		document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
+        document.getElementById("luxVal").innerHTML = String(luxOut);
+        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
 
     },
     // BLE Characteristic Read Callback
@@ -794,18 +796,18 @@ var app = {
         }
     },
     /*onTouchEyePres: function() {
-    	var console = document.getElementById("console");
-    	if (console.style.visibility == "hidden"){
-    		console.style.visibility = "visible";
-    	}
-    	else {
-    		console.style.visibility = "hidden";
-    	}
+        var console = document.getElementById("console");
+        if (console.style.visibility == "hidden"){
+            console.style.visibility = "visible";
+        }
+        else {
+            console.style.visibility = "hidden";
+        }
     },
     */
     // Function to Log Text to Screen
     log: function(string) {
-    	document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />";
+        document.querySelector("#console").innerHTML += (new Date()).toLocaleTimeString() + " : " + string + "<br />";
         document.querySelector("#console").scrollTop = document.querySelector("#console").scrollHeight;
     }
 };
