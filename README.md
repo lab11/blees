@@ -1,15 +1,13 @@
 BLEES
 =====
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/lab11/blees/master/media/blees.png" alt="BLEES" width="20%;">
-</p>
-
+<img src="https://raw.githubusercontent.com/lab11/blees/master/media/blees.png" alt="BLEES" width="20%;" align="left">
 BLEES: Bluetooth Low Energy Environment Sensors.
-
+<br /><br />
 BLEES is a 1 inch round sensor tag for sensing the ambient environment. It monitors
 temperature, humidity, light, pressure, and movement and reports its readings
 over BLE.
+<br /><br /><br />
 
 Hardware
 --------
