@@ -20,9 +20,18 @@ var touchduration = 3000; //length of time we want the user to touch before we d
 var connection_toggle = false;
 var is_init = false;
 
+var last_update = 0;
+
 var switch_visibility_console_check = "visible";
 var switch_visibility_steadyscan_check = "visible";
 var steadyscan_on = true;
+
+// Load the swipe pane
+$(document).on('pageinit',function(){
+    $("#main_view").on("swipeleft",function(){
+        $("#logPanel").panel( "open");
+    });
+});
 
 var app = {
     // Application Constructor
@@ -58,6 +67,9 @@ var app = {
     // App Ready Event Handler
     onAppReady: function() {
     	app.log("amihere");
+
+        // Setup update for last data time
+        setInterval(app.update_time_ago, 5000);
 
         if (typeof window.gateway != "undefined") {                               // if UI opened through Summon,
             deviceId = window.gateway.getDeviceId();                                // get device ID from Summon
@@ -603,9 +615,14 @@ var app = {
 			ble.stopScan(app.onStopScan, app.onError);
 		}
 
-        //app.log("Parsing advertised data...");
+        // Save when we got this.
+        last_update = Date.now();
 
-       	var pressureOut = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10) + " Pa";
+        //app.log("Parsing advertised data...");
+        var pressure_pascals = (( (adData[17] * 16777216) + (adData[16] * 65536 ) + (adData[15] * 256) + adData[14] )/10);
+        var pressure_mmHg = (pressure_pascals*0.007500616827042).toFixed(2);
+        var pressure_atm = (pressure_pascals*0.00000986923266716).toFixed(4);
+       	var pressureOut = pressure_mmHg + ' mmHg<br />' + pressure_atm + ' atm';
         app.log( "Pressure: " + pressureOut);
         document.getElementById("presVal").innerHTML = String(pressureOut);
 
@@ -613,7 +630,10 @@ var app = {
         app.log( "Humidity: " + humidityOut);
         document.getElementById("humVal").innerHTML = String(humidityOut);
 
-        var temperatureOut = (( (adData[21] * 256) + adData[20])/100) + " " + String.fromCharCode(176) + "C";
+        var temp_celsius = (((adData[21] * 256) + adData[20])/100).toFixed(1);
+        var temp_fahrenheit = ((temp_celsius * (9/5)) + 32).toFixed(1);
+        var temperatureOut = temp_celsius + " " + String.fromCharCode(176) + "C";
+        temperatureOut    += '<br />' + temp_fahrenheit + " " + String.fromCharCode(176) + "F";
         app.log( "Temperature: " + temperatureOut);
         document.getElementById("tempVal").innerHTML = String(temperatureOut);
 
@@ -652,7 +672,8 @@ var app = {
         	document.getElementById('accNotSpinnerInt').style.visibility = "visible";
         }
 
-        document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
+        app.update_time_ago();
+        // document.querySelector("#time_stamp").innerHTML = (new Date()).toLocaleTimeString();
 
         if(steadyscan_on){
         	app.onEnable();
@@ -747,6 +768,30 @@ var app = {
     // Function to Convert Bytes to String (to Read Characteristics)
     bytesToString: function(buffer) {
         return String.fromCharCode.apply(null, new Uint8Array(buffer));
+    },
+    update_time_ago: function () {
+        if (last_update > 0) {
+            // Only do something after we've gotten a packet
+            // Default output
+            var out = 'Haven\'t gotten a packet in a while...';
+
+            var now = Date.now();
+            var diff = now - last_update;
+            if (diff < 60000) {
+                // less than a minute
+                var seconds = Math.round(diff/1000);
+                out = 'Last updated ' + seconds + ' second';
+                if (seconds != 1) {
+                    out += 's';
+                }
+                out += ' ago';
+
+            } else if (diff < 120000) {
+                out = 'Last updated about a minute ago';
+            }
+
+            document.querySelector("#data_update").innerHTML = out;
+        }
     },
     /*onTouchEyePres: function() {
     	var console = document.getElementById("console");

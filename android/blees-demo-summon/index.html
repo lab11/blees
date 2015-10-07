@@ -8,9 +8,10 @@
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
         <link rel="stylesheet" type="text/css" href="css/index.css">
         <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css">
-        <script src="js/jquery-1.11.3.min.js"></script>
-        <script src="js/jquery.mobile-1.4.5.min.js"></script>
         <link rel="stylesheet" href="css/font-awesome-4.4.0/css/font-awesome.min.css">
+
+        <link rel="shortcut icon" type="image/x-icon" href="img/blees.ico" />
+
         <title>BLEES</title>
     </head>
     <body id="main_view" data-role="main" class="frame" style="text-align:center; font-family:sans-serif-thin;color:#888">
@@ -30,8 +31,7 @@
         </div>
 
         <div style="margin-top:10px;">
-            <span align=center>Last Updated: </span>
-            <span align=center id="time_stamp">00:00:00 --</span>
+            <span align="center" id="data_update">Waiting for data...</span>
         </div>
 
         <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif; margin-top:10px;">
@@ -84,25 +84,15 @@
        <div data-role="footer" data-theme="b" data-position="fixed">
           <div data-role="navbar">
             <ul>
-                <!-- <li><a href="#anylink"><i class="fa fa-cog fa-2x"></i></br>Settings</a></li> -->
                 <li><a href="#about_page" data-rel="popup" data-position-to="window"><i class="fa fa-info-circle fa-2x"></i></br>About</a></li>
-                <!-- <li><a href="#anylink"><i class="fa fa-question-circle fa-2x"></i></br>Help</a></li> -->
                 <li><a href="#logPanel"><i name = "logbook" class="fa fa-book fa-2x"></i></br>Log</a></li>
             </ul>
           </div>
         </div>
 
-
-
-        <script type='text/javascript'>
-        $(document).on('pageinit',function(){
-            $("#main_view").on("swipeleft",function(){
-                $("#logPanel").panel( "open");
-            });
-        });
-        </script>
-
         <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="js/jquery.mobile-1.4.5.min.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
     </body>
 </html>

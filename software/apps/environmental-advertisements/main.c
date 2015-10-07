@@ -99,8 +99,10 @@
 
 
 // Maximum size is 17 characters, counting URLEND if used
-#define PHYSWEB_URL     "goo.gl/tM8s2Y"
-
+// Main App
+//#define PHYSWEB_URL     "goo.gl/tM8s2Y"
+// Demo App (http://nuclear.eecs.umich.edu/public/ble/blees-demo/index.html)
+#define PHYSWEB_URL     "goo.gl/xWppj1"
 
 /*******************************************************************************
  *   STATIC AND GLOBAL VARIABLES
