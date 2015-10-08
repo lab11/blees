@@ -625,7 +625,7 @@ static void lux_take_measurement(void * p_context)
     UNUSED_PARAMETER(p_context);
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
-    app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(400, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
+    app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(800, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
 
     /*    
     uint8_t  lux_meas_val[2]; 
