@@ -747,8 +747,11 @@ static void ble_stack_init (void) {
     err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
     APP_ERROR_CHECK(err_code);
 
-    // Set the MAC address of the device
-    {
+    // Try to get MAC address stored at flash time
+    uint8_t _ble_address[6];
+    memcpy(_ble_address, (uint8_t*) ADDRESS_FLASH_LOCATION, 6);
+    if (_ble_address[1] == 0xFF && _ble_address[0] == 0xFF) {
+        // No address in flash, use manufacturer ID with Michigan OUI
         ble_gap_addr_t gap_addr;
 
         // Get the current original address
@@ -757,6 +760,16 @@ static void ble_stack_init (void) {
         // Set the new BLE address with the Michigan OUI
         gap_addr.addr_type = BLE_GAP_ADDR_TYPE_PUBLIC;
         memcpy(gap_addr.addr+2, MAC_ADDR+2, sizeof(gap_addr.addr)-2);
+        err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE,
+                &gap_addr);
+        APP_ERROR_CHECK(err_code);
+    } else {
+        // Use address from flash
+        ble_gap_addr_t gap_addr;
+
+        // Set the new BLE address with the address from flash
+        gap_addr.addr_type = BLE_GAP_ADDR_TYPE_PUBLIC;
+        memcpy(gap_addr.addr, _ble_address, 6);
         err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE,
                 &gap_addr);
         APP_ERROR_CHECK(err_code);
