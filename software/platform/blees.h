@@ -10,6 +10,9 @@
 extern uint8_t MAC_ADDR[6];
 #define PLATFORM_ID_BYTE 0x30
 
+// Address is written here in flash if the ID command is used
+#define ADDRESS_FLASH_LOCATION 0x0003fff8
+
 // FTDI chip for bootloader
 #define BOOTLOADER_CTRL_PIN  3
 #define BOOTLOADER_CTRL_PULL NRF_GPIO_PIN_PULLUP
