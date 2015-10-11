@@ -14,6 +14,11 @@ APPLICATION_SRCS += nrf_drv_gpiote.c
 APPLICATION_SRCS += nrf_drv_twi.c
 APPLICATION_SRCS += led.c
 APPLICATION_SRCS += app_scheduler.c
+APPLICATION_SRCS += adxl362.c
+APPLICATION_SRCS += lps331ap.c
+APPLICATION_SRCS += si7021.c
+APPLICATION_SRCS += tsl2561.c
+APPLICATION_SRCS += spi_driver.c
 
 ifndef TARGET
 	TARGET = BLEES
@@ -25,8 +30,8 @@ BOARD = BOARD_$(TARGET_UPPER)
 
 APPLICATION_SRCS += $(TARGET_LOWER).c
 
-LIBRARY_PATHS += ./ ../../platform/
-SOURCE_PATHS += ../../platform/
+LIBRARY_PATHS += ./ ../../platform/ ../../chips
+SOURCE_PATHS += ../../platform/ ../../chips/
 
 NRF_BASE_PATH ?= ../../nrf5x-base/
 TEMPLATE_PATH ?= $(NRF_BASE_PATH)/nrf51-pure-gcc-setup/template/
