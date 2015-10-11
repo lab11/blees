@@ -1,5 +1,5 @@
-Environmental Advertisements App
-================================
+BLEES App
+=========
 
 This app provides the Environmental Sensing Service for BLEES.
 
@@ -15,6 +15,10 @@ BLEES alternates between advertising environmental data and the
 [Eddystone protocol](https://github.com/google/eddystone). It works with the
 [Summon](https://github.com/lab11/summon) project that provides a browser-based
 UI for BLE devices.
+
+### Eddystone URL
+
+Change the `PHYSWEB_URL` define to change where the BLEES Eddystone URL points to.
 
 Services
 --------
