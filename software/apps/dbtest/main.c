@@ -29,6 +29,7 @@ static simple_ble_config_t ble_config = {
 };
 
 
+
 int main(void) {
     uint32_t err_code;
 
