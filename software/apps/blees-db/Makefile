@@ -82,6 +82,10 @@ SOURCE_PATHS += ../../LittleD/src/dboutput
 SOURCE_PATHS += ../../LittleD/src/dbparser
 SOURCE_PATHS += ../../LittleD/src/dbstorage
 
+# Configure LittleD
+CFLAGS += -DDB_CTCONF_SETTING_FEATURE_ERROR_MESSAGES=0
+CFLAGS += -DB_CTCONF_PROFILE_MAXMEM=0
+
 NRF_BASE_PATH ?= ../../nrf5x-base/
 TEMPLATE_PATH ?= $(NRF_BASE_PATH)/nrf51-pure-gcc-setup/template/
 
@@ -92,7 +96,7 @@ SOFTDEVICE ?= $(NRF_BASE_PATH)/softdevice/s110_nrf51_8.0.0_softdevice.hex
 SDK_VERSION = 9
 SDK_PATH ?= $(NRF_BASE_PATH)/sdk/nrf51_sdk_9.0.0/
 
-CFLAGS = -Os
+CFLAGS += -Os
 GDB_PORT_NUMBER = 2331
 
 include $(NRF_BASE_PATH)/Makefile.include

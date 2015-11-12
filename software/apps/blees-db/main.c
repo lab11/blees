@@ -538,7 +538,7 @@ static void temp_take_measurement(void * p_context)
     }
 }
 
-static void lux_take_actual_measurement(void * p_context){
+static void lux_take_actual_measurement(void * p_context) {
 
     app_timer_stop(m_lux_wait_timer_id);
 
@@ -563,14 +563,9 @@ static void lux_take_actual_measurement(void * p_context){
 
     db_query_mm_t mm;
     init_query_mm(&mm, db_memory, DB_WORKING_MEM_SIZE);
-    // char query[100];
-    // snprintf(query, 100, "INSERT INTO sensors (light_lx) VALUES (%u);", (unsigned int) meas);
-    // snprintf(query, 100, "INSERT INTO sensors (light_lx) VALUES (%u);", 400);
-    // parse("INSERT INTO sensors (light_lx) VALUES (400);", &mm);
-    // parse("INSERT INTO sensorsFDS VALUES (400);", &mm);
-    parse("SELECT * FROM sensors;", &mm);
-
-    led_on(BLEES_LED_PIN);
+    char query[100];
+    snprintf(query, 100, "INSERT INTO sensors (light_lx) VALUES (%u);", (unsigned int) meas);
+    parse("INSERT INTO sensors (light_lx) VALUES (400);", &mm);
 
     update_advdata();
 
@@ -1006,7 +1001,8 @@ static void advertising_stop(void) {
 
 static void timers_start(void) {
 
-    uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
+    uint32_t err_code;
+    err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
@@ -1214,7 +1210,6 @@ int main(void) {
 
     // Initialization
     led_init(BLEES_LED_PIN);
-
 
     db_init();
     timers_init();
