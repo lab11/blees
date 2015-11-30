@@ -1,0 +1,10 @@
+{
+  "name": "advertisements",
+  "version": "1.0.0",
+  "description": "Display advertisement data received from BLEES devices",
+  "main": "blees_adv.js",
+  "author": "Branden Ghena",
+  "dependencies": {
+    "noble": "^1.2.1"
+  }
+}

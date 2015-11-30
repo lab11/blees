@@ -64,13 +64,50 @@ allowed. The environmental sensing service is defined by the
 
 
 Summon App
------------
+----------
 [Summon](https://github.com/lab11/summon) is a UI application for BLE devices.
 Rather than requiring every user
 to install a new app for every BLE device, Summon allows BLE devices to
 point to their own HTML/JS based interface and loads it in a single
 application. BLEES supports the summon architecture and provides
 a Summon application.
+
+
+Installation
+------------
+### Pre-reqs for Noble
+
+#### OS X
+ * install [Xcode](https://itunes.apple.com/ca/app/xcode/id497799835?mt=12)
+
+#### Linux
+ * Kernel version 3.6 or above
+ * ```libbluetooth-dev```
+
+##### Ubuntu/Debian/Raspbian
+```sh
+sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+```
+
+Make sure ```node``` is on your path, if it's not, some options:
+ * symlink ```nodejs``` to ```node```: ```sudo ln -s /usr/bin/nodejs /usr/bin/node```
+ * [install Node.js using the NodeSource package](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions)
+
+##### Fedora / Other-RPM based
+```sh
+sudo yum install bluez bluez-libs bluez-libs-devel
+```
+
+##### Intel Edison
+See [Configure Intel Edison for Bluetooth LE (Smart) Development](http://rexstjohn.com/configure-intel-edison-for-bluetooth-le-smart-development/)
+
+
+### Pre-reqs for Node applications
+Requirements are already listed in package.json.
+```
+npm install
+```
+
 
 Cloning
 -------
