@@ -10,7 +10,6 @@ APPLICATION_SRCS += app_timer.c
 APPLICATION_SRCS += app_util_platform.c
 APPLICATION_SRCS += nrf_delay.c
 APPLICATION_SRCS += nrf_drv_common.c
-APPLICATION_SRCS += nrf_drv_gpiote.c
 APPLICATION_SRCS += nrf_drv_twi.c
 APPLICATION_SRCS += led.c
 APPLICATION_SRCS += app_scheduler.c

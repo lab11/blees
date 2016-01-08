@@ -34,9 +34,7 @@
 #include "nrf_sdm.h"
 #include "nrf_gpio.h"
 #include "nrf_soc.h"
-#include "nrf_gpiote.h"
 #include "nrf_drv_config.h"
-#include "nrf_drv_gpiote.h"
 #include "nrf_error.h"
 #include "nrf_assert.h"
 #include "nrf_drv_twi.h"
@@ -60,8 +58,6 @@
 #define APP_BEACON_INFO_LENGTH      11
 
 #define PIN_IN                      5
-
-#define APP_GPIOTE_MAX_USERS        1                                              /**< Maximum number of users of the GPIOTE handler. */
 
 #define DEAD_BEEF                   0xDEADBEEF                                     /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -297,12 +293,32 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
     }
 }
 
-void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+static void gpio_init (void)
 {
+    // configure pin as input
+    NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos)
+                            | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
+                            | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
+                            | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
+                            | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
 
-    //If high to low transition
-    if (nrf_gpio_pin_read(PIN_IN) == 0){
+    // enable interrupt
+    sd_nvic_SetPriority(GPIOTE_IRQn, 3);
+    NVIC_EnableIRQ(GPIOTE_IRQn);
+    NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Set << GPIOTE_INTENSET_PORT_Pos;
+}
 
+void GPIOTE_IRQHandler (void)
+{
+    // Event causing the interrupt must be cleared
+    if ((NRF_GPIOTE->EVENTS_PORT != 0))
+    {
+        NRF_GPIOTE->EVENTS_PORT = 0;
+    }
+
+    // check pin state
+    if (nrf_gpio_pin_read(PIN_IN) == 0) {
+        // high to low transition
         led_on(BLEES_LED_PIN);
 
         m_sensor_info.acceleration = 0x11;
@@ -315,7 +331,6 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
         adxl362_read_status_reg();
 
-
         spi_disable();
 
         nrf_gpio_pin_clear(PIN_IN);
@@ -324,52 +339,28 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
         for(int i = 0; i < 1000; i++);
         led_off(BLEES_LED_PIN);
 
+        // toggle state to continue getting interrupts
+        NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos)
+                                | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
+                                | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
+                                | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
+    } else {
 
-    }
-    //If low to high transition
-    else {
-
+        // low to high transition
         m_sensor_info.acceleration = 0x01;
 
         while( !(update_advdata()) ){
             m_sensor_info.acceleration = 0x01;
         };
 
-        //led_off(BLEES_LED_PIN);
-
+        // toggle state to continue getting interrupts
+        NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos)
+                                | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
+                                | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
+                                | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
     }
-
-
-}
-
-static void gpio_init(void)
-{
-    //led_off(BLEES_LED_PIN);
-
-    ret_code_t err_code;
-    err_code = nrf_drv_gpiote_init();
-    APP_ERROR_CHECK(err_code);
-
-    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-
-    err_code = nrf_drv_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
-    APP_ERROR_CHECK(err_code);
-
-    nrf_gpio_pin_clear(PIN_IN);
-    nrf_drv_gpiote_in_event_enable(PIN_IN, true);
-    nrf_gpio_cfg_input(PIN_IN, NRF_GPIO_PIN_NOPULL);
-
-    sd_nvic_SetPriority(GPIOTE_IRQn, 3); 
-
-    NVIC_EnableIRQ(GPIOTE_IRQn);
-
-    NRF_GPIOTE->CONFIG[0] =  (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos)
-              | (PIN_IN << GPIOTE_CONFIG_PSEL_Pos)
-              | (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos);
-    NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_IN0_Set << GPIOTE_INTENSET_IN0_Pos;
-
-    //led_on(BLEES_LED_PIN);
-
 }
 
 /**@brief Function for handling the ESS events.
@@ -626,6 +617,7 @@ static void lux_take_measurement(void * p_context)
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
     app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(800, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
+    nrf_drv_twi_disable(&twi_instance);
 
     /*    
     uint8_t  lux_meas_val[2]; 
