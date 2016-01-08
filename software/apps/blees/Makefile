@@ -12,7 +12,6 @@ APPLICATION_SRCS += nrf_delay.c
 APPLICATION_SRCS += nrf_drv_common.c
 APPLICATION_SRCS += nrf_drv_twi.c
 APPLICATION_SRCS += led.c
-APPLICATION_SRCS += app_scheduler.c
 APPLICATION_SRCS += adxl362.c
 APPLICATION_SRCS += lps331ap.c
 APPLICATION_SRCS += si7021.c

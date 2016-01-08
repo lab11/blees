@@ -1282,7 +1282,6 @@ int main(void) {
 
     // Setup BLE and services
     ble_stack_init();
-    scheduler_init();
     gap_params_init();
     services_init();
     advertising_init();
@@ -1302,7 +1301,6 @@ int main(void) {
     //led_off(SQUALL_LED_PIN);
 
     while (1) {
-        app_sched_execute();
         power_manage();
     }
 }
