@@ -131,7 +131,7 @@ static bool                         switch_acc = false;
 static bool PHYSWEB_MODE = false;
 
 // Security requirements for this application.
-static ble_gap_sec_params_t m_sec_params = 
+static ble_gap_sec_params_t m_sec_params =
 {
     SEC_PARAM_BOND,
     SEC_PARAM_MITM,
@@ -190,7 +190,6 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     //led_on(BLEES_LED_PIN);
     //while(1);
     ble_debug_assert_handler(error_code, line_num, p_file_name);
-
 }
 
 /**@brief Function for asserts in the SoftDevice.
@@ -289,14 +288,13 @@ static void on_ble_evt(ble_evt_t * p_ble_evt) {
                                                  BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
                 APP_ERROR_CHECK(err_code);
             }
-            break;    
+            break;
         default:
             break;
     }
 }
 
-static void gpio_init (void)
-{
+static void gpio_init (void) {
     // configure pin as input
     NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos)
                             | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
@@ -310,11 +308,9 @@ static void gpio_init (void)
     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Set << GPIOTE_INTENSET_PORT_Pos;
 }
 
-void GPIOTE_IRQHandler (void)
-{
+void GPIOTE_IRQHandler (void) {
     // Event causing the interrupt must be cleared
-    if ((NRF_GPIOTE->EVENTS_PORT != 0))
-    {
+    if ((NRF_GPIOTE->EVENTS_PORT != 0)) {
         NRF_GPIOTE->EVENTS_PORT = 0;
     }
 
@@ -373,17 +369,16 @@ void GPIOTE_IRQHandler (void)
  * @param[in]   p_ess   Environmental Sensing Service structure.
  * @param[in]   p_evt   Event received from the ESS.
  */
-static void on_ess_evt(ble_ess_t * p_ess, ble_ess_evt_t * p_evt)
-{
+static void on_ess_evt(ble_ess_t * p_ess, ble_ess_evt_t * p_evt) {
     /*
     switch (p_evt->evt_type)
     {
         case BLE_ESS_EVT_NOTIFICATION_ENABLED:
             break;
-            
+
         case BLE_ESS_EVT_NOTIFICATION_CONFIRMED:
             break;
-            
+
         default:
             // No implementation needed.
             break;
@@ -395,22 +390,21 @@ static void on_ess_evt(ble_ess_t * p_ess, ble_ess_evt_t * p_evt)
  *
  * @param[in]   sys_evt   system event.
  */
- 
-static void on_sys_evt(uint32_t sys_evt)
-{
+
+static void on_sys_evt(uint32_t sys_evt) {
     /*
     switch(sys_evt)
     {
         case NRF_EVT_FLASH_OPERATION_SUCCESS:
         case NRF_EVT_FLASH_OPERATION_ERROR:
-            
+
             if (m_memory_access_in_progress)
             {
                 m_memory_access_in_progress = false;
                 advertising_start();
             }
             break;
-            
+
         default:
             // No implementation needed.
             break;
@@ -425,8 +419,7 @@ static void on_sys_evt(uint32_t sys_evt)
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
  */
-static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
-{
+static void ble_evt_dispatch(ble_evt_t * p_ble_evt) {
     ble_ess_on_ble_evt(&m_ess, p_ble_evt);
     on_ble_evt(p_ble_evt);
     ble_conn_params_on_ble_evt(p_ble_evt);
@@ -445,18 +438,17 @@ static void sys_evt_dispatch(uint32_t sys_evt) {
 
 }
 
-static void pres_take_measurement(void * p_context)
-{
+static void pres_take_measurement(void * p_context) {
 
     //lps331ap_power_on();
 
     UNUSED_PARAMETER(p_context);
-        
+
     uint8_t  pres_meas_val[4];
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
-    
+
     float pres;
     memset(&pres, 0, sizeof(pres));
 
@@ -477,24 +469,22 @@ static void pres_take_measurement(void * p_context)
 
     memcpy(pres_meas_val, &meas, 4);
 
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val, 
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val,
         MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
-    
+
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
+        ) {
         APP_ERROR_HANDLER(err_code);
     }
 }
 
-static void hum_take_measurement(void * p_context)
-{
+static void hum_take_measurement(void * p_context) {
     UNUSED_PARAMETER(p_context);
 
-    uint8_t  hum_meas_val[2]; 
+    uint8_t  hum_meas_val[2];
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
@@ -516,24 +506,22 @@ static void hum_take_measurement(void * p_context)
 
     memcpy(hum_meas_val, &meas, 2);
 
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val, 
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val,
         MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
-    
+
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
+        ) {
         APP_ERROR_HANDLER(err_code);
     }
 }
 
-static void temp_take_measurement(void * p_context)
-{
+static void temp_take_measurement(void * p_context) {
     UNUSED_PARAMETER(p_context);
 
-    uint8_t  temp_meas_val[2]; 
+    uint8_t  temp_meas_val[2];
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
@@ -549,25 +537,24 @@ static void temp_take_measurement(void * p_context)
 
     meas = (int16_t)(temp * 100);
     m_sensor_info.temp = meas;
-    
+
     update_advdata();
 
     memcpy(temp_meas_val, &meas, 2);
 
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val, 
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val,
         MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
+        ) {
         APP_ERROR_HANDLER(err_code);
     }
 }
 
-static void lux_take_actual_measurement(void * p_context){
+static void lux_take_actual_measurement(void * p_context) {
 
     app_timer_stop(m_lux_wait_timer_id);
 
@@ -584,7 +571,7 @@ static void lux_take_actual_measurement(void * p_context){
 
     nrf_drv_twi_disable(&twi_instance);
 
-    uint8_t  lux_meas_val[2]; 
+    uint8_t  lux_meas_val[2];
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
@@ -596,106 +583,60 @@ static void lux_take_actual_measurement(void * p_context){
 
     memcpy(lux_meas_val, &meas, 2);
 
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, 
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val,
         MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
-    
+
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
+        ) {
         APP_ERROR_HANDLER(err_code);
     }
 
     UNUSED_PARAMETER(p_context);
-
 }
 
 
-static void lux_take_measurement(void * p_context)
-{
+static void lux_take_measurement(void * p_context) {
     UNUSED_PARAMETER(p_context);
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
     app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(800, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
     nrf_drv_twi_disable(&twi_instance);
-
-    /*    
-    uint8_t  lux_meas_val[2]; 
-
-    uint32_t meas;
-    memset(&meas, 0, sizeof(meas));
-
-    volatile float lux;
-    memset(&lux, 0, sizeof(lux));
-
-    nrf_drv_twi_enable(&twi_instance);
-
-    //do {
-        lux = tsl2561_readLux(tsl2561_MODE0);
-    //}while(!lux);
-
-    tsl2561_off();
-
-    nrf_drv_twi_disable(&twi_instance);
-
-    meas = (uint16_t)(lux);
-    m_sensor_info.light = meas;
-
-    update_advdata();
-
-    memcpy(lux_meas_val, &meas, 2);
-
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val, 
-        MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
-    
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-    */
-
 }
 
-static void acc_take_measurement(void * p_context)
-{
-    
+static void acc_take_measurement(void * p_context) {
+
     UNUSED_PARAMETER(p_context);
-    
-    uint8_t  acc_meas_val[1]; 
+
+    uint8_t  acc_meas_val[1];
 
     uint32_t meas;
     memset(&meas, 0, sizeof(meas));
 
-    if (switch_acc || (m_sensor_info.acceleration & 0x10) ) {
+    if (switch_acc || (m_sensor_info.acceleration & 0x10)) {
         meas = m_sensor_info.acceleration & 0x11;
         switch_acc = false;
-    }
-    else {
+    } else {
         meas = m_sensor_info.acceleration & 0x10;
     }
     m_sensor_info.acceleration = meas;
 
-    while( !update_advdata() ){
+    while(!update_advdata()) {
         m_sensor_info.acceleration = meas;
     }
 
     memcpy(acc_meas_val, &meas, 1);
 
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val, 
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val,
         MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
-    
+
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
+        ) {
         APP_ERROR_HANDLER(err_code);
     }
 }
@@ -812,13 +753,13 @@ static void advertising_init(void) {
     volatile uint32_t      err_code;
     ble_advdata_t advdata;
     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-    
+
     // Build and set advertising data
     memset(&advdata, 0, sizeof(advdata));
     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.include_appearance      = true;
     advdata.flags = flags;
-    
+
     err_code = ble_advdata_set(&advdata, NULL);
     APP_ERROR_CHECK(err_code);
 }
@@ -837,7 +778,7 @@ static void conn_params_init(void) {
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
-    
+
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
@@ -847,7 +788,7 @@ static void timers_init(void) {
 
     uint32_t err_code;
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
-    
+
     err_code = app_timer_create(&sample_timer, APP_TIMER_MODE_REPEATED,
             timer_handler);
     APP_ERROR_CHECK(err_code);
@@ -857,7 +798,7 @@ static void timers_init(void) {
                     APP_TIMER_MODE_REPEATED,
                     pres_take_measurement);
     APP_ERROR_CHECK(err_code);
-    
+
     // Initialize timer for Humidity Trigger
     err_code = app_timer_create(&m_hum_timer_id,
                     APP_TIMER_MODE_REPEATED,
@@ -882,18 +823,17 @@ static void timers_init(void) {
                     acc_take_measurement);
     APP_ERROR_CHECK(err_code);
 
-    
+
     err_code = app_timer_create(&m_lux_wait_timer_id,
                     APP_TIMER_MODE_REPEATED,
                     lux_take_actual_measurement);
     APP_ERROR_CHECK(err_code);
-    
+
 }
 
 /**@brief Function for initializing the pressure.
  */
-static void pres_char_init(ble_ess_init_t * p_ess_init)
-{
+static void pres_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->pres_trigger_data.condition = PRES_TRIGGER_CONDITION;
     p_ess_init->init_pres_data = (uint32_t)(INIT_PRES_DATA);
     p_ess_init->pres_trigger_val_var = (uint32_t)(PRES_TRIGGER_VAL_OPERAND);
@@ -902,8 +842,7 @@ static void pres_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing the humidity.
  */
-static void hum_char_init(ble_ess_init_t * p_ess_init)
-{
+static void hum_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->hum_trigger_data.condition = HUM_TRIGGER_CONDITION;
     p_ess_init->init_hum_data = (uint16_t)(INIT_HUM_DATA);
     p_ess_init->hum_trigger_val_var = (uint16_t)(HUM_TRIGGER_VAL_OPERAND);
@@ -912,8 +851,7 @@ static void hum_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing the temperature.
  */
-static void temp_char_init(ble_ess_init_t * p_ess_init)
-{
+static void temp_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->temp_trigger_data.condition = TEMP_TRIGGER_CONDITION;
     p_ess_init->init_temp_data = (int16_t)(INIT_TEMP_DATA);
     p_ess_init->temp_trigger_val_var = (int16_t)(TEMP_TRIGGER_VAL_OPERAND);
@@ -922,8 +860,7 @@ static void temp_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing lux.
  */
-static void lux_char_init(ble_ess_init_t * p_ess_init)
-{
+static void lux_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->lux_trigger_data.condition = LUX_TRIGGER_CONDITION;
     p_ess_init->init_lux_data = (uint16_t)(INIT_LUX_DATA);
     p_ess_init->lux_trigger_val_var = (uint16_t)(LUX_TRIGGER_VAL_OPERAND);
@@ -932,8 +869,7 @@ static void lux_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing the acceleration.
  */
-static void acc_char_init(ble_ess_init_t * p_ess_init)
-{
+static void acc_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->acc_trigger_data.condition = ACC_TRIGGER_CONDITION;
     p_ess_init->init_acc_data = (uint8_t)(INIT_ACC_DATA);
     p_ess_init->acc_trigger_val_var = (uint16_t)(ACC_TRIGGER_VAL_OPERAND);
@@ -943,8 +879,7 @@ static void acc_char_init(ble_ess_init_t * p_ess_init)
 
 /**@brief Function for initializing the sensor simulators.
  */
-static void sensors_init(void)
-{
+static void sensors_init(void) {
 
     nrf_drv_twi_config_t twi_config;
 
@@ -1006,7 +941,7 @@ static void sensors_init(void)
     intmap_1.INT_LOW = 1;
     adxl362_config_INTMAP(&intmap_1, true);
     */
-    
+
     intmap_2.DATA_READY = 0;
     intmap_2.FIFO_READY = 0;
     intmap_2.FIFO_WATERMARK = 0;
@@ -1035,16 +970,16 @@ static void services_init (void) {
 
     ble_ess_init_t ess_init;
     memset(&ess_init, 0 , sizeof(ess_init));
-    
+
     ess_init.evt_handler = on_ess_evt;
     ess_init.is_notify_supported = true;
-    
+
     pres_char_init(&ess_init);  //initialize pres
     hum_char_init(&ess_init);   //initialize hum
     temp_char_init(&ess_init);  //initialize temp
     lux_char_init(&ess_init);   //initialize lux
     acc_char_init(&ess_init);   //initialize acc
-    
+
     err_code = ble_ess_init(&m_ess, &ess_init);
     APP_ERROR_CHECK(err_code);
 }
@@ -1075,7 +1010,7 @@ static void timers_start(void) {
 
     uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
     APP_ERROR_CHECK(err_code);
- 
+
     err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
     APP_ERROR_CHECK(err_code);
 
@@ -1102,20 +1037,17 @@ static void update_timers( ble_evt_t * p_ble_evt ){
 
     uint32_t err_code;
 
-    if (p_evt_write->handle == m_ess.pressure.trigger_handle)
-    {
-        if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){   
+    if (p_evt_write->handle == m_ess.pressure.trigger_handle) {
+        if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.pressure.trigger_val_buff + 1, 3);
             meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_pres_timer_id);
             err_code = app_timer_start(m_pres_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
-        } 
-    }
-    else if (p_evt_write->handle == m_ess.humidity.trigger_handle)
-    {
-        if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){   
+        }
+    } else if (p_evt_write->handle == m_ess.humidity.trigger_handle) {
+        if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.humidity.trigger_val_buff + 1, 3);
             meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
@@ -1123,10 +1055,8 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
         }
-    }
-    else if (p_evt_write->handle == m_ess.temperature.trigger_handle)
-    {
-        if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){   
+    } else if (p_evt_write->handle == m_ess.temperature.trigger_handle) {
+        if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
             meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
@@ -1134,9 +1064,7 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
         }
-    }
-    else if (p_evt_write->handle == m_ess.lux.trigger_handle)
-    {
+    } else if (p_evt_write->handle == m_ess.lux.trigger_handle) {
         if ( (m_ess.lux.trigger_val_cond == 0x01) || (m_ess.lux.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.lux.trigger_val_buff + 1, 3);
             meas_interval = (uint32_t)(meas_interval);
@@ -1145,39 +1073,32 @@ static void update_timers( ble_evt_t * p_ble_evt ){
             err_code = app_timer_start(m_lux_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
         }
-    }
-    
-    else if (p_evt_write->handle == m_ess.acceleration.trigger_handle)
-    {
-        if ( (m_ess.acceleration.trigger_val_cond == 0x01) || (m_ess.acceleration.trigger_val_cond == 0x02) ){
+    } else if (p_evt_write->handle == m_ess.acceleration.trigger_handle) {
+        if ((m_ess.acceleration.trigger_val_cond == 0x01) || (m_ess.acceleration.trigger_val_cond == 0x02)) {
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
             meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_acc_timer_id);
             err_code = app_timer_start(m_acc_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
-        }
-        else{
+        } else{
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
-            if ( m_ess.acceleration.trigger_val_cond == 0x04 ){
+            if (m_ess.acceleration.trigger_val_cond == 0x04) {
                 uint8_t a_time = (uint8_t)(meas_interval);
                 spi_enable();
                 adxl362_set_activity_time(a_time);
                 spi_disable();
-            }
-            else if ( m_ess.acceleration.trigger_val_cond == 0x05 ){
+            } else if (m_ess.acceleration.trigger_val_cond == 0x05) {
                 uint16_t act_thresh = (uint16_t)(meas_interval);
                 spi_enable();
                 adxl362_set_activity_threshold(act_thresh);
                 spi_disable();
-            }
-            else if ( m_ess.acceleration.trigger_val_cond == 0x06 ){
+            } else if (m_ess.acceleration.trigger_val_cond == 0x06) {
                 uint8_t ia_time = (uint8_t)(meas_interval);
                 spi_enable();
                 adxl362_set_inactivity_time(ia_time);
                 spi_disable();
-            }
-            else if ( m_ess.acceleration.trigger_val_cond == 0x07 ){
+            } else if (m_ess.acceleration.trigger_val_cond == 0x07) {
                 uint16_t inact_thresh = (uint16_t)(meas_interval);
                 spi_enable();
                 adxl362_set_inactivity_threshold(inact_thresh);
@@ -1208,7 +1129,7 @@ static void adv_physweb(void) {
         m_url_frame[i+3] = PHYSWEB_URL[i];
     }
     //m_url_frame[url_frame_length-1] = PHYSWEB_URLEND_COMSLASH; // Remember to change url_frame_length
-    
+
     // Physical web service
     ble_advdata_service_data_t service_data;
     service_data.service_uuid   = PHYSWEB_SERVICE_ID;
@@ -1229,7 +1150,7 @@ static void adv_physweb(void) {
 
 static bool update_advdata(void) {
 
-    if (m_ess_updating_advdata == false){
+    if (m_ess_updating_advdata == false) {
 
         m_ess_updating_advdata = true;
         uint32_t err_code;
