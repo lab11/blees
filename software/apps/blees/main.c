@@ -98,7 +98,9 @@
 // Main App
 //#define PHYSWEB_URL     "goo.gl/tM8s2Y"
 // Demo App (http://nuclear.eecs.umich.edu/public/ble/blees-demo/index.html)
-#define PHYSWEB_URL     "goo.gl/xWppj1"
+//#define PHYSWEB_URL     "goo.gl/xWppj1"
+// Demo App (using rawgit.com)
+#define PHYSWEB_URL     "goo.gl/2ImXWJ"
 
 /*******************************************************************************
  *   STATIC AND GLOBAL VARIABLES
