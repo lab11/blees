@@ -674,6 +674,7 @@ var app = {
     },
     onParseAdvData: function(device){
         console.log("PARSING SOME ADVERTISEMENT");
+        console.log(typeof device.advertising);
         //Parse Advertised Data
         var advertisement = adv_bytes_to_noble_object(device.advertising);
         console.log(advertisement);
