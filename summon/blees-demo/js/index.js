@@ -720,6 +720,7 @@ var app = {
             console.log('cool with this packet')
 
             var mandata = new Uint8Array(advertisement.manufacturerData);
+            console.log('man data len: ' + mandata.length);
 
 
 
@@ -739,29 +740,29 @@ var app = {
             last_update = Date.now();
 
             //app.log("Parsing advertised data...");
-            var pressure_pascals = (( (adData[6] * 16777216) + (adData[5] * 65536 ) + (adData[4] * 256) + adData[3] )/10);
+            var pressure_pascals = (( (mandata[6] * 16777216) + (mandata[5] * 65536 ) + (mandata[4] * 256) + mandata[3] )/10);
             var pressure_mmHg = (pressure_pascals*0.007500616827042).toFixed(2);
             var pressure_atm = (pressure_pascals*0.00000986923266716).toFixed(4);
             var pressureOut = pressure_mmHg + ' mmHg<br />' + pressure_atm + ' atm';
             app.log( "Pressure: " + pressureOut);
             document.getElementById("presVal").innerHTML = String(pressureOut);
 
-            var humidityOut = (( (adData[8] * 256) + adData[7] )/100) + String.fromCharCode(37);
+            var humidityOut = (( (mandata[8] * 256) + mandata[7] )/100) + String.fromCharCode(37);
             app.log( "Humidity: " + humidityOut);
             document.getElementById("humVal").innerHTML = String(humidityOut);
 
-            var temp_celsius = (((adData[10] * 256) + adData[9])/100).toFixed(1);
+            var temp_celsius = (((mandata[10] * 256) + mandata[9])/100).toFixed(1);
             var temp_fahrenheit = ((temp_celsius * (9/5)) + 32).toFixed(1);
             var temperatureOut = temp_celsius + " " + String.fromCharCode(176) + "C";
             temperatureOut    += '<br />' + temp_fahrenheit + " " + String.fromCharCode(176) + "F";
             app.log( "Temperature: " + temperatureOut);
             document.getElementById("tempVal").innerHTML = String(temperatureOut);
 
-            var luxOut = ( (adData[12] * 256) + adData[11]) + " lux" ;
+            var luxOut = ( (mandata[12] * 256) + mandata[11]) + " lux" ;
             app.log( "Lux: " + luxOut);
             document.getElementById("luxVal").innerHTML = String(luxOut);
 
-            var accdata = adData[13];
+            var accdata = mandata[13];
             var immAcc = ((accdata & 17) >> 4);
             var intAcc = (accdata & 1);
             app.log("Immediate Acceleration: " + ((accdata & 17) >> 4) );
