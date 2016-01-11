@@ -87,7 +87,6 @@ function adv_bytes_to_noble_object (inadv) {
             case 0x09: // Complete Local Name»
                 var decoder = new TextDecoder('utf8');
                 advertisement.localName = decoder.decode(bytesdv);
-                console.log(advertisement.localName);
                 break;
 
             case 0x0a: // Tx Power Level
