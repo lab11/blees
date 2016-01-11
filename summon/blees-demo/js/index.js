@@ -44,9 +44,13 @@ function adv_bytes_to_noble_object (inadv) {
 
     console.log('adv_bytes_to_noble_object')
 
-    var raw_adv = ArrayBuffer.transfer(inadv);
+
+
+
+
+    var raw_adv = new Uint8Array(inadv);
     // raw_adv.transfer(inadv);
-    var eir = new DataView(raw_adv);
+    var eir = new DataView(raw_adv.buffer);
     console.log(eir)
     console.log('lenllllen: ' + raw_adv.byteLength)
 
