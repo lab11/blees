@@ -33,7 +33,7 @@ $(document).on('pageinit',function(){
     });
 });
 
-function adv_bytes_to_noble_object (raw_adv) {
+function adv_bytes_to_noble_object (inadv) {
     var i = 0;
     var j = 0;
     // var serviceUuid = null;
@@ -44,10 +44,11 @@ function adv_bytes_to_noble_object (raw_adv) {
 
     console.log('adv_bytes_to_noble_object')
 
-    raw_adv = new ArrayBuffer(raw_adv);
+    var raw_adv = new ArrayBuffer(raw_adv.length);
+    raw_adv.transfer(inadv);
     var eir = new DataView(raw_adv);
     console.log(eir)
-    console.log(raw_adv.byteLength)
+    console.log('lenllllen: ' + raw_adv.byteLength)
 
     while ((i + 1) < eir.byteLength) {
       var length = eir.getUint8(i);
