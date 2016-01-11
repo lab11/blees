@@ -14,17 +14,12 @@ var accelerationUuid = "F801";                                                  
 
 var ess_service = "181A";
 
-// var device_connected = false;
 var timer;
-// var touchduration = 3000; //length of time we want the user to touch before we do something
-// var connection_toggle = false;
-// var is_init = false;
 
 var last_update = 0;
 
 var switch_visibility_console_check = "visible";
 var switch_visibility_steadyscan_check = "visible";
-var steadyscan_on = true;
 
 // Load the swipe pane
 $(document).on('pageinit',function(){
@@ -229,9 +224,6 @@ var app = {
 
             app.update_time_ago();
 
-            // if(steadyscan_on){
-            //     app.onEnable();
-            // }
         } else {
             // Not a BLEES packet...
             app.log('Advertisement was not BLEES.');
