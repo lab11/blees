@@ -55,7 +55,9 @@
  *   DEFINES
  ******************************************************************************/
 
-#define APP_BEACON_INFO_LENGTH      11
+#define UMICH_COMPANY_IDENTIFIER      0x02E0
+#define APP_BEACON_INFO_LENGTH        12
+#define APP_BEACON_INFO_SERVICE_BLEES 0x12 // Registered to BLEES
 
 #define PIN_IN                      5
 
@@ -108,6 +110,8 @@
 
 uint8_t MAC_ADDR[6] = {0x00, 0x00, 0x30, 0xe5, 0x98, 0xc0};
 nrf_drv_twi_t twi_instance = NRF_DRV_TWI_INSTANCE(1);
+
+static ble_uuid_t ESS_SERVICE_UUID[] = {{ESS_UUID_SERVICE, BLE_UUID_TYPE_BLE}};
 
 static ble_app_t                    app;
 static ble_gap_adv_params_t         m_adv_params;
@@ -1156,26 +1160,33 @@ static bool update_advdata(void) {
         uint32_t err_code;
         uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
 
-        ble_advdata_service_data_t service_data;
+        ble_advdata_uuid_list_t service_list;
+        ble_advdata_manuf_data_t manuf_specific_data;
 
-        memcpy(&m_beacon_info[0],  &m_sensor_info.pressure, 4);
-        memcpy(&m_beacon_info[4],  &m_sensor_info.humidity, 2);
-        memcpy(&m_beacon_info[6], &m_sensor_info.temp, 2);
-        memcpy(&m_beacon_info[8],  &m_sensor_info.light, 2);
-        memcpy(&m_beacon_info[10], &m_sensor_info.acceleration, 1);
+        // Register this manufacturer data specific data as the BLEES service
+        m_beacon_info[0] = APP_BEACON_INFO_SERVICE_BLEES;
+        memcpy(&m_beacon_info[1],  &m_sensor_info.pressure, 4);
+        memcpy(&m_beacon_info[5],  &m_sensor_info.humidity, 2);
+        memcpy(&m_beacon_info[7],  &m_sensor_info.temp, 2);
+        memcpy(&m_beacon_info[9],  &m_sensor_info.light, 2);
+        memcpy(&m_beacon_info[11], &m_sensor_info.acceleration, 1);
 
-        memset(&service_data, 0, sizeof(service_data));
-        service_data.data.p_data = (uint8_t *)m_beacon_info;
-        service_data.data.size = APP_BEACON_INFO_LENGTH;
-        service_data.service_uuid = ESS_UUID_SERVICE;
+        memset(&service_list, 0, sizeof(service_list));
+        service_list.uuid_cnt = 1;
+        service_list.p_uuids = ESS_SERVICE_UUID;
+
+        memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
+        manuf_specific_data.company_identifier = UMICH_COMPANY_IDENTIFIER;
+        manuf_specific_data.data.p_data = (uint8_t*) m_beacon_info;
+        manuf_specific_data.data.size   = APP_BEACON_INFO_LENGTH;
 
         // Build and set advertising data.
         memset(&advdata, 0, sizeof(advdata));
 
         advdata.name_type               = BLE_ADVDATA_FULL_NAME;
         advdata.flags                   = flags;
-        advdata.p_service_data_array = &service_data;
-        advdata.service_data_count = 1;
+        advdata.p_manuf_specific_data   = &manuf_specific_data;
+        advdata.uuids_complete          = service_list;
 
         err_code = ble_advdata_set(&advdata, NULL);
         APP_ERROR_CHECK(err_code);
