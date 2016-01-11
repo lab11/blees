@@ -116,7 +116,7 @@ var app = {
         //bleesimg.addEventListener('touchend', app.onTouch, false);                // if bulb image touched, goto: onToggle
         //bleesimg.addEventListener('touchstart', app.onStartTimer, false);         // if bulb image touched, goto: onToggle
 
-        toggleOff.addEventListener('touchend', app.onTouchToggleOff, false);
+        // toggleOff.addEventListener('touchend', app.onTouchToggleOff, false);
 
         presimg.addEventListener('touchend', app.onTouchPres, false);             // if bulb image touched, goto: onToggle
         humimg.addEventListener('touchend', app.onTouchHum, false);             // if bulb image touched, goto: onToggle
@@ -673,6 +673,7 @@ var app = {
         app.log("device written");
     },
     onParseAdvData: function(device){
+        console.log("PARSING SOME ADVERTISEMENT");
         //Parse Advertised Data
         var advertisement = adv_bytes_to_noble_object(device.advertising);
         console.log(advertisement);
