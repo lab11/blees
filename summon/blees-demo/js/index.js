@@ -33,6 +33,77 @@ $(document).on('pageinit',function(){
     });
 });
 
+function adv_bytes_to_noble_object (eir) {
+    var i = 0;
+    var j = 0;
+    var serviceUuid = null;
+
+    while ((i + 1) < eir.length) {
+      var length = eir.readUInt8(i);
+
+      if (length < 1) {
+        debug('invalid EIR data, length = ' + length);
+        break;
+      }
+
+      var eirType = eir.readUInt8(i + 1); // https://www.bluetooth.org/en-us/specification/assigned-numbers/generic-access-profile
+
+      if ((i + length + 1) > eir.length) {
+        debug('invalid EIR data, out of range of buffer length');
+        break;
+      }
+
+      var bytes = eir.slice(i + 2).slice(0, length - 1);
+
+      switch(eirType) {
+        case 0x02: // Incomplete List of 16-bit Service Class UUID
+        case 0x03: // Complete List of 16-bit Service Class UUIDs
+          for (j = 0; j < bytes.length; j += 2) {
+            serviceUuid = bytes.readUInt16LE(j).toString(16);
+            if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
+              advertisement.serviceUuids.push(serviceUuid);
+            }
+          }
+          break;
+
+        case 0x06: // Incomplete List of 128-bit Service Class UUIDs
+        case 0x07: // Complete List of 128-bit Service Class UUIDs
+          for (j = 0; j < bytes.length; j += 16) {
+            serviceUuid = bytes.slice(j, j + 16).toString('hex').match(/.{1,2}/g).reverse().join('');
+            if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
+              advertisement.serviceUuids.push(serviceUuid);
+            }
+          }
+          break;
+
+        case 0x08: // Shortened Local Name
+        case 0x09: // Complete Local Name»
+          advertisement.localName = bytes.toString('utf8');
+          break;
+
+        case 0x0a: // Tx Power Level
+          advertisement.txPowerLevel = bytes.readInt8(0);
+          break;
+
+        case 0x16: // Service Data, there can be multiple occurences
+          var serviceDataUuid = bytes.slice(0, 2).toString('hex').match(/.{1,2}/g).reverse().join('');
+          var serviceData = bytes.slice(2, bytes.length);
+
+          advertisement.serviceData.push({
+            uuid: serviceDataUuid,
+            data: serviceData
+          });
+          break;
+
+        case 0xff: // Manufacturer Specific Data
+          advertisement.manufacturerData = bytes;
+          break;
+      }
+
+      i += (length + 1);
+    }
+}
+
 var app = {
     // Application Constructor
     initialize: function() {
@@ -603,6 +674,8 @@ var app = {
     },
     onParseAdvData: function(device){
         //Parse Advertised Data
+        var advertisement = adv_bytes_to_noble_object(device.advertising);
+        console.log(advertisement);
         var adData = new Uint8Array(device.advertising);
 
         if ((adData[12] != 0x1A) || (adData[13] != 0x18)){
