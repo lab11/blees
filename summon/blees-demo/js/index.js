@@ -47,9 +47,9 @@ function adv_bytes_to_noble_object (raw_adv) {
     raw_adv = new ArrayBuffer(raw_adv);
     var eir = new DataView(raw_adv);
     console.log(eir)
-    console.log(eir.length)
+    console.log(raw_adv.byteLength)
 
-    while ((i + 1) < eir.length) {
+    while ((i + 1) < eir.byteLength) {
       var length = eir.getUint8(i);
       console.log('LENGTHHTHT ' + length);
 
@@ -61,7 +61,7 @@ function adv_bytes_to_noble_object (raw_adv) {
       var eirType = eir.getUint8(i + 1); // https://www.bluetooth.org/en-us/specification/assigned-numbers/generic-access-profile
       console.log('TYPPPPEE: ' + eirType);
 
-      if ((i + length + 1) > eir.length) {
+      if ((i + length + 1) > eir.byteLength) {
         console.log('invalid EIR data, out of range of buffer length');
         break;
       }
@@ -74,7 +74,7 @@ function adv_bytes_to_noble_object (raw_adv) {
         case 0x02: // Incomplete List of 16-bit Service Class UUID
         case 0x03: // Complete List of 16-bit Service Class UUIDs
         console.log('16 bit service UUID')
-          for (j = 0; j < bytes.length; j += 2) {
+          for (j = 0; j < bytes.byteLength; j += 2) {
             var serviceUuid = bytesdv.getUint16(j, true).toString(16);
             if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
               advertisement.serviceUuids.push(serviceUuid);
@@ -85,7 +85,7 @@ function adv_bytes_to_noble_object (raw_adv) {
         case 0x06: // Incomplete List of 128-bit Service Class UUIDs
         case 0x07: // Complete List of 128-bit Service Class UUIDs
         console.log('128 bit service');
-          for (j = 0; j < bytes.length; j += 16) {
+          for (j = 0; j < bytes.byteLength; j += 16) {
             var serviceUuidBytes = bytes.slice(j, j + 16);
             var serviceUuidBytesDv = new DataView(serviceUuidBytes);
             var serviceUuid = '';
