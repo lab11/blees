@@ -166,7 +166,11 @@ var app = {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
         } else {
-            app.log('Not BLEES...');
+            app.log('Not BLEES (' + device.id + ')');
+
+            // HACK:
+            ble.stopScan();
+            ble.startScan([], app.onDiscover, app.onAppReady);
         }
     },
    onParseAdvData: function(device){
