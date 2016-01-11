@@ -143,11 +143,10 @@ var app = {
             deviceName = window.gateway.getDeviceName();                            // get device name from Summon
             app.log("Opened via Summon..");
         }
-        app.log("Opened via Summon...");
         document.getElementById("title").innerHTML = String(deviceId);
         app.log("Checking if ble is enabled...");
         ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
-        app.onEnable();
+        // app.onEnable();
     },
     // App Paused Event Handler
     onPause: function() {
@@ -157,7 +156,7 @@ var app = {
     // Bluetooth Enabled Callback
     onEnable: function() {
         app.log("onEnable");
-        app.onPause();                                                              // halt any previously running BLE processes
+        // app.onPause();                                                              // halt any previously running BLE processes
         ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
