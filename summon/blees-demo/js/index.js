@@ -42,10 +42,15 @@ function adv_bytes_to_noble_object (raw_adv) {
         serviceData: []
     };
 
+    console.log('adv_bytes_to_noble_object')
+
     var eir = new DataView(raw_adv);
+    console.log(eir)
+    console.log(eir.length)
 
     while ((i + 1) < eir.length) {
       var length = eir.getUint8(i);
+      console.log('LENGTHHTHT ' + length);
 
       if (length < 1) {
         console.log('invalid EIR data, length = ' + length);
@@ -67,6 +72,7 @@ function adv_bytes_to_noble_object (raw_adv) {
       switch(eirType) {
         case 0x02: // Incomplete List of 16-bit Service Class UUID
         case 0x03: // Complete List of 16-bit Service Class UUIDs
+        console.log('16 bit service UUID')
           for (j = 0; j < bytes.length; j += 2) {
             var serviceUuid = bytesdv.getUint16(j, true).toString(16);
             if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
@@ -77,6 +83,7 @@ function adv_bytes_to_noble_object (raw_adv) {
 
         case 0x06: // Incomplete List of 128-bit Service Class UUIDs
         case 0x07: // Complete List of 128-bit Service Class UUIDs
+        console.log('128 bit service');
           for (j = 0; j < bytes.length; j += 16) {
             var serviceUuidBytes = bytes.slice(j, j + 16);
             var serviceUuidBytesDv = new DataView(serviceUuidBytes);
@@ -93,8 +100,10 @@ function adv_bytes_to_noble_object (raw_adv) {
 
         case 0x08: // Shortened Local Name
         case 0x09: // Complete Local Name»
+        console.log('NAMEEEEEEEE');
             var decoder = new TextDecoder('utf8');
           advertisement.localName = decoder.decode(bytesdv);
+          console.log(advertisement.localName);
           break;
 
         case 0x0a: // Tx Power Level
@@ -112,6 +121,7 @@ function adv_bytes_to_noble_object (raw_adv) {
           break;
 
         case 0xff: // Manufacturer Specific Data
+        console.log('FOUND MAN DATA')
           advertisement.manufacturerData = bytes;
           break;
       }
