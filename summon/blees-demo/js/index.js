@@ -1,6 +1,6 @@
 /* JavaScript for ESS Summon UI */
 
-var deviceId = "C0:98:E5:30:DA:E4";                                                 // while testing, replace with address of a BLE peripheral
+var deviceId = "C0:98:E5:30:00:11";                                                 // while testing, replace with address of a BLE peripheral
 var deviceName = "BLE Device";                                                      // while testing, replace with desired name
 var serviceUuid = "181A";                                                           // ESS UUID
 var writeValue = "Written Name";                                                    // value to write to characteristic
@@ -194,10 +194,13 @@ var app = {
             document.getElementById("humVal").innerHTML = String(humidityOut);
 
             var temp_celsius = (mandata[10] * 256) + mandata[9];
+			app.log(temp_celsius);
 			if(temp_celsius > 32767) {
-				temp_celsius = (temp_celsius - 32767)*-1;
+				temp_celsius = (temp_celsius - 65536);
 			} 
+			app.log(temp_celsius);
             temp_celsius = (temp_celsius/100).toFixed(1);
+			app.log(temp_celsius);
             var temp_fahrenheit = ((temp_celsius * (9/5)) + 32).toFixed(1);
             var temperatureOut = temp_celsius + " " + String.fromCharCode(176) + "C";
             temperatureOut    += '<br />' + temp_fahrenheit + " " + String.fromCharCode(176) + "F";
