@@ -176,6 +176,7 @@ var app = {
             advertisement.serviceUuids.indexOf('181a') !== -1) {
 
             var mandata = new Uint8Array(advertisement.manufacturerData);
+            var signedmandata = new Int16Array(advertisement.manufacturerData);
 
             // Save when we got this.
             last_update = Date.now();
@@ -192,7 +193,11 @@ var app = {
             app.log( "Humidity: " + humidityOut);
             document.getElementById("humVal").innerHTML = String(humidityOut);
 
-            var temp_celsius = (((mandata[10] * 256) + mandata[9])/100).toFixed(1);
+            var temp_celsius = (mandata[10] * 256) + mandata[9];
+			if(temp_celsius > 32767) {
+				temp_celsius = (temp_celsius - 32767)*-1;
+			} 
+            temp_celsius = (temp_celsius/100).toFixed(1);
             var temp_fahrenheit = ((temp_celsius * (9/5)) + 32).toFixed(1);
             var temperatureOut = temp_celsius + " " + String.fromCharCode(176) + "C";
             temperatureOut    += '<br />' + temp_fahrenheit + " " + String.fromCharCode(176) + "F";
