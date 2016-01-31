@@ -20,13 +20,14 @@
 // How many milliseconds between switching advertisements
 #define ADV_SWITCH_MS 1000
 
-#define DEVICE_NAME "mover"
+#define DEVICE_NAME "squall+PIR"
 
 // Manufacturer specific data setup
 #define UMICH_COMPANY_IDENTIFIER 0x02E0
 #define PIR_MOTION_SERVICE 0x13
 
-#define PHYSWEB_URL "goo.gl/aaaaaa"
+// https://rawgit.com/lab11/blees/master/summon/squall-pir/index.html
+#define PHYSWEB_URL "goo.gl/sbMMHT"
 
 // Need this for one minute timer
 #define ONE_MINUTE APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
