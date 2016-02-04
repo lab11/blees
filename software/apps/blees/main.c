@@ -239,6 +239,7 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         nrf_drv_twi_enable(&twi_instance);
         // Get the lux value from the stored registers on the chip
         uint32_t lux = tsl2561_read_lux();
+        
         // Now turn the sensor back off and put it in low power mode
         tsl2561_off();
         // Stop I2C
@@ -246,8 +247,9 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
         // Update our global state and update our advertisement.
         m_sensor_info.light = (uint16_t) lux;
-//         update_advdata();
+        //update_advdata();
 
+/*
         // Update the service characteristic as well.
         uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), &lux,
             MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
@@ -259,6 +261,7 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
             ) {
             APP_ERROR_HANDLER(err_code);
         }
+*/
     }
 }
 
@@ -287,10 +290,11 @@ static void gpio_init (void) {
                              acc_interrupt_handler);
 
     // Register the light sensor interrupt
-    app_gpiote_user_register(&gpiote_user_light,
+    uint32_t err = app_gpiote_user_register(&gpiote_user_light,
                              0,                        // Which pins we want the interrupt for low to high
                              1<<LIGHT_INTERRUPT_PIN,   // Which pins we want the interrupt for high to low
                              light_interrupt_handler);
+    APP_ERROR_CHECK(err);
 
 
     // Light sensor interrupt pin needs a pull up resistor
@@ -514,6 +518,7 @@ static void lux_take_measurement(void * p_context) {
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
     tsl2561_config(tsl2561_GAIN_LOW, tsl2561_INTEGRATION_101MS);
+    tsl2561_interrupt_enable();
 //     app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(200, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
     nrf_drv_twi_disable(&twi_instance);
 }
