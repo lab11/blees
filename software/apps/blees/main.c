@@ -120,12 +120,8 @@ nrf_drv_twi_t twi_instance = NRF_DRV_TWI_INSTANCE(1);
 
 static ble_uuid_t ESS_SERVICE_UUID[] = {{ESS_UUID_SERVICE, BLE_UUID_TYPE_BLE}};
 
-static ble_app_t                    app;
-static ble_gap_adv_params_t         m_adv_params;
-static ble_advdata_t                advdata;
 static ble_ess_t                    m_ess;
 static uint8_t                      m_beacon_info[APP_BEACON_INFO_LENGTH];
-static uint16_t                     m_conn_handle = BLE_CONN_HANDLE_INVALID;     /**< Handle of the current connection. */
 
 APP_TIMER_DEF(m_pres_timer_id);     /**< ESS Pressure timer. */
 APP_TIMER_DEF(m_hum_timer_id);      /**< ESS Humidity timer. */
