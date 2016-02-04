@@ -558,36 +558,29 @@ static void temp_take_measurement(void * p_context) {
     }
 }
 
-static void lux_take_actual_measurement(void * p_context) {
+static void lux_take_actual_measurement(void* p_context) {
 
+    // Done with this timer
     app_timer_stop(m_lux_wait_timer_id);
 
-    volatile float lux;
-    memset(&lux, 0, sizeof(lux));
-
+    // Need to re-enable I2C to get reading from sensor
     nrf_drv_twi_enable(&twi_instance);
 
-    //do {
-        lux = tsl2561_readLux(tsl2561_MODE0);
-    //}while(!lux);
+    // Get the lux value from the stored registers on the chip
+    uint32_t lux = tsl2561_read_lux();
 
+    // Now turn the sensor back off and put it in low power mode
     tsl2561_off();
 
+    // Stop I2C
     nrf_drv_twi_disable(&twi_instance);
 
-    uint8_t  lux_meas_val[2];
-
-    uint32_t meas;
-    memset(&meas, 0, sizeof(meas));
-
-    meas = (uint16_t)(lux);
-    m_sensor_info.light = meas;
-
+    // Update our global state and update our advertisement.
+    m_sensor_info.light = (uint16_t) lux;
     update_advdata();
 
-    memcpy(lux_meas_val, &meas, 2);
-
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val,
+    // Update the service characteristic as well.
+    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), &lux,
         MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
@@ -606,7 +599,8 @@ static void lux_take_measurement(void * p_context) {
     UNUSED_PARAMETER(p_context);
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
-    app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(800, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
+    tsl2561_config(tsl2561_GAIN_LOW, tsl2561_INTEGRATION_101MS);
+    app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(200, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
     nrf_drv_twi_disable(&twi_instance);
 }
 
@@ -914,9 +908,10 @@ static void sensors_init(void) {
     si7021_heater_off();
 
     //initialize lux
-    tsl2561_init(&twi_instance);
-    tsl2561_on();
-    tsl2561_off();
+    tsl2561_driver_init(&twi_instance, 0b00101001);
+
+    // tsl2561_on();
+    // tsl2561_off();
     //tsl2561_on();
 
 
