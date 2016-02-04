@@ -13,20 +13,20 @@
 #define REF_P_L 0x09
 #define REF_P_H 0x0A
 #define RES_CONF 0x10
-#define CTRL_REG1 0x20 
-#define CTRL_REG2 0x21 
-#define CTRL_REG3 0x22 
-#define INT_CFG_REG 0x23 
-#define INT_SOURCE_REG 0x24 
+#define CTRL_REG1 0x20
+#define CTRL_REG2 0x21
+#define CTRL_REG3 0x22
+#define INT_CFG_REG 0x23
+#define INT_SOURCE_REG 0x24
 #define THS_P_LOW_REG 0x25
 #define THS_P_HIGH_REG 0x26
-#define STATUS_REG 0x27 
+#define STATUS_REG 0x27
 #define PRESS_OUT_XL 0x28
-#define PRESS_OUT_L 0x29 
-#define PRESS_OUT_H 0x2A 
+#define PRESS_OUT_L 0x29
+#define PRESS_OUT_H 0x2A
 #define TEMP_OUT_L 0x2B
-#define TEMP_OUT_H 0x2C 
-#define AMP_CTRL 0x30 
+#define TEMP_OUT_H 0x2C
+#define AMP_CTRL 0x30
 
 //Ctrl_Reg1 defines
 #define POWER_ON   0x80
@@ -47,16 +47,16 @@ void lps331ap_amp_control(bool selmain){
 
 
     uint8_t command[2] = {
-        AMP_CTRL, 
+        AMP_CTRL,
         0x00
     };
 
     if (selmain){
-        command[2] = 0x01;
+        command[1] = 0x01;
     }
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -74,19 +74,19 @@ void lps331ap_readPressure(float *pres){
 
 
     uint8_t command[1] = {PRESS_OUT_XL | AUTO_INCR};
-    
+
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
            	command,
             sizeof(command),
             true
     );
-    
+
     uint8_t pressure_data[3] = {0x00, 0x00, 0x00};
 
    nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             pressure_data,
             sizeof(pressure_data),
@@ -107,7 +107,7 @@ void lps331ap_readTemp (float *temp){
     uint8_t command[1] = {TEMP_OUT_L | AUTO_INCR};
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -117,7 +117,7 @@ void lps331ap_readTemp (float *temp){
     uint8_t temp_data[2];
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             temp_data,
             sizeof(temp_data),
@@ -136,14 +136,14 @@ void lps331ap_readTemp (float *temp){
 //resets everything
 void lps331ap_power_off(){
 
-	
+
 	uint8_t command[2] = {
-		CTRL_REG1, 
+		CTRL_REG1,
 		POWER_OFF
 	};
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -154,7 +154,7 @@ void lps331ap_power_off(){
 
 void lps331ap_sw_reset(){
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
         CTRL_REG2,
         SW_RESET
@@ -162,7 +162,7 @@ void lps331ap_sw_reset(){
     };
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -174,14 +174,14 @@ void lps331ap_sw_reset(){
 
 void lps331ap_sw_reset_disable(){
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
         CTRL_REG2,
         0x00
     };
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -193,9 +193,9 @@ void lps331ap_sw_reset_disable(){
 
 void lps331ap_config_interrupt(interrupt_config interrupt_c_1, interrupt_config interrupt_c_2 , bool active_low){
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
-        CTRL_REG3, 
+        CTRL_REG3,
         interrupt_c_1 | (interrupt_c_2 << 3)
     };
 
@@ -207,7 +207,7 @@ void lps331ap_config_interrupt(interrupt_config interrupt_c_1, interrupt_config 
     }
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -227,7 +227,7 @@ void lps331ap_interrupt_disable_all(){
     uint8_t command[2] = {INT_CFG_REG, 0x00};
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -255,7 +255,7 @@ void lps331ap_interrupt_enable_manual(bool high, bool low, bool latch_request){
     }
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -287,7 +287,7 @@ void lps331ap_interrupt_enable(bool latch_request){
     }
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -310,14 +310,14 @@ void lps331ap_config(lps331ap_data_rate data_rate, lps331ap_p_res p_res, lps331a
 
 void lps331ap_config_data_rate(lps331ap_data_rate data_rate){
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
         CTRL_REG1,
         (data_rate << 4)
     };
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -328,7 +328,7 @@ void lps331ap_config_data_rate(lps331ap_data_rate data_rate){
 
 void lps331ap_set_pressure_threshold(uint16_t p_thresh){
 
-    uint8_t command[3] = 
+    uint8_t command[3] =
     {
         THS_P_LOW_REG | AUTO_INCR,
         p_thresh & 0x00FF,
@@ -336,7 +336,7 @@ void lps331ap_set_pressure_threshold(uint16_t p_thresh){
     };
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -359,7 +359,7 @@ void lps331ap_read_controlreg1(uint8_t * data){
     uint8_t command[1] = {CTRL_REG1};
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -367,7 +367,7 @@ void lps331ap_read_controlreg1(uint8_t * data){
     );
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             data,
             sizeof(uint8_t),
@@ -382,7 +382,7 @@ void lps331ap_read_controlreg2(uint8_t * data){
     uint8_t command[1] = {CTRL_REG2};
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -390,7 +390,7 @@ void lps331ap_read_controlreg2(uint8_t * data){
     );
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             data,
             sizeof(uint8_t),
@@ -404,9 +404,9 @@ void lps331ap_read_controlreg3(uint8_t * data){
     uint8_t command[1] = {CTRL_REG3};
 
 
-    
+
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -414,16 +414,16 @@ void lps331ap_read_controlreg3(uint8_t * data){
     );
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             data,
             sizeof(uint8_t),
             false
     );
-    
+
     /*
     nrf_drv_twi_rx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -438,7 +438,7 @@ void lps331ap_read_status_reg(uint8_t * buf){
     uint8_t command[1] = {STATUS_REG};
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -446,7 +446,7 @@ void lps331ap_read_status_reg(uint8_t * buf){
     );
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             buf,
             sizeof(uint8_t),
@@ -460,7 +460,7 @@ void lps331ap_read_interrupt_source_reg(uint8_t * buf){
     uint8_t command[1] = {INT_SOURCE_REG};
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -468,7 +468,7 @@ void lps331ap_read_interrupt_source_reg(uint8_t * buf){
     );
 
     nrf_drv_twi_rx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             buf,
             sizeof(uint8_t),
@@ -481,7 +481,7 @@ void lps331ap_config_res(lps331ap_p_res p_res, lps331ap_t_res t_res){
 
     uint8_t data = (p_res | (t_res << 4));
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
         RES_CONF,
         data
@@ -489,7 +489,7 @@ void lps331ap_config_res(lps331ap_p_res p_res, lps331ap_t_res t_res){
     };
 
      nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command,
             sizeof(command),
@@ -505,7 +505,7 @@ void lps331ap_power_on(){
     uint8_t command[1] = {CTRL_REG1};
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
@@ -515,7 +515,7 @@ void lps331ap_power_on(){
     uint8_t data[1] = {0x00};
 
     nrf_drv_twi_rx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         data,
         sizeof(uint8_t),
@@ -524,12 +524,12 @@ void lps331ap_power_on(){
 
 
 	uint8_t command2[2] = {
-		CTRL_REG1, 
+		CTRL_REG1,
 		data[0] | POWER_ON | BLOCK_UPDATE_ENABLE
 	};
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command2,
         sizeof(command2),
@@ -543,25 +543,25 @@ void lps331ap_power_on(){
 void lps331ap_one_shot_config(){
 
 
-    uint8_t command[2] = 
+    uint8_t command[2] =
     {
         CTRL_REG1,
         BLOCK_UPDATE_ENABLE
     };
 
     nrf_drv_twi_tx(
-        m_instance, 
+        m_instance,
         SENSOR_ADDR,
         command,
         sizeof(command),
         false
-    ); 
+    );
 
 }
 
 void lps331ap_one_shot_enable(){
 
-    uint8_t command2[2] = 
+    uint8_t command2[2] =
     {
         CTRL_REG2,
         ONE_SHOT_ENABLE
@@ -569,7 +569,7 @@ void lps331ap_one_shot_enable(){
     };
 
     nrf_drv_twi_tx(
-            m_instance, 
+            m_instance,
             SENSOR_ADDR,
             command2,
             sizeof(command2),
