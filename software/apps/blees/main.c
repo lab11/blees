@@ -16,7 +16,6 @@
 #include "app_scheduler.h"
 #include "app_util_platform.h"
 #include "app_timer.h"
-#include "ble_advdata_parser.h"
 #include "ble_conn_params.h"
 #include "ble_hci.h"
 #include "ble_hrs_c.h"
@@ -120,14 +119,13 @@ static ble_ess_t                    m_ess;
 static uint8_t                      m_beacon_info[APP_BEACON_INFO_LENGTH];
 static uint16_t                     m_conn_handle = BLE_CONN_HANDLE_INVALID;     /**< Handle of the current connection. */
 
-static app_timer_id_t               sample_timer;                                /**< Advertisement timer. */
-static app_timer_id_t               m_pres_timer_id;                             /**< ESS Pressure timer. */
-static app_timer_id_t               m_hum_timer_id;                              /**< ESS Humidity timer. */
-static app_timer_id_t               m_temp_timer_id;                             /**< ESS Temperature timer. */
-static app_timer_id_t               m_lux_timer_id;                              /**< ESS Lux timer. */
-static app_timer_id_t               m_lux_wait_timer_id;                              /**< ESS Lux timer. */
-
-static app_timer_id_t               m_acc_timer_id;                              /**< ESS Accelerometer timer. */
+APP_TIMER_DEF(sample_timer);        /**< Advertisement timer. */
+APP_TIMER_DEF(m_pres_timer_id);     /**< ESS Pressure timer. */
+APP_TIMER_DEF(m_hum_timer_id);      /**< ESS Humidity timer. */
+APP_TIMER_DEF(m_temp_timer_id);     /**< ESS Temperature timer. */
+APP_TIMER_DEF(m_lux_timer_id);      /**< ESS Lux timer. */
+APP_TIMER_DEF(m_lux_wait_timer_id); /**< ESS Lux timer. */
+APP_TIMER_DEF(m_acc_timer_id);      /**< ESS Accelerometer timer. */
 
 static bool                         m_ess_updating_advdata = false;
 static bool                         switch_acc = false;
@@ -785,7 +783,7 @@ static void conn_params_init(void) {
 static void timers_init(void) {
 
     uint32_t err_code;
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
 
     err_code = app_timer_create(&sample_timer, APP_TIMER_MODE_REPEATED,
             timer_handler);
@@ -887,7 +885,7 @@ static void sensors_init(void) {
     twi_config.frequency          = NRF_TWI_FREQ_400K;
     twi_config.interrupt_priority = APP_IRQ_PRIORITY_HIGH;
 
-    nrf_drv_twi_init(&twi_instance, &twi_config, NULL);
+    nrf_drv_twi_init(&twi_instance, &twi_config, NULL, NULL);
     nrf_drv_twi_enable(&twi_instance);
 
     //initialize pressure

@@ -42,9 +42,9 @@
 #define INTERRUPT_ON_ADC_DONE       (0x0)
 
 
-/******************************************************************************/
-/* Global State
-/******************************************************************************/
+/******************************************************************************
+ * Global State
+ ******************************************************************************/
 
 // Pointer to I2C Hardware
 static nrf_drv_twi_t* m_instance;
@@ -56,9 +56,9 @@ static tsl2561_integration_time_mode_t m_mode_time = tsl2561_INTEGRATION_402MS;
 static tsl2561_package_type_t m_package_type = tsl2561_PACKAGE_TFNCL;
 
 
-/******************************************************************************/
-/* Internal functions for this driver
-/******************************************************************************/
+/******************************************************************************
+ * Internal functions for this driver
+ ******************************************************************************/
 
 // Read a single byte from a register on the sensor.
 static uint8_t read_byte (uint8_t reg) {
@@ -77,7 +77,6 @@ static uint8_t read_byte (uint8_t reg) {
 
 // Read ADC Channels Using Read Word Protocol
 static void tsl2561_readADC(uint16_t* channel0_data, uint16_t* channel1_data) {
-	ret_code_t error;
 	uint8_t data_low, data_high;
 
 	// Read from channel 0
@@ -92,9 +91,9 @@ static void tsl2561_readADC(uint16_t* channel0_data, uint16_t* channel1_data) {
 }
 
 
-/******************************************************************************/
-/* Public Functions
-/******************************************************************************/
+/******************************************************************************
+ * Public Functions
+ ******************************************************************************/
 
 // Pass in a pointer to the I2C hardware we can use. Call this first before
 // any other ts12561 functions.
@@ -137,7 +136,6 @@ void tsl2561_off(void) {
 // Configure the sample integration time and gain.
 void tsl2561_config(tsl2561_gain_mode_t mode_gain, tsl2561_integration_time_mode_t mode_time) {
 	ret_code_t error;
-	uint8_t config = mode_gain | mode_time;
 
 	// save configuration settings
 	m_mode_gain = mode_gain;
@@ -411,191 +409,3 @@ uint32_t tsl2561_read_lux (void) {
 
     return lux;
 }
-
-
-
-
-/******************************************************************************/
-/* Old shit
-/******************************************************************************/
-
-
-/*
-//currently doesn't work for manual integration
-float tsl2561_readLux(tsl2561_integration_time_mode_t int_mode){
-
-	uint16_t chan0, chan1;
-	float lux = 0.0;
-
-	tsl2561_readADC(&chan0, &chan1);
-
-	if (int_mode == tsl2561_MODE0){
-		chan0 = chan0 / 0.034;
-		chan1 = chan1 / 0.034;
-	}
-	else if (int_mode == tsl2561_MODE1){
-		chan0 = chan0 / 0.252;
-		chan1 = chan1 / 0.252;
-	}
-
-	float ratio = ((float) chan1) / chan0;
-
-	if (ratio == 0){
-		lux = 0;
-	}
-   	else if (ratio <= 0.50) {
-        lux = (0.0304 * chan0) - (0.062 * chan0 * (pow(ratio, 1.4)));
-    } else if (ratio <= 0.61) {
-        lux = (0.0224 * chan0) - (0.031 * chan1);
-    } else if (ratio <= 0.80) {
-        lux = (0.0128 * chan0) - (0.0153 * chan1);
-    } else if (ratio <= 1.3) {
-        lux = (0.00146 * chan0) - (0.00112 * chan1);
-    }
-
-    return lux;
-}
-
-
-void tsl2561_interrupt_test(){
-
-	uint8_t command[2] = {0x00, 0x00};
-
-	uint8_t data = 0x30;
-	command[0] = COMMAND_REG | INTERRUPT_CONTROL_REG_ADDR;
-
-	command[1] = data;
-
-	nrf_drv_twi_tx(
-        m_instance,
-        SENSOR_GND_ADDR,
-		command,
-		sizeof(command),
-		false
-	);
-
-
-
-}
-
-void tsl2561_interrupt_enable(uint16_t * threshold_low, uint16_t * threshold_high){
-
-	uint8_t command3[3] = {0x00, 0x00, 0x00};
-	uint8_t command2[2] = {0x00, 0x00};
-	uint8_t data1[1] = {0x00};
-	uint8_t data2[2] = {0x00, 0x00};
-	ret_code_t error = NRF_SUCCESS;
-
-	if (threshold_low){
-
-		//memcpy(data, threshold_low, 1);
-		memcpy(data2, threshold_low, 2);
-
-		command3[0] = COMMAND_REG| THRESHLOWLOW_REG_ADDR;
-		command3[1] = data2[0];
-		command3[2] = data2[1];
-
-		error =
-        nrf_drv_twi_tx(
-            m_instance,
-            SENSOR_GND_ADDR,
-			command3,
-			sizeof(command3),
-			false
-		);
-
-	}
-
-	if (threshold_high){
-
-		memcpy(data2, threshold_high, 2);
-		command3[0] = COMMAND_REG| THRESHHIGHLOW_REG_ADDR;
-		command3[1] = data2[0];
-		command3[2] = data2[1];
-
-		//error =
-		nrf_drv_twi_tx(
-            m_instance,
-            SENSOR_GND_ADDR,
-			command3,
-			sizeof(command3),
-			false
-		);
-
-	}
-
-	if ((threshold_low) || (threshold_high)){
-
-		data1[0] = INTERRUPT_LEVEL_INTERRUPT;
-		command2[0] = COMMAND_REG| INTERRUPT_CONTROL_REG_ADDR;
-		command2[1] = data1[0];
-
-		error =
-        nrf_drv_twi_tx(
-            m_instance,
-            SENSOR_GND_ADDR,
-			command2,
-			sizeof(command2),
-			false
-		);
-
-	}
-
-}
-
-
-
-
-/*
-void tsl2561_config_manual(tsl2561_gain_mode_t mode_gain, uint32_t man_time){
-
-	uint8_t data;
-	ret_code_t error = NRF_SUCCESS;
-
-	if (mode_gain == tsl2561_HIGH){
-
-		data = HIGH_GAIN_MODE; // high gain mode (16x)
-
-	}
-
-	else {
-
-		data = LOW_GAIN_MODE; // low gain mode (1x)
-
-	}
-
-	data = data | MANUAL_INTEGRATION | BEGIN_INTEGRATION;
-
-	uint8_t command[2] =
-	{
-		COMMAND_REG | TIMING_REG_ADDR,
-		data
-	};
-
-	error =
-    nrf_drv_twi_tx(
-        m_instance,
-        SENSOR_GND_ADDR,
-		command,
-		sizeof(command),
-		false
-	);
-
-	sleep(man_time);
-
-	data = data & (STOP_INTEGRATION);
-
-	command[1] = data;
-
-	//is this one necessary??
-	error =
-    nrf_drv_twi_tx(
-        m_instance,
-        SENSOR_GND_ADDR,
-		command,
-		sizeof(command),
-		false
-	);
-
-}
-*/
