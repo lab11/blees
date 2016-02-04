@@ -6,13 +6,26 @@ var ESS_SERVICE_UUID16 = 0x181A;
 var UMICH_COMPANY_ID = 0x02E0;
 var BLEES_SERVICE_ID = 0x12;
 
+var blees_choice = null;
+if (process.argv.length >= 3) {
+    blees_choice = process.argv[2];
+}
+
 noble.on('stateChange', function (state) {
     if (state === 'poweredOn') {
         noble.startScanning([], true);
+        console.log("Scanning started");
+        if (blees_choice != null) {
+            console.log("Searching for " + blees_choice);
+        }
     }
 });
 
 noble.on('discover', function (peripheral) {
+
+    if (blees_choice != null && peripheral.address != blees_choice) {
+        return;
+    }
 
     var advertisement = peripheral.advertisement;
     if (peripheral.advertisement.localName === 'BLEES') {
@@ -50,7 +63,7 @@ function parse_blees_data (peripheral, data) {
     var address = peripheral.address;
     var pressure = data.readUIntLE(0,4)/10;
     var humidity = data.readUIntLE(4,2)/100;
-    var temp     = data.readUIntLE(6,2)/100;
+    var temp     = data.readIntLE(6,2)/100;
     var light    = data.readUIntLE(8,2);
     var accel    = data.readUIntLE(10,1);
 
