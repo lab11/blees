@@ -35,6 +35,7 @@
 #include "nrf_gpio.h"
 #include "nrf_soc.h"
 #include "nrf_drv_config.h"
+#include "nrf_drv_gpiote.h"
 #include "nrf_error.h"
 #include "nrf_assert.h"
 #include "nrf_drv_twi.h"
@@ -292,6 +293,12 @@ static void gpio_init (void) {
                              light_interrupt_handler);
 
 
+    // Light sensor interrupt pin needs a pull up resistor
+    nrf_gpio_cfg_input(LIGHT_INTERRUPT_PIN, NRF_GPIO_PIN_PULLUP);
+
+    // Enable the interrupts!
+    app_gpiote_user_enable(gpiote_user_acc);
+    app_gpiote_user_enable(gpiote_user_light);
 }
 
 //XXX: these two need to be updated to use the app_gpiote driver
