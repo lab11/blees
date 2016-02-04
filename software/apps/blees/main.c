@@ -127,33 +127,17 @@ static ble_ess_t                    m_ess;
 static uint8_t                      m_beacon_info[APP_BEACON_INFO_LENGTH];
 static uint16_t                     m_conn_handle = BLE_CONN_HANDLE_INVALID;     /**< Handle of the current connection. */
 
-// APP_TIMER_DEF(sample_timer);        /**< Advertisement timer. */
 APP_TIMER_DEF(m_pres_timer_id);     /**< ESS Pressure timer. */
 APP_TIMER_DEF(m_hum_timer_id);      /**< ESS Humidity timer. */
 APP_TIMER_DEF(m_temp_timer_id);     /**< ESS Temperature timer. */
 APP_TIMER_DEF(m_lux_timer_id);      /**< ESS Lux timer. */
-// APP_TIMER_DEF(m_lux_wait_timer_id); /**< ESS Lux timer. */
 APP_TIMER_DEF(m_acc_timer_id);      /**< ESS Accelerometer timer. */
 
 // Need this for the app_gpiote library
 app_gpiote_user_id_t gpiote_user_acc;
 app_gpiote_user_id_t gpiote_user_light;
 
-// static bool                         m_ess_updating_advdata = false;
 static bool                         switch_acc = false;
-
-// static bool PHYSWEB_MODE = false;
-
-// Security requirements for this application.
-// static ble_gap_sec_params_t m_sec_params =
-// {
-//     SEC_PARAM_BOND,
-//     SEC_PARAM_MITM,
-//     SEC_PARAM_IO_CAPABILITIES,
-//     SEC_PARAM_OOB,
-//     SEC_PARAM_MIN_KEY_SIZE,
-//     SEC_PARAM_MAX_KEY_SIZE,
-// };
 
 static struct {
     uint32_t pressure;
@@ -176,11 +160,7 @@ static simple_ble_config_t ble_config = {
 /*******************************************************************************
  *   FUNCTION PROTOTYPES
  ******************************************************************************/
-// static void advertising_start(void);
-// static void advertising_stop(void);
-// static bool update_advdata(void);
 static void update_timers( ble_evt_t * p_ble_evt );
-// static void adv_physweb(void);
 
 /*******************************************************************************
  *   HANDLERS AND CALLBACKS
@@ -207,15 +187,10 @@ static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
         m_sensor_info.acceleration = 0x11;
 
-//         while( !(update_advdata()) ){
-//             m_sensor_info.acceleration = 0x11;
-//         };
-
         spi_enable();
         adxl362_read_status_reg();
         spi_disable();
 
-//         nrf_gpio_pin_clear(PIN_IN);
         switch_acc = true;
 
         for (int i = 0; i < 1000; i++);
@@ -224,10 +199,6 @@ static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
     } else if (pins_l2h & (1 << ACCELEROMETER_INTERRUPT_PIN)) {
         // Low to high transition
         m_sensor_info.acceleration = 0x01;
-
-//         while( !(update_advdata()) ){
-//             m_sensor_info.acceleration = 0x01;
-//         };
     }
 }
 
@@ -239,7 +210,7 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         nrf_drv_twi_enable(&twi_instance);
         // Get the lux value from the stored registers on the chip
         uint32_t lux = tsl2561_read_lux();
-        
+
         // Now turn the sensor back off and put it in low power mode
         tsl2561_off();
         // Stop I2C
@@ -247,7 +218,6 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
         // Update our global state and update our advertisement.
         m_sensor_info.light = (uint16_t) lux;
-        //update_advdata();
 
 /*
         // Update the service characteristic as well.
@@ -268,18 +238,6 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
 //XXX: these two need to be updated to use the app_gpiote driver
 static void gpio_init (void) {
-    // configure pin as input
-//     NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos)
-//                             | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
-//                             | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
-//                             | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
-//                             | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
-
-//     // enable interrupt
-//     sd_nvic_SetPriority(GPIOTE_IRQn, 3);
-//     NVIC_EnableIRQ(GPIOTE_IRQn);
-//     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Set << GPIOTE_INTENSET_PORT_Pos;
-
     // Need two users: accelerometer and light
     APP_GPIOTE_INIT(2);
 
@@ -304,61 +262,6 @@ static void gpio_init (void) {
     app_gpiote_user_enable(gpiote_user_acc);
     app_gpiote_user_enable(gpiote_user_light);
 }
-
-//XXX: these two need to be updated to use the app_gpiote driver
-// void GPIOTE_IRQHandler (void) {
-//     // Event causing the interrupt must be cleared
-//     if ((NRF_GPIOTE->EVENTS_PORT != 0)) {
-//         NRF_GPIOTE->EVENTS_PORT = 0;
-//     }
-
-//     // check pin state
-//     if (nrf_gpio_pin_read(PIN_IN) == 0) {
-//         // high to low transition
-//         led_on(BLEES_LED_PIN);
-
-//         m_sensor_info.acceleration = 0x11;
-
-//         while( !(update_advdata()) ){
-//             m_sensor_info.acceleration = 0x11;
-//         };
-
-//         spi_enable();
-
-//         adxl362_read_status_reg();
-
-//         spi_disable();
-
-//         nrf_gpio_pin_clear(PIN_IN);
-//         switch_acc = true;
-
-//         for(int i = 0; i < 1000; i++);
-//         led_off(BLEES_LED_PIN);
-
-//         // toggle state to continue getting interrupts
-//         NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos)
-//                                 | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
-//                                 | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
-//                                 | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
-//                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
-//     } else {
-
-//         // low to high transition
-//         m_sensor_info.acceleration = 0x01;
-
-//         while( !(update_advdata()) ){
-//             m_sensor_info.acceleration = 0x01;
-//         };
-
-//         // toggle state to continue getting interrupts
-//         NRF_GPIO->PIN_CNF[PIN_IN] = (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos)
-//                                 | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos)
-//                                 | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos)
-//                                 | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)
-//                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos);
-//     }
-// }
-
 
 static void pres_take_measurement(void * p_context) {
 
@@ -386,8 +289,6 @@ static void pres_take_measurement(void * p_context) {
 
     meas = (uint32_t)(pres * 1000);
     m_sensor_info.pressure = meas;
-
-//     update_advdata();
 
     memcpy(pres_meas_val, &meas, 4);
 
@@ -420,11 +321,8 @@ static void hum_take_measurement(void * p_context) {
 
     nrf_drv_twi_disable(&twi_instance);
 
-
     meas = (uint16_t)(hum * 100);
     m_sensor_info.humidity = meas;
-
-//     update_advdata();
 
     memcpy(hum_meas_val, &meas, 2);
 
@@ -460,8 +358,6 @@ static void temp_take_measurement(void * p_context) {
     meas = (int16_t)(temp * 100);
     m_sensor_info.temp = meas;
 
-//     update_advdata();
-
     memcpy(temp_meas_val, &meas, 2);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val,
@@ -476,50 +372,12 @@ static void temp_take_measurement(void * p_context) {
     }
 }
 
-// static void lux_take_actual_measurement(void* p_context) {
-
-//     // Done with this timer
-//     app_timer_stop(m_lux_wait_timer_id);
-
-//     // Need to re-enable I2C to get reading from sensor
-//     nrf_drv_twi_enable(&twi_instance);
-
-//     // Get the lux value from the stored registers on the chip
-//     uint32_t lux = tsl2561_read_lux();
-
-//     // Now turn the sensor back off and put it in low power mode
-//     tsl2561_off();
-
-//     // Stop I2C
-//     nrf_drv_twi_disable(&twi_instance);
-
-//     // Update our global state and update our advertisement.
-//     m_sensor_info.light = (uint16_t) lux;
-//     update_advdata();
-
-//     // Update the service characteristic as well.
-//     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), &lux,
-//         MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
-
-//     if ((err_code != NRF_SUCCESS) &&
-//         (err_code != NRF_ERROR_INVALID_STATE) &&
-//         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-//         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-//         ) {
-//         APP_ERROR_HANDLER(err_code);
-//     }
-
-//     UNUSED_PARAMETER(p_context);
-// }
-
-
 static void lux_take_measurement(void * p_context) {
     UNUSED_PARAMETER(p_context);
     nrf_drv_twi_enable(&twi_instance);
     tsl2561_on();
     tsl2561_config(tsl2561_GAIN_LOW, tsl2561_INTEGRATION_101MS);
     tsl2561_interrupt_enable();
-//     app_timer_start(m_lux_wait_timer_id, (uint32_t)(APP_TIMER_TICKS(200, APP_TIMER_PRESCALER)), NULL); //works for 393 and above but not 392!
     nrf_drv_twi_disable(&twi_instance);
 }
 
@@ -540,10 +398,6 @@ static void acc_take_measurement(void * p_context) {
     }
     m_sensor_info.acceleration = meas;
 
-//     while(!update_advdata()) {
-//         m_sensor_info.acceleration = meas;
-//     }
-
     memcpy(acc_meas_val, &meas, 1);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val,
@@ -558,58 +412,16 @@ static void acc_take_measurement(void * p_context) {
     }
 }
 
-// timer callback
-// static void timer_handler (void* p_context) {
-//     if (PHYSWEB_MODE) {
-//         PHYSWEB_MODE = false;
-//         update_advdata();
-//     } else {
-//         PHYSWEB_MODE = true;
-//         adv_physweb();
-//     }
-// }
-
 /*******************************************************************************
  *   INIT FUNCTIONS
  ******************************************************************************/
 
-
-// initialize advertising
-// static void advertising_init(void) {
-//     memset(&m_adv_params, 0, sizeof(m_adv_params));
-//     m_adv_params.type               = BLE_GAP_ADV_TYPE_ADV_IND;
-//     m_adv_params.p_peer_addr        = NULL;
-//     m_adv_params.fp                 = BLE_GAP_ADV_FP_ANY;
-//     m_adv_params.interval           = APP_ADV_INTERVAL;
-//     m_adv_params.timeout            = APP_ADV_TIMEOUT_IN_SECONDS;
-
-//     volatile uint32_t      err_code;
-//     ble_advdata_t advdata;
-//     uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-
-//     // Build and set advertising data
-//     memset(&advdata, 0, sizeof(advdata));
-//     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-//     advdata.include_appearance      = true;
-//     advdata.flags = flags;
-
-//     err_code = ble_advdata_set(&advdata, NULL);
-//     APP_ERROR_CHECK(err_code);
-// }
-
-
 //Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
-
-//     uint32_t err_code;
-//     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
-
-//     err_code = app_timer_create(&sample_timer, APP_TIMER_MODE_REPEATED,
-//             timer_handler);
-//     APP_ERROR_CHECK(err_code);
+     uint32_t err_code;
 
     // Initialize timer for Pressure Trigger
-    uint32_t err_code = app_timer_create(&m_pres_timer_id,
+    err_code = app_timer_create(&m_pres_timer_id,
                     APP_TIMER_MODE_REPEATED,
                     pres_take_measurement);
     APP_ERROR_CHECK(err_code);
@@ -637,13 +449,6 @@ static void timers_init(void) {
                     APP_TIMER_MODE_REPEATED,
                     acc_take_measurement);
     APP_ERROR_CHECK(err_code);
-
-
-//     err_code = app_timer_create(&m_lux_wait_timer_id,
-//                     APP_TIMER_MODE_REPEATED,
-//                     lux_take_actual_measurement);
-//     APP_ERROR_CHECK(err_code);
-
 }
 
 /**@brief Function for initializing the pressure.
@@ -809,25 +614,22 @@ void services_init (void) {
  *   HELPER FUNCTIONS
  ******************************************************************************/
 
-
 static void timers_start(void) {
+    uint32_t err_code;
 
-//     uint32_t err_code = app_timer_start(sample_timer, UPDATE_RATE, NULL);
-//     APP_ERROR_CHECK(err_code);
-
-    uint32_t err_code = app_timer_start(m_pres_timer_id, (uint32_t)(PRES_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_pres_timer_id, (uint32_t) PRES_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
 
-    err_code = app_timer_start(m_hum_timer_id, (uint32_t)(HUM_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_hum_timer_id, (uint32_t) HUM_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
 
-    err_code = app_timer_start(m_temp_timer_id, (uint32_t)(TEMP_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_temp_timer_id, (uint32_t) TEMP_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
 
-    err_code = app_timer_start(m_lux_timer_id, (uint32_t)(LUX_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_lux_timer_id, (uint32_t) LUX_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
 
-    err_code = app_timer_start(m_acc_timer_id, (uint32_t)(ACC_TRIGGER_VAL_TIME), NULL);
+    err_code = app_timer_start(m_acc_timer_id, (uint32_t) ACC_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -913,136 +715,31 @@ static void update_timers( ble_evt_t * p_ble_evt ){
 
 }
 
-/** @brief Function for the Power manager.
- */
-// static void power_manage(void) {
-//     uint32_t err_code = sd_app_evt_wait();
-//     APP_ERROR_CHECK(err_code);
-// }
-
-// static void adv_physweb(void) {
-//     uint32_t err_code;
-
-//     // Physical Web data
-//     uint8_t url_frame_length = 3 + strlen(PHYSWEB_URL); // Change to 4 if URLEND is applied
-//     uint8_t m_url_frame[url_frame_length];
-//     m_url_frame[0] = PHYSWEB_URL_TYPE;
-//     m_url_frame[1] = PHYSWEB_TX_POWER;
-//     m_url_frame[2] = PHYSWEB_URLSCHEME_HTTP;
-//     for (uint8_t i=0; i<strlen(PHYSWEB_URL); i++) {
-//         m_url_frame[i+3] = PHYSWEB_URL[i];
-//     }
-//     //m_url_frame[url_frame_length-1] = PHYSWEB_URLEND_COMSLASH; // Remember to change url_frame_length
-
-//     // Physical web service
-//     ble_advdata_service_data_t service_data;
-//     service_data.service_uuid   = PHYSWEB_SERVICE_ID;
-//     service_data.data.p_data    = m_url_frame;
-//     service_data.data.size      = url_frame_length;
-
-//     // Build and set advertising data
-//     memset(&advdata, 0, sizeof(advdata));
-//     advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-//     advdata.p_service_data_array    = &service_data;
-//     advdata.service_data_count      = 1;
-//     advdata.uuids_complete          = PHYSWEB_SERVICE_LIST;
-
-//     // Actually set advertisement data
-//     err_code = ble_advdata_set(&advdata, NULL);
-//     APP_ERROR_CHECK(err_code);
-// }
-
-// static bool update_advdata(void) {
-
-//     if (m_ess_updating_advdata == false) {
-
-//         m_ess_updating_advdata = true;
-//         uint32_t err_code;
-//         uint8_t flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-
-//         ble_advdata_uuid_list_t service_list;
-//         ble_advdata_manuf_data_t manuf_specific_data;
-
-//         // Register this manufacturer data specific data as the BLEES service
-//         m_beacon_info[0] = APP_BEACON_INFO_SERVICE_BLEES;
-//         memcpy(&m_beacon_info[1],  &m_sensor_info.pressure, 4);
-//         memcpy(&m_beacon_info[5],  &m_sensor_info.humidity, 2);
-//         memcpy(&m_beacon_info[7],  &m_sensor_info.temp, 2);
-//         memcpy(&m_beacon_info[9],  &m_sensor_info.light, 2);
-//         memcpy(&m_beacon_info[11], &m_sensor_info.acceleration, 1);
-
-//         memset(&service_list, 0, sizeof(service_list));
-//         service_list.uuid_cnt = 1;
-//         service_list.p_uuids = ESS_SERVICE_UUID;
-
-//         memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
-//         manuf_specific_data.company_identifier = UMICH_COMPANY_IDENTIFIER;
-//         manuf_specific_data.data.p_data = (uint8_t*) m_beacon_info;
-//         manuf_specific_data.data.size   = APP_BEACON_INFO_LENGTH;
-
-//         // Build and set advertising data.
-//         memset(&advdata, 0, sizeof(advdata));
-
-//         advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-//         advdata.flags                   = flags;
-//         advdata.p_manuf_specific_data   = &manuf_specific_data;
-//         advdata.uuids_complete          = service_list;
-
-//         err_code = ble_advdata_set(&advdata, NULL);
-//         APP_ERROR_CHECK(err_code);
-//         m_ess_updating_advdata = false;
-
-//         return true;
-
-//     }
-
-//     return false;
-// }
+/*******************************************************************************
+ *   Configure Advertisements
+ ******************************************************************************/
 
 static void adv_config_eddystone () {
     eddystone_adv(PHYSWEB_URL, NULL);
 }
 
-// TODO ALSO ADD SERVICE
 static void adv_config_data () {
     ble_advdata_manuf_data_t manuf_specific_data;
 
-        // Register this manufacturer data specific data as the BLEES service
-        m_beacon_info[0] = APP_BEACON_INFO_SERVICE_BLEES;
-        memcpy(&m_beacon_info[1],  &m_sensor_info.pressure, 4);
-        memcpy(&m_beacon_info[5],  &m_sensor_info.humidity, 2);
-        memcpy(&m_beacon_info[7],  &m_sensor_info.temp, 2);
-        memcpy(&m_beacon_info[9],  &m_sensor_info.light, 2);
-        memcpy(&m_beacon_info[11], &m_sensor_info.acceleration, 1);
+    // Register this manufacturer data specific data as the BLEES service
+    m_beacon_info[0] = APP_BEACON_INFO_SERVICE_BLEES;
+    memcpy(&m_beacon_info[1],  &m_sensor_info.pressure, 4);
+    memcpy(&m_beacon_info[5],  &m_sensor_info.humidity, 2);
+    memcpy(&m_beacon_info[7],  &m_sensor_info.temp, 2);
+    memcpy(&m_beacon_info[9],  &m_sensor_info.light, 2);
+    memcpy(&m_beacon_info[11], &m_sensor_info.acceleration, 1);
 
-//         memset(&service_list, 0, sizeof(service_list));
-//         service_list.uuid_cnt = 1;
-//         service_list.p_uuids = ESS_SERVICE_UUID;
+    memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
+    manuf_specific_data.company_identifier = UMICH_COMPANY_IDENTIFIER;
+    manuf_specific_data.data.p_data = (uint8_t*) m_beacon_info;
+    manuf_specific_data.data.size   = APP_BEACON_INFO_LENGTH;
 
-        memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
-        manuf_specific_data.company_identifier = UMICH_COMPANY_IDENTIFIER;
-        manuf_specific_data.data.p_data = (uint8_t*) m_beacon_info;
-        manuf_specific_data.data.size   = APP_BEACON_INFO_LENGTH;
-//     ble_advdata_manuf_data_t mandata;
-
-    // Put in service byte
-//     mdata[0] = PIR_MOTION_SERVICE;
-
-    // Copy in latest PIR data
-//     memcpy(mdata+1, (uint8_t*) &pir_data, sizeof(pir_data_t));
-
-    // Reset that we got the last motion since the last advertisement, but
-    // only if the interrupt is not still high
-//     if (pir_data.current_motion == 0) {
-//         pir_data.motion_since_last_adv = 0;
-//     }
-
-    // Fill out nordic struct
-//     mandata.company_identifier = UMICH_COMPANY_IDENTIFIER;
-//     mandata.data.p_data = mdata;
-//     mandata.data.size   = 1 + sizeof(pir_data_t);
-
-    simple_adv_manuf_data(&manuf_specific_data);
+    simple_adv_service_manuf_data(ESS_SERVICE_UUID, &manuf_specific_data);
 }
 
 /*******************************************************************************
