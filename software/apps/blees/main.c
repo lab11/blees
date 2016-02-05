@@ -189,7 +189,7 @@ static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
         switch_acc = true;
 
-        for (int i = 0; i < 1000; i++);
+        for (volatile int i = 0; i < 1000; i++);
         led_off(BLEES_LED_PIN);
 
     } else if (pins_l2h & (1 << ACCELEROMETER_INTERRUPT_PIN)) {
