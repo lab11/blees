@@ -155,6 +155,8 @@ int main(void) {
                      APP_TIMER_MODE_SINGLE_SHOT,
                      one_minute_timer_handler);
 
+    // PIR pin needs a pull down
+    nrf_gpio_cfg_input(INTERRUPT_PIN, NRF_GPIO_PIN_PULLDOWN);
 
     // Ready to go!
     app_gpiote_user_enable(gpiote_user);
