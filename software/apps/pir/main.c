@@ -53,7 +53,7 @@ uint8_t mdata[1 + sizeof(pir_data_t)];
 
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
-    .platform_id       = 0x00,              // used as 4th octect in device BLE address
+    .platform_id       = 0x90,              // used as 4th octect in device BLE address
     .device_id         = DEVICE_ID_DEFAULT,
     .adv_name          = DEVICE_NAME,       // used in advertisements if there is room
     .adv_interval      = MSEC_TO_UNITS(500, UNIT_0_625_MS),
@@ -93,7 +93,7 @@ void interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
     if (pins_l2h & (1 << INTERRUPT_PIN)) {
         // The PIR interrupt pin when high.
-        led_on(LED);
+        // led_on(LED);
 
         // Mark that the PIN is currently high
         pir_data.current_motion = 1;
@@ -109,7 +109,7 @@ void interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
     } else if (pins_h2l & (1 << INTERRUPT_PIN)) {
         // Motion detection stopped
-        led_off(LED);
+        // led_off(LED);
 
         // No more detected motion
         pir_data.current_motion = 0;
