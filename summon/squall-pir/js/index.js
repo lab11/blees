@@ -172,62 +172,13 @@ var app = {
         var advertisement = adv_bytes_to_noble_object(device.advertising);
 
         // Check this is something we can parse
-        if (advertisement.localName == 'BLEES' &&
-            advertisement.serviceUuids.indexOf('181a') !== -1) {
+        if (advertisement.localName == 'squall+PIR') { 
 
             var mandata = new Uint8Array(advertisement.manufacturerData);
             var signedmandata = new Int16Array(advertisement.manufacturerData);
 
             // Save when we got this.
             last_update = Date.now();
-
-            //app.log("Parsing advertised data...");
-            var pressure_pascals = (( (mandata[6] * 16777216) + (mandata[5] * 65536 ) + (mandata[4] * 256) + mandata[3] )/10);
-            var pressure_mmHg = (pressure_pascals*0.007500616827042).toFixed(2);
-            var pressure_atm = (pressure_pascals*0.00000986923266716).toFixed(4);
-            var pressureOut = pressure_mmHg + ' mmHg<br />' + pressure_atm + ' atm';
-            app.log( "Pressure: " + pressureOut);
-            document.getElementById("presVal").innerHTML = String(pressureOut);
-
-            var humidityOut = (( (mandata[8] * 256) + mandata[7] )/100) + String.fromCharCode(37);
-            app.log( "Humidity: " + humidityOut);
-            document.getElementById("humVal").innerHTML = String(humidityOut);
-
-            var temp_celsius = (mandata[10] * 256) + mandata[9];
-			app.log(temp_celsius);
-			if(temp_celsius > 32767) {
-				temp_celsius = (temp_celsius - 65536);
-			} 
-			app.log(temp_celsius);
-            temp_celsius = (temp_celsius/100).toFixed(1);
-			app.log(temp_celsius);
-            var temp_fahrenheit = ((temp_celsius * (9/5)) + 32).toFixed(1);
-            var temperatureOut = temp_celsius + " " + String.fromCharCode(176) + "C";
-            temperatureOut    += '<br />' + temp_fahrenheit + " " + String.fromCharCode(176) + "F";
-            app.log( "Temperature: " + temperatureOut);
-            document.getElementById("tempVal").innerHTML = String(temperatureOut);
-
-            var luxOut = ( (mandata[12] * 256) + mandata[11]) + " lux" ;
-            app.log( "Lux: " + luxOut);
-            document.getElementById("luxVal").innerHTML = String(luxOut);
-
-            var accdata = mandata[13];
-            var immAcc = ((accdata & 17) >> 4);
-            var intAcc = (accdata & 1);
-            app.log("Immediate Acceleration: " + ((accdata & 17) >> 4) );
-            app.log("Interval Acceleration: " + (accdata & 1) );
-
-            if (intAcc) {
-                document.getElementById('accLastIntCell').style.color = "#ED97B9";
-                document.getElementById('accLastIntCell2').style.color = "#ED97B9";
-                document.getElementById('accSpinnerInt').style.visibility = "visible";
-                document.getElementById('accNotSpinnerInt').style.visibility = "hidden";
-            } else {
-                document.getElementById('accLastIntCell').style.color = "black";
-                document.getElementById('accLastIntCell2').style.color = "black";
-                document.getElementById('accSpinnerInt').style.visibility = "hidden";
-                document.getElementById('accNotSpinnerInt').style.visibility = "visible";
-            }
 
             app.update_time_ago();
 
