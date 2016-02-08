@@ -12,7 +12,7 @@
 
         <link rel="shortcut icon" type="image/x-icon" href="img/blees.ico" />
 
-        <title>BLEES-PIR</title>
+        <title>BLEES</title>
     </head>
     <body id="main_view" data-role="main" class="frame" style="text-align:center; font-family:sans-serif-thin;color:#888">
 
@@ -20,14 +20,10 @@
                 </br>
                 <text align=center style="font-size: 250%">
                     <span style="font-weight: bold; color:#0099FF">B</span>
-                    <span style="font-weight: bold; color:#0099DD">L</span>
-                    <span style="font-weight: bold; color:#0099BB">E</span>
+                    <span style="font-weight: bold; color:#0099CC">L</span>
                     <span style="font-weight: bold; color:#009999">E</span>
-                    <span style="font-weight: bold; color:#009977">S</span>
-                    <span style="font-weight: bold; color:#009955">-</span>
-                    <span style="font-weight: bold; color:#009933">P</span>
-                    <span style="font-weight: bold; color:#009911">I</span>
-                    <span style="font-weight: bold; color:#009900">R</span>
+                    <span style="font-weight: bold; color:#009966">E</span>
+                    <span style="font-weight: bold; color:#009933">S</span>
                     <!--<text style="color:#009900">!</text>-->
                 </text></br>
                 <h1 style="font-size: 90%;" id="title">deviceId</h1>
@@ -40,16 +36,35 @@
 
         <table border="0" align=center style="width:90%; font-family:'HelveticaNeue-Light', sans-serif-light, Arial, sans-serif; margin-top:10px;">
             <tr>
-                <td align=center class="charTitleCell">Motion Now: </td>
-                <td align=center class="charValueCell" id="motionNow">No</td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/temp.png" alt="temp_img" name="tempimg"/></td>
+                <td align=center class="charTitleCell">Temperature: </td>
+                <td align=center class="charValueCell" id="tempVal">0</td>
             </tr>
             <tr>
-                <td align=center class="charTitleCell">Motion 1s: </td>
-                <td align=center class="charValueCell" id="motionSec">No</td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/humidity.png" alt="humidity_img" name="humimg"/></td>
+                <td align=center class="charTitleCell">Humidity: </td>
+                <td align=center class="charValueCell" id="humVal">0</td>
             </tr>
             <tr>
-                <td align=center class="charTitleCell">Motion 1min: </td>
-                <td align=center class="charValueCell" id="motionMin">No</td>
+                <td align=left class="charImgCell"><img class="charImg" src="img/light.png" alt="light_img" name="lightimg"/></td>
+                <td align=center class="charTitleCell">Lux: </td>
+                <td align=center class="charValueCell" id="luxVal">0</td>
+            </tr>
+            <tr>
+                <td align=left class="charImgCell"><img class="charImg" src="img/pressure.png" alt="pressure_img" name="presimg"/></td>
+                <td align=center class="charTitleCell">Pressure: </td>
+                <td align=center class="charValueCell" id="presVal">0</td>
+            </tr>
+
+            <tr>
+                <td align=left class="charImgCell"><img class="charImg" src="img/acceleration.png" alt="accel_img" name="accelimg"/></td>
+                <td align="center" id="accLastIntCell" class="charTitleCell">Movement: </td>
+                <td align="center" id="accLastIntCell2" class="charValueCell">
+                    <span class="fa-stack">
+                        <i style="visibility:visible" id="accNotSpinnerInt" class="fa fa-sun-o fa-stack-2x"></i>
+                        <spinit><i style="visibility:hidden" id="accSpinnerInt" class="fa fa-sun-o fa-stack-2x"></i></spinit>
+                    </span>
+                </td>
             </tr>
         </table>
         </br>

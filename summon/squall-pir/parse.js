@@ -1,8 +1,8 @@
-/* Parse Squall PIR advertisements */
+/* Parse BLEES advertisements */
 
 var parse_advertisement = function (advertisement, cb) {
 
-    if (advertisement.localName === 'squall+PIR') {
+    if (advertisement.localName === 'BLEES') {
         if (advertisement.hasOwnProperty('manufacturerData')) {
             // Need at least 3 bytes. Two for manufacturer identifier and
             // one for the service ID.
@@ -10,20 +10,28 @@ var parse_advertisement = function (advertisement, cb) {
                 // Check that manufacturer ID and service byte are correct
                 var manufacturer_id = advertisement.manufacturerData.readUIntLE(0, 2);
                 var service_id = advertisement.manufacturerData.readUInt8(2);
-                if (manufacturer_id == 0x02E0 && service_id == 0x13) {
-                    // OK! This looks like a PIR packet
-                    if (advertisement.manufacturerData.length == 6) {
-                        var pir = advertisement.manufacturerData.slice(3);
+                if (manufacturer_id == 0x02E0 && service_id == 0x12) {
+                    // OK! This looks like a BLEES packet
+                    if (advertisement.manufacturerData.length == 14) {
+                        var sensor_data = advertisement.manufacturerData.slice(3);
 
-                        var current_motion        = pir.readUInt8(0); // 1 if the PIR is currently detecting motion, 0 otherwise
-                        var motion_since_last_adv = pir.readUInt8(1); // 1 if the PIR detected motion at any point since the last adv was transmitted
-                        var motion_last_minute    = pir.readUInt8(2); // 1 if the PIR detected motion at any point in the last minute
+                        var pressure = sensor_data.readUIntLE(0,4)/10;
+                        var humidity = sensor_data.readUIntLE(4,2)/100;
+                        var temp     = sensor_data.readUIntLE(6,2)/100;
+                        var light    = sensor_data.readUIntLE(8,2);
+                        var accel    = sensor_data.readUIntLE(10,1);
+
+                        var imm_accel = ((accel & 0xF0) != 0);
+                        var min_accel = ((accel & 0x0F) != 0);
 
                         var out = {
-                            device: 'SquallPIR',
-                            current_motion:        current_motion==1,
-                            motion_since_last_adv: motion_since_last_adv==1,
-                            motion_last_minute:    motion_last_minute==1
+                            device: 'BLEES',
+                            pressure_pascals: pressure,
+                            humidity_percent: humidity,
+                            temperature_celcius: temp,
+                            light_lux: light,
+                            acceleration_advertisement: imm_accel,
+                            acceleration_interval: min_accel
                         };
 
                         cb(out);
