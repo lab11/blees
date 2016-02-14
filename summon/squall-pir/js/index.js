@@ -175,7 +175,7 @@ var app = {
 
         // Check this is something we can parse
         if (advertisement.localName == 'squall+PIR') { 
-
+			app.log(advertisement);
             var mandata = new Uint8Array(advertisement.manufacturerData);
             var signedmandata = new Int16Array(advertisement.manufacturerData);
 
@@ -183,8 +183,8 @@ var app = {
             last_update = Date.now();
 			
 			//check that it's a data packet
-			if(mandata.length >= 6) {
-				app.log(mandata);
+			if(mandata[0] == 224) {
+				//app.log(mandata);
 				if(mandata[3]) {
         			document.getElementById("tempVal").innerHTML = "yes";
 				} else {
