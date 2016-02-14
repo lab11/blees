@@ -165,8 +165,8 @@ var app = {
             //app.log('Not BLEES (' + device.id + ')');
 
             // HACK:
-            //ble.stopScan();
-            //ble.startScan([], app.onDiscover, app.onAppReady);
+            ble.stopScan();
+            ble.startScan([], app.onDiscover, app.onAppReady);
         }
     },
    onParseAdvData: function(device){
