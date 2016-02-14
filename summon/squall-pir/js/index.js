@@ -183,6 +183,25 @@ var app = {
             last_update = Date.now();
 
 			app.log(mandata);
+			if(mandata[3]) {
+        		document.getElementById("tempVal").innerHTML = "yes";
+			} else {
+        		document.getElementById("tempVal").innerHTML = "no";
+			}
+
+
+			if(mandata[4]) {
+        		document.getElementById("humVal").innerHTML = "yes";
+			} else {
+        		document.getElementById("humVal").innerHTML = "no";
+			}
+
+			if(mandata[5]) {
+        		document.getElementById("luxVal").innerHTML = "yes";
+			} else {
+        		document.getElementById("luxVal").innerHTML = "no";
+			}
+
 
             app.update_time_ago();
 
