@@ -181,25 +181,28 @@ var app = {
 
             // Save when we got this.
             last_update = Date.now();
+			
+			//check that it's a data packet
+			if(mandata.length >= 6) {
+				app.log(mandata);
+				if(mandata[3]) {
+        			document.getElementById("tempVal").innerHTML = "yes";
+				} else {
+        			document.getElementById("tempVal").innerHTML = "no";
+				}
 
-			app.log(mandata);
-			if(mandata[3]) {
-        		document.getElementById("tempVal").innerHTML = "yes";
-			} else {
-        		document.getElementById("tempVal").innerHTML = "no";
-			}
 
+				if(mandata[4]) {
+        			document.getElementById("humVal").innerHTML = "yes";
+				} else {
+        			document.getElementById("humVal").innerHTML = "no";
+				}
 
-			if(mandata[4]) {
-        		document.getElementById("humVal").innerHTML = "yes";
-			} else {
-        		document.getElementById("humVal").innerHTML = "no";
-			}
-
-			if(mandata[5]) {
-        		document.getElementById("luxVal").innerHTML = "yes";
-			} else {
-        		document.getElementById("luxVal").innerHTML = "no";
+				if(mandata[5]) {
+        			document.getElementById("luxVal").innerHTML = "yes";
+				} else {
+        			document.getElementById("luxVal").innerHTML = "no";
+				}
 			}
 
 
