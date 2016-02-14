@@ -182,6 +182,8 @@ var app = {
             // Save when we got this.
             last_update = Date.now();
 
+			app.log(mandata);
+
             app.update_time_ago();
 
         } else {
