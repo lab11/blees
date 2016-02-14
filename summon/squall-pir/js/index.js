@@ -175,7 +175,6 @@ var app = {
 
         // Check this is something we can parse
         if (advertisement.localName == 'squall+PIR') { 
-			app.log(advertisement);
             var mandata = new Uint8Array(advertisement.manufacturerData);
             var signedmandata = new Int16Array(advertisement.manufacturerData);
 
@@ -185,18 +184,12 @@ var app = {
 			//check that it's a data packet
 			if(mandata[0] == 224) {
 				//app.log(mandata);
-				if(mandata[3]) {
+				if(mandata[3] || mandata[4]) {
         			document.getElementById("tempVal").innerHTML = "yes";
 				} else {
         			document.getElementById("tempVal").innerHTML = "no";
 				}
 
-
-				if(mandata[4]) {
-        			document.getElementById("humVal").innerHTML = "yes";
-				} else {
-        			document.getElementById("humVal").innerHTML = "no";
-				}
 
 				if(mandata[5]) {
         			document.getElementById("luxVal").innerHTML = "yes";
