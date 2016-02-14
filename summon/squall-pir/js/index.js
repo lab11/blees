@@ -122,8 +122,10 @@ var app = {
         document.addEventListener("deviceready", app.onAppReady, false);
         document.addEventListener("resume", app.onAppReady, false);
         document.addEventListener("pause", app.onPause, false);
-
-        app.onAppReady();
+		
+        if (typeof window.gateway != "undefined") { // if UI opened through Summon,
+        	app.onAppReady();
+		}
     },
     // App Ready Event Handler
     onAppReady: function() {
