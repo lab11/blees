@@ -182,6 +182,7 @@ var app = {
             last_update = Date.now();
 			
 			//check that it's a data packet
+			app.log(mandata);
 			if(mandata[0] == 224) {
 				//app.log(mandata);
 				if(mandata[3] || mandata[4]) {
