@@ -1,43 +1,35 @@
+#pragma once
+
 #include <stdint.h>
 
 
-#ifndef ADXL362_H
-
-#define ADXL362_H
-
-typedef enum
-{
+typedef enum {
     adxl362_DISABLE_FIFO,
     adxl362_OLDEST_SAVED_FIFO,
     adxl362_STREAM_FIFO,
     adxl362_TRIGGERED_FIFO
 } adxl362_fifo_mode;
 
-typedef enum
-{
+typedef enum {
     adxl362_INTERRUPT_DEFAULT,
     adxl362_INTERRUPT_LINKED,
     adxl362_INTERRUPT_LOOP
 } adxl362_interrupt_mode;
 
-typedef enum
-{
+typedef enum {
     adxl362_NOISE_NORMAL,
     adxl362_NOISE_LOW,
     adxl362_NOISE_ULTRALOW
 } adxl362_noise_mode;
 
-
-typedef enum
-{
+typedef enum {
     adxl362_MEAS_RANGE_2G,
     adxl362_MEAS_RANGE_4G,
     adxl362_MEAS_RANGE_8G
 } adxl362_measurement_range;
 
 
-typedef struct
-{
+typedef struct {
     bool DATA_READY;
     bool FIFO_READY;
     bool FIFO_WATERMARK;
@@ -49,9 +41,14 @@ typedef struct
 
 } adxl362_interrupt_map_t;
 
-void adxl362_accelerometer_init(adxl362_noise_mode n_mode, bool measure, bool autosleep_en, bool wakeup_en);
+void adxl362_accelerometer_init(adxl362_noise_mode n_mode,
+                                bool measure,
+                                bool autosleep_en,
+                                bool wakeup_en);
 
-void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode, bool use_referenced_activity, bool use_referenced_inactivity);
+void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode,
+                                   bool use_referenced_activity,
+                                   bool use_referenced_inactivity);
 void adxl362_config_measurement_range(adxl362_measurement_range m_range);
 
 void adxl362_set_activity_threshold(uint16_t act_threshold);
@@ -79,7 +76,3 @@ void adxl362_parse_FIFO(uint8_t * buf_in, int16_t * buf_out, uint16_t num_sample
 
 uint8_t adxl362_read_status_reg();
 void adxl362_read_dev_id(uint8_t *buf);
-
-
-
-#endif // ADXL362_H

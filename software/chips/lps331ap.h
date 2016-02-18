@@ -1,9 +1,6 @@
-#ifndef LPS331AP_H
+#pragma once
 
-#define LP331AP_H
-
-typedef enum
-{
+typedef enum {
     lps331ap_MODE0, 	// Pressure = One Shot, Temperature = One Shot
     lps331ap_MODE1, 	// Pressure = 1 Hz, 	Temperature = 1 Hz
     lps331ap_MODE2, 	// Pressure = 7 Hz, 	Temperature = 1 Hz
@@ -12,12 +9,9 @@ typedef enum
     lps331ap_MODE5, 	// Pressure = 7 Hz, 	Temperature = 7 Hz
     lps331ap_MODE6, 	// Pressure = 12.5 Hz, 	Temperature = 12.5 Hz
     lps331ap_MODE7, 	// Pressure = 25 Hz, 	Temperature = 25 Hz
-
 } lps331ap_data_rate; //Measurement Resolution, (aka ODR)
 
-
-typedef enum
-{
+typedef enum {
     lps331ap_P_RES_0, 	// Nr. Internal Average = 1
     lps331ap_P_RES_1, 	// Nr. Internal Average = 2
     lps331ap_P_RES_2, 	// Nr. Internal Average = 4
@@ -29,12 +23,9 @@ typedef enum
     lps331ap_P_RES_8, 	// Nr. Internal Average = 256
     lps331ap_P_RES_9, 	// Nr. Internal Average = 384
     lps331ap_P_RES_10, 	// Nr. Internal Average = 512, not allowed with ODR = 25Hz/25Hz
-
 } lps331ap_p_res; 	//Pressure Resolution
 
-
-typedef enum
-{
+typedef enum {
     lps331ap_T_RES_0, 	// Nr. Internal Average = 1
     lps331ap_T_RES_1, 	// Nr. Internal Average = 2
     lps331ap_T_RES_2, 	// Nr. Internal Average = 4
@@ -43,18 +34,14 @@ typedef enum
     lps331ap_T_RES_5, 	// Nr. Internal Average = 32
     lps331ap_T_RES_6, 	// Nr. Internal Average = 64
     lps331ap_T_RES_7, 	// Nr. Internal Average = 128, not allowed with ODR = 25Hz/25Hz
-
 } lps331ap_t_res; 	//Temperature Resolution
 
-
-typedef enum
-{
+typedef enum {
 	lps331ap_intrerrupt_mode_NONE,
 	lps331ap_interrupt_mode_P_HIGH,
 	lps331ap_interrupt_mode_P_LOW,
 	lps331ap_interrupt_mode_P_LOW_OR_P_HIGH,
 	lps331ap_interrupt_mode_DATA_READY,
-
 } interrupt_config;
 
 
@@ -65,8 +52,6 @@ void lps331ap_sw_reset();
 void lps331ap_sw_reset_disable();
 
 void lps331ap_init(nrf_drv_twi_t * p_instance);
-
-
 
 void lps331ap_amp_control(bool selmain);
 
@@ -96,6 +81,3 @@ void lps331ap_read_controlreg2(uint8_t * data);
 void lps331ap_read_controlreg3(uint8_t * data);
 void lps331ap_read_status_reg(uint8_t * buf);
 void lps331ap_read_interrupt_source_reg(uint8_t * buf);
-
-
-#endif //LPS331AP_H
