@@ -2,7 +2,7 @@
 <!-- HTML for Template Summon UI -->
 <html>
     <head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: raw.githubusercontent.com; connect-src 'self' raw.githubusercontent.com">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: gap: https://ssl.gstatic.com * 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: raw.githubusercontent.com; connect-src 'self' raw.githubusercontent.com">
         <meta name="format-detection" content="telephone=no">
         <meta name="msapplication-tap-highlight" content="no">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
@@ -10,9 +10,9 @@
         <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css">
         <link rel="stylesheet" href="css/font-awesome-4.4.0/css/font-awesome.min.css">
 
-        <link rel="shortcut icon" type="image/x-icon" href="img/blees.ico" />
+        <link rel="shortcut icon" type="image/x-icon" href="img/blink.ico" />
 
-        <title>BLEES-PIR</title>
+        <title>Blink</title>
     </head>
     <body id="main_view" data-role="main" class="frame" style="text-align:center; font-family:sans-serif-thin;color:#888">
 
@@ -21,14 +21,9 @@
                 <text align=center style="font-size: 250%">
                     <span style="font-weight: bold; color:#0099FF">B</span>
                     <span style="font-weight: bold; color:#0099DD">L</span>
-                    <span style="font-weight: bold; color:#0099BB">E</span>
-                    <span style="font-weight: bold; color:#009999">E</span>
-                    <span style="font-weight: bold; color:#009977">S</span>
-                    <span style="font-weight: bold; color:#009955">-</span>
-                    <span style="font-weight: bold; color:#009933">P</span>
-                    <span style="font-weight: bold; color:#009911">I</span>
-                    <span style="font-weight: bold; color:#009900">R</span>
-                    <!--<text style="color:#009900">!</text>-->
+                    <span style="font-weight: bold; color:#0099BB">I</span>
+                    <span style="font-weight: bold; color:#009999">N</span>
+                    <span style="font-weight: bold; color:#009977">K</span>
                 </text></br>
                 <h1 style="font-size: 90%;" id="title">deviceId</h1>
 
@@ -57,9 +52,8 @@
        </div>
 
         <div data-role="popup" data-overlay-theme="b" id="about_page">
-            <img id="centralblees" alt = "blees_img" src="img/blees2-sm.png" name="bleesimg" style="width:50%; margin:5px 0;"/></br>
-            <p>BLEES: Bluetooth Low Energy Environmental Sensing.</p>
-            <p>App created by Deepika Natarajan in collaboration with lab11.</p>
+            <img id="centralblink" alt = "blink_img" src="img/blink.png" name="blinkimg" style="width:50%; margin:5px 0;"/></br>
+            <p>Blink: Ubiquitous low-energy proximity sensing.</p>
             <p>Find out more at <a href="https://github.com/lab11/blees">https://github.com/lab11/blees</a>.</p>
         </div>
 
@@ -72,9 +66,9 @@
           </div>
         </div>
 
-        <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="js/jquery.mobile-1.4.5.min.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/bluetooth.js"></script>
+        <script type="text/javascript" src="cordova.js"></script>
     </body>
 </html>
