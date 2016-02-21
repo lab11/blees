@@ -1,6 +1,6 @@
 /* JavaScript for ESS Summon UI */
 
-var deviceId = "C0:98:E5:30:00:11";                                                 // while testing, replace with address of a BLE peripheral
+var deviceId = "C0:98:E5:30:00:5A";                                                 // while testing, replace with address of a BLE peripheral
 var deviceName = "BLE Device";                                                      // while testing, replace with desired name
 var serviceUuid = "181A";                                                           // ESS UUID
 var writeValue = "Written Name";                                                    // value to write to characteristic
@@ -28,92 +28,6 @@ $(document).on('pageinit',function(){
     });
 });
 
-function adv_bytes_to_noble_object (inadv) {
-    var i = 0;
-    var j = 0;
-    // Return
-    var advertisement = {
-        serviceUuids: [],
-        serviceData: []
-    };
-
-    var raw_adv = (new Uint8Array(inadv)).buffer;
-    var eir = new DataView(raw_adv);
-
-    while ((i + 1) < eir.byteLength) {
-        var length = eir.getUint8(i);
-
-        if (length < 1) {
-            break;
-        }
-
-        var eirType = eir.getUint8(i + 1); // https://www.bluetooth.org/en-us/specification/assigned-numbers/generic-access-profile
-
-        if ((i + length + 1) > eir.byteLength) {
-            break;
-        }
-
-        // var bytes = eir.slice(i + 2).slice(0, length - 1);
-        var bytes = raw_adv.slice(i + 2, i + 2 + length - 1);
-        var bytesdv = new DataView(bytes);
-
-        switch(eirType) {
-            case 0x02: // Incomplete List of 16-bit Service Class UUID
-            case 0x03: // Complete List of 16-bit Service Class UUIDs
-                for (j = 0; j < bytes.byteLength; j += 2) {
-                    var serviceUuid = bytesdv.getUint16(j, true).toString(16);
-                    if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
-                        advertisement.serviceUuids.push(serviceUuid);
-                    }
-                }
-                break;
-
-            case 0x06: // Incomplete List of 128-bit Service Class UUIDs
-            case 0x07: // Complete List of 128-bit Service Class UUIDs
-                for (j = 0; j < bytes.byteLength; j += 16) {
-                    var serviceUuidBytes = bytes.slice(j, j + 16);
-                    var serviceUuidBytesDv = new DataView(serviceUuidBytes);
-                    var serviceUuid = '';
-                    for (var k=0; k<16; k++) {
-                        serviceUuid += serviceUuidBytesDv.getUint8(k).toString(16);
-                    }
-                    if (advertisement.serviceUuids.indexOf(serviceUuid) === -1) {
-                        advertisement.serviceUuids.push(serviceUuid);
-                    }
-                }
-                break;
-
-            case 0x08: // Shortened Local Name
-            case 0x09: // Complete Local Name»
-                var decoder = new TextDecoder('utf8');
-                advertisement.localName = decoder.decode(bytesdv);
-                break;
-
-            case 0x0a: // Tx Power Level
-                advertisement.txPowerLevel = bytesdv.getInt8(0);
-                break;
-
-            case 0x16: // Service Data, there can be multiple occurrences
-                // var serviceDataUuid = bytes.slice(0, 2).toString('hex').match(/.{1,2}/g).reverse().join('');
-                // var serviceData = bytes.slice(2, bytes.length);
-
-                // advertisement.serviceData.push({
-                //   uuid: serviceDataUuid,
-                //   data: serviceData
-                // });
-                break;
-
-            case 0xff: // Manufacturer Specific Data
-                advertisement.manufacturerData = bytes;
-                break;
-        }
-
-        i += (length + 1);
-    }
-
-    return advertisement;
-}
-
 var app = {
     // Application Constructor
     initialize: function() {
@@ -139,7 +53,7 @@ var app = {
         }
         document.getElementById("title").innerHTML = String(deviceId);
         app.log("Checking if ble is enabled...");
-        ble.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
+        bluetooth.isEnabled(app.onEnable);                                                // if BLE enabled, goto: onEnable
         // app.onEnable();
     },
     // App Paused Event Handler
@@ -151,7 +65,7 @@ var app = {
     onEnable: function() {
         app.log("onEnable");
         // app.onPause();                                                              // halt any previously running BLE processes
-        ble.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
+        bluetooth.startScan([], app.onDiscover, app.onAppReady);                          // start BLE scan; if device discovered, goto: onDiscover
         app.log("Searching for " + deviceName + " (" + deviceId + ").");
     },
     // BLE Device Discovered Callback
@@ -160,23 +74,23 @@ var app = {
             app.log("Found " + deviceName + " (" + deviceId + ")!");
             app.onParseAdvData(device);
         } else {
-            app.log('Not BLEES (' + device.id + ')');
+            //app.log('Not BLEES (' + device.id + ')');
 
             // HACK:
-            ble.stopScan();
-            ble.startScan([], app.onDiscover, app.onAppReady);
+            bluetooth.stopScan();
+            bluetooth.startScan([], app.onDiscover, app.onAppReady);
         }
     },
    onParseAdvData: function(device){
         //Parse Advertised Data
-        var advertisement = adv_bytes_to_noble_object(device.advertising);
+        var advertisement = device.advertisement;
 
         // Check this is something we can parse
         if (advertisement.localName == 'BLEES' &&
-            advertisement.serviceUuids.indexOf('181a') !== -1) {
+            advertisement.serviceUuids.indexOf('181A') !== -1) {
 
-            var mandata = new Uint8Array(advertisement.manufacturerData);
-            var signedmandata = new Int16Array(advertisement.manufacturerData);
+            var mandata = advertisement.manufacturerData;
+            var signedmandata = new Int16Array(advertisement.manufacturerData.buffer);
 
             // Save when we got this.
             last_update = Date.now();
@@ -236,33 +150,6 @@ var app = {
             app.log('Advertisement was not BLEES.');
         }
 
-    },
-    // Function to Convert String to Bytes (to Write Characteristics)
-    stringToBytes: function(string) {
-        array = new Uint8Array(string.length);
-        for (i = 0, l = string.length; i < l; i++) array[i] = string.charCodeAt(i);
-        return array.buffer;
-    },
-    buffToUInt32Decimal: function(buffer) {
-        //app.log("to32");
-        var uint32View = new Uint32Array(buffer);
-        return uint32View[0];
-    },
-    buffToUInt16Decimal: function(buffer) {
-        var uint16View = new Uint16Array(buffer);
-        return uint16View[0];
-    },
-    buffToInt16Decimal: function(buffer) {
-        var int16View = new Int16Array(buffer);
-        return int16View[0];
-    },
-    buffToUInt8Decimal: function(buffer) {
-        var uint8View = new Uint8Array(buffer);
-        return uint8View[0];
-    },
-    // Function to Convert Bytes to String (to Read Characteristics)
-    bytesToString: function(buffer) {
-        return String.fromCharCode.apply(null, new Uint8Array(buffer));
     },
     update_time_ago: function () {
         if (last_update > 0) {
