@@ -1,37 +1,27 @@
-# Created by https://www.gitignore.io
-
-### Eagle ###
-# Ignore list for Eagle, a PCB layout tool
-
-# Backup files
-*.s#?
-*.b#?
-*.l#?
-
-# Eagle project file
-# It contains a serial number and references to the file structure
-# on your computer.
-# comment the following line if you want to have your project file included.
-eagle.epf
-
-# CAM files
-*.$$$
-*.cmp
-*.ly2
-*.l15
-*.sol
-*.plc
-*.stc
-*.sts
-*.crc
-*.crs
-
-*.drl
+*s#*
+*b#*
+*l#*
+*.top
+*.bot
+*.L1
+*.L2
+*.L3
+*.L4
+*.bsp
+*.tsp
+*.bps
+*.bsk
+*.drd
+*.dri
+*.dru
 *.gpi
-*.pls
-
-
-*.info
-
-*.eps
-
+*.oln
+*.slk
+*.smb
+*.smt
+*.tps
+*.centroid
+*.svg
+*.mil
+*.crop
+*.hs
