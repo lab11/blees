@@ -3,7 +3,7 @@
 var parse_advertisement = function (advertisement, cb) {
 
     if (advertisement.localName === 'squall+PIR') {
-        if (advertisement.hasOwnProperty('manufacturerData')) {
+        if (advertisement.manufacturerData) {
             // Need at least 3 bytes. Two for manufacturer identifier and
             // one for the service ID.
             if (advertisement.manufacturerData.length >= 3) {
