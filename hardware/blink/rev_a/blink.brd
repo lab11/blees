@@ -297,10 +297,10 @@ We've spent an enormous amount of time creating and checking these footprints an
 <description>&lt;b&gt;LAB11&lt;/b&gt; - ICs and other digital/analog chips.</description>
 <packages>
 <package name="AMN2">
-<pad name="GND" x="1.796" y="-1.796" drill="0.65"/>
+<pad name="GND" x="1.796" y="-1.796" drill="0.65" diameter="1.778"/>
 <circle x="0" y="0" radius="5.5" width="0.127" layer="21"/>
-<pad name="VCC" x="-1.796" y="1.796" drill="0.65"/>
-<pad name="OUT" x="-1.796" y="-1.796" drill="0.65"/>
+<pad name="VCC" x="-1.796" y="1.796" drill="0.65" diameter="1.778"/>
+<pad name="OUT" x="-1.796" y="-1.796" drill="0.65" diameter="1.778"/>
 <text x="0" y="6" size="1.016" layer="25" font="vector" ratio="12" align="bottom-center">&gt;NAME</text>
 </package>
 </packages>
