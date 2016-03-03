@@ -13,6 +13,7 @@
 
 // Need pin number for LED
 #define LED 13
+#define USE_LED 0
 
 // Interrupt pin number
 #define INTERRUPT_PIN 25
@@ -93,7 +94,9 @@ void interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
     if (pins_l2h & (1 << INTERRUPT_PIN)) {
         // The PIR interrupt pin when high.
-        // led_on(LED);
+#if USE_LED
+		led_on(LED);
+#endif
 
         // Mark that the PIN is currently high
         pir_data.current_motion = 1;
@@ -109,7 +112,9 @@ void interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
     } else if (pins_h2l & (1 << INTERRUPT_PIN)) {
         // Motion detection stopped
-        // led_off(LED);
+#if USE_LED
+		led_off(LED);
+#endif
 
         // No more detected motion
         pir_data.current_motion = 0;
