@@ -67,7 +67,8 @@
 #define ACCELEROMETER_INTERRUPT_PIN 5
 #define LIGHT_INTERRUPT_PIN         22
 
-#define DEAD_BEEF                   0xDEADBEEF                                     /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+/**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF                   0xDEADBEEF
 
 #define UPDATE_RATE                 APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
@@ -163,17 +164,17 @@ static void update_timers( ble_evt_t * p_ble_evt );
  ******************************************************************************/
 
 void ble_error(uint32_t error_code) {
-  led_init(SQUALL_LED_PIN);
-  led_on(SQUALL_LED_PIN);
-  while(1);
+    led_init(SQUALL_LED_PIN);
+    led_on(SQUALL_LED_PIN);
+    while(1);
 }
 
 void ble_evt_write(ble_evt_t* p_ble_evt) {
-  update_timers(p_ble_evt);
+    update_timers(p_ble_evt);
 }
 
 void ble_evt_user_handler (ble_evt_t* p_ble_evt) {
-  ble_ess_on_ble_evt(&m_ess, p_ble_evt);
+    ble_ess_on_ble_evt(&m_ess, p_ble_evt);
 }
 
 static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
@@ -205,7 +206,7 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         // Need to re-enable I2C to get reading from sensor
         nrf_drv_twi_enable(&twi_instance);
         // Get the lux value from the stored registers on the chip
-        uint32_t lux = tsl2561_read_lux();
+        uint16_t lux = (uint16_t)tsl2561_read_lux();
 
         // Now turn the sensor back off and put it in low power mode
         tsl2561_off();
@@ -213,18 +214,21 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         nrf_drv_twi_disable(&twi_instance);
 
         // Update our global state and update our advertisement.
-        m_sensor_info.light = (uint16_t) lux;
-
+        m_sensor_info.light = lux;
 /*
+        //XXX: what is going on here?
+        uint8_t lux_meas_val[2];
+        memcpy(lux_meas_val, &lux, 2);
+
         // Update the service characteristic as well.
-        uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), &lux,
-            MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
+        uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.lux), lux_meas_val,
+                MAX_LUX_LEN, false, &(m_ess.lux_char_handles) );
 
         if ((err_code != NRF_SUCCESS) &&
             (err_code != NRF_ERROR_INVALID_STATE) &&
             (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            ) {
+            (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)) {
+
             APP_ERROR_HANDLER(err_code);
         }
 */
@@ -232,22 +236,21 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 }
 
 
-//XXX: these two need to be updated to use the app_gpiote driver
 static void gpio_init (void) {
     // Need two users: accelerometer and light
     APP_GPIOTE_INIT(2);
 
     // Register the accelerometer
     app_gpiote_user_register(&gpiote_user_acc,
-                             1<<ACCELEROMETER_INTERRUPT_PIN,   // Which pins we want the interrupt for low to high
-                             1<<ACCELEROMETER_INTERRUPT_PIN,   // Which pins we want the interrupt for high to low
-                             acc_interrupt_handler);
+            1<<ACCELEROMETER_INTERRUPT_PIN,   // Which pins we want the interrupt for low to high
+            1<<ACCELEROMETER_INTERRUPT_PIN,   // Which pins we want the interrupt for high to low
+            acc_interrupt_handler);
 
     // Register the light sensor interrupt
     uint32_t err = app_gpiote_user_register(&gpiote_user_light,
-                             0,                        // Which pins we want the interrupt for low to high
-                             1<<LIGHT_INTERRUPT_PIN,   // Which pins we want the interrupt for high to low
-                             light_interrupt_handler);
+            0,                        // Which pins we want the interrupt for low to high
+            1<<LIGHT_INTERRUPT_PIN,   // Which pins we want the interrupt for high to low
+            light_interrupt_handler);
     APP_ERROR_CHECK(err);
 
 
@@ -289,13 +292,13 @@ static void pres_take_measurement(void * p_context) {
     memcpy(pres_meas_val, &meas, 4);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.pressure), pres_meas_val,
-        MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
+            MAX_PRES_LEN, false, &(m_ess.pres_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        ) {
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)) {
+
         APP_ERROR_HANDLER(err_code);
     }
 }
@@ -323,13 +326,13 @@ static void hum_take_measurement(void * p_context) {
     memcpy(hum_meas_val, &meas, 2);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.humidity), hum_meas_val,
-        MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
+            MAX_HUM_LEN, false, &(m_ess.hum_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        ) {
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)) {
+
         APP_ERROR_HANDLER(err_code);
     }
 }
@@ -357,13 +360,13 @@ static void temp_take_measurement(void * p_context) {
     memcpy(temp_meas_val, &meas, 2);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.temperature), temp_meas_val,
-        MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
+            MAX_TEMP_LEN, false, &(m_ess.temp_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        ) {
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)) {
+
         APP_ERROR_HANDLER(err_code);
     }
 }
@@ -397,13 +400,13 @@ static void acc_take_measurement(void * p_context) {
     memcpy(acc_meas_val, &meas, 1);
 
     uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val,
-        MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
+            MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
 
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        ) {
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING) ) {
+
         APP_ERROR_HANDLER(err_code);
     }
 }
@@ -414,41 +417,40 @@ static void acc_take_measurement(void * p_context) {
 
 //Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
-     uint32_t err_code;
+    uint32_t err_code;
 
     // Initialize timer for Pressure Trigger
     err_code = app_timer_create(&m_pres_timer_id,
-                    APP_TIMER_MODE_REPEATED,
-                    pres_take_measurement);
+            APP_TIMER_MODE_REPEATED,
+            pres_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Humidity Trigger
     err_code = app_timer_create(&m_hum_timer_id,
-                    APP_TIMER_MODE_REPEATED,
-                    hum_take_measurement);
+            APP_TIMER_MODE_REPEATED,
+            hum_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Temperature trigger
     err_code = app_timer_create(&m_temp_timer_id,
-                    APP_TIMER_MODE_REPEATED,
-                    temp_take_measurement);
+            APP_TIMER_MODE_REPEATED,
+            temp_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Lux Trigger
     err_code = app_timer_create(&m_lux_timer_id,
-                    APP_TIMER_MODE_REPEATED,
-                    lux_take_measurement);
+            APP_TIMER_MODE_REPEATED,
+            lux_take_measurement);
     APP_ERROR_CHECK(err_code);
 
     // Initialize timer for Acc Trigger
     err_code = app_timer_create(&m_acc_timer_id,
-                    APP_TIMER_MODE_REPEATED,
-                    acc_take_measurement);
+            APP_TIMER_MODE_REPEATED,
+            acc_take_measurement);
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for initializing the pressure.
- */
+/**@brief Function for initializing the pressure.*/
 static void pres_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->pres_trigger_data.condition = PRES_TRIGGER_CONDITION;
     p_ess_init->init_pres_data = (uint32_t)(INIT_PRES_DATA);
@@ -456,8 +458,7 @@ static void pres_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->pres_trigger_data.time_interval = (uint32_t)(PRES_TRIGGER_VAL_TIME);
 }
 
-/**@brief Function for initializing the humidity.
- */
+/**@brief Function for initializing the humidity.*/
 static void hum_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->hum_trigger_data.condition = HUM_TRIGGER_CONDITION;
     p_ess_init->init_hum_data = (uint16_t)(INIT_HUM_DATA);
@@ -465,8 +466,7 @@ static void hum_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->hum_trigger_data.time_interval = (uint32_t)(HUM_TRIGGER_VAL_TIME);
 }
 
-/**@brief Function for initializing the temperature.
- */
+/**@brief Function for initializing the temperature.*/
 static void temp_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->temp_trigger_data.condition = TEMP_TRIGGER_CONDITION;
     p_ess_init->init_temp_data = (int16_t)(INIT_TEMP_DATA);
@@ -474,8 +474,7 @@ static void temp_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->temp_trigger_data.time_interval = (uint32_t)(TEMP_TRIGGER_VAL_TIME);
 }
 
-/**@brief Function for initializing lux.
- */
+/**@brief Function for initializing lux.*/
 static void lux_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->lux_trigger_data.condition = LUX_TRIGGER_CONDITION;
     p_ess_init->init_lux_data = (uint16_t)(INIT_LUX_DATA);
@@ -483,8 +482,7 @@ static void lux_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->lux_trigger_data.time_interval = (uint32_t)(LUX_TRIGGER_VAL_TIME);
 }
 
-/**@brief Function for initializing the acceleration.
- */
+/**@brief Function for initializing the acceleration.*/
 static void acc_char_init(ble_ess_init_t * p_ess_init) {
     p_ess_init->acc_trigger_data.condition = ACC_TRIGGER_CONDITION;
     p_ess_init->init_acc_data = (uint8_t)(INIT_ACC_DATA);
@@ -493,8 +491,7 @@ static void acc_char_init(ble_ess_init_t * p_ess_init) {
 }
 
 
-/**@brief Function for initializing the sensor simulators.
- */
+/**@brief Function for initializing the sensor simulators.*/
 static void sensors_init(void) {
 
     nrf_drv_twi_config_t twi_config;
@@ -519,7 +516,6 @@ static void sensors_init(void) {
     lps331ap_power_on();
     //lps331ap_power_off();
 
-
     //initialize humidity and temperature
     si7021_init(&twi_instance);
     si7021_reset();
@@ -527,11 +523,6 @@ static void sensors_init(void) {
 
     //initialize lux
     tsl2561_driver_init(&twi_instance, 0b00101001);
-
-    // tsl2561_on();
-    // tsl2561_off();
-    //tsl2561_on();
-
 
     //initialize accelerometer
     adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
