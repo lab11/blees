@@ -86,3 +86,16 @@ date by doing `git submodule update --init --recursive`
 
 If you think all of this is ridiculous and git should just handle submodules automatically, use this:
 https://gist.github.com/brghena/fc4483a2df83c47660a5
+
+Other Hardware
+--------------
+
+Included in this repo are:
+
+### Blink
+
+<img src="https://raw.githubusercontent.com/lab11/blees/master/media/blink_large_1000x790.jpg" width="25%" align="left">
+
+Blink is a PIR sensor that is also based on Squall. Like BLEES, it supports Summon.
+The nRF51822 app is [here](https://github.com/lab11/blees/tree/master/software/apps/blink).
+
