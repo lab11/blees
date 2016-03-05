@@ -29,7 +29,9 @@ located in the `software` directory. Follow the directions at [Lab11's
 Wiki](http://lab11.eecs.umich.edu/wiki/doku.php?id=eecs582w15:setup:start) to
 get your machine set up to build and flash the Squall.
 
-The primary application is `software/apps/blees`. This application samples the
+The primary application is
+[`software/apps/blees`](https://github.com/lab11/blees/tree/master/software/apps/blees).
+This application samples the
 sensors and makes this data available as both broadcast advertisements and the
 Environmental Sensing Service for a connected device.
 
