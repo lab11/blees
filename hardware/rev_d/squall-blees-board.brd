@@ -986,6 +986,7 @@ This Sunstone Circuits 2 Layer .DRU has been set to cover our minimum requiremen
 <via x="31.369" y="3.4544" extent="1-16" drill="0.4064"/>
 <via x="29.5656" y="13.4366" extent="1-16" drill="0.4064"/>
 <via x="28.2702" y="7.4676" extent="1-16" drill="0.4064"/>
+<via x="15.9258" y="12.6746" extent="1-16" drill="0.4064"/>
 </signal>
 <signal name="A6">
 <contactref element="J1" pad="B7"/>
@@ -1429,24 +1430,24 @@ This Sunstone Circuits 2 Layer .DRU has been set to cover our minimum requiremen
 <approved hash="2,20,6fa7314a197b3acd"/>
 <approved hash="2,20,a2abbad0486970fe"/>
 <approved hash="2,20,51270fc96f384c8d"/>
-<approved hash="2,20,7fa7214d5cfc7f4d"/>
 <approved hash="2,20,4d0b9434ba4d031e"/>
+<approved hash="2,20,7fa7214d5cfc7f4d"/>
 <approved hash="2,20,b426eac3bcb29f0c"/>
 <approved hash="2,20,c260b318e1094d2e"/>
-<approved hash="2,20,8bbc6b9db5a513fb"/>
 <approved hash="2,20,1e740c7487f45dea"/>
+<approved hash="2,20,8bbc6b9db5a513fb"/>
 <approved hash="2,20,72ed5bcf129af520"/>
 <approved hash="2,20,e227b2d5c8bfd114"/>
 <approved hash="5,1,233ee8228f4957f9"/>
-<approved hash="5,1,218fe82c8f475548"/>
 <approved hash="5,1,24e1e8208f47502a"/>
 <approved hash="5,1,2610e8228f4552db"/>
+<approved hash="5,1,218fe82c8f475548"/>
 <approved hash="5,1,52342255c49518e5"/>
 <approved hash="5,1,41e1224dc48f0b30"/>
 <approved hash="5,1,d0e2b34dc88f0733"/>
-<approved hash="5,1,731ca53a954552d7"/>
 <approved hash="5,1,7483a53495475544"/>
 <approved hash="5,1,71eda53895475026"/>
+<approved hash="5,1,731ca53a954552d7"/>
 </errors>
 </board>
 </drawing>
