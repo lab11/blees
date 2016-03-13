@@ -8,3 +8,6 @@ and BLEES comes with HTML/JS applications that Summon supports.
 - `bless-demo`: Pared down version of the full app with less options. Designed
 for quicker viewing in a demo setting.
 
+### Blink
+
+Blink also has a Summon app in the `squall-pir` folder.
