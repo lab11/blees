@@ -9,14 +9,17 @@ if (navigator.platform.startsWith("iP")) {
     $.getScript('cordova_android.js', load_after)
         .fail(function(jqxhr, settings, exception) {
             console.log("Failed to load");
-            console.log(jqxhr);
-            console.log(settings);
-            console.log(exception);
+            console.log(JSON.stringify(jqxhr));
+            console.log("Settings: " + settings);
+            console.log("Exception: " + exception);
         });
 }
 
 // don't load the user's index.js until cordova is loaded
-function load_after () {
+function load_after (response, stats) {
+    console.log("Successful load");
+    console.log("Response: " + response);
+    console.log("Status: " + stats);
     console.log("Loading user's index.js file");
     $.getScript('js/index.js');
 }

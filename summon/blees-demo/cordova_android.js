@@ -1,3 +1,4 @@
+console.log("Running cordova_android.js");
 // Platform: android
 // 23738581906992092a43ad2e643b1e0c43bba38a
 /*
