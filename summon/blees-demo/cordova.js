@@ -6,7 +6,13 @@ if (navigator.platform.startsWith("iP")) {
 } else {
     // android or bust
     console.log("Loading android-specific cordova");
-    $.getScript('cordova_android.js', load_after);
+    $.getScript('cordova_android.js', load_after)
+        .fail(function(jqxhr, settings, exception) {
+            console.log("Failed to load");
+            console.log(jqxhr);
+            console.log(settings);
+            console.log(exception);
+        });
 }
 
 // don't load the user's index.js until cordova is loaded
