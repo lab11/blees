@@ -596,6 +596,28 @@ void services_init (void) {
     APP_ERROR_CHECK(err_code);
 }
 
+void dfu_reset_prepare (void) {
+
+    
+    // Disable the interrupts!
+    app_gpiote_user_disable(gpiote_user_acc);
+    app_gpiote_user_disable(gpiote_user_light);
+    
+    // disable pressure 
+    lps331ap_power_off();
+  e 
+    // reset accelerometer
+    spi_enable();
+    adxl362_accelerometer_reset();
+    spi_disable();
+   
+    // disable lux
+    tsl2561_off();
+    
+    // disable i2c 
+    nrf_drv_twi_disable(&twi_instance);
+}
+
 
 /*******************************************************************************
  *   HELPER FUNCTIONS

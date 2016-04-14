@@ -41,6 +41,8 @@ typedef struct {
 
 } adxl362_interrupt_map_t;
 
+void adxl362_accelerometer_reset();
+
 void adxl362_accelerometer_init(adxl362_noise_mode n_mode,
                                 bool measure,
                                 bool autosleep_en,

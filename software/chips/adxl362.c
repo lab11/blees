@@ -304,20 +304,26 @@ void adxl362_sample_accel_byte (uint8_t* x_data, uint8_t* y_data, uint8_t* z_dat
 	adxl362_sample_accel_byte_z(z_data);
 }
 
-// If measure = 0 standby mode, if measure = 1, measurement mode
-void adxl362_accelerometer_init (adxl362_noise_mode n_mode,
-                                 bool measure,
-                                 bool autosleep_en,
-                                 bool wakeup_en) {
-
-	spi_init();
-
+void adxl362_accelerometer_reset () {
     // send a soft reset to the accelerometer
     uint8_t data[1] = {RESET_CODE};
     spi_write_reg(SOFT_RESET, data, 1);
 
     //wait for device to be reset
-    for (int i = 0; i < 100; i++);
+    for (volatile int i = 0; i < 100; i++);
+}
+
+// If measure = 0 standby mode, if measure = 1, measurement mode
+void adxl362_accelerometer_init (adxl362_noise_mode n_mode,
+                                 bool measure,
+                                 bool autosleep_en,
+                                 bool wakeup_en) {
+    uint8_t data[1] = {RESET_CODE};
+    
+    spi_init();
+
+    adxl362_accelerometer_reset();
+
     
     if (measure) {
     	data[0] = MEASUREMENT_MODE;
