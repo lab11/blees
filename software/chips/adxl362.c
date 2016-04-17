@@ -79,7 +79,7 @@ void adxl362_config_interrupt_mode(adxl362_interrupt_mode i_mode,
 	}
 
 	if (use_referenced_inactivity) {
-		data[0] |= INACT_REF_EN; 
+		data[0] |= INACT_REF_EN;
 	}
 	if (use_referenced_activity) {
 		data[0] |= ACT_REF_EN;
@@ -96,7 +96,7 @@ void adxl362_config_INTMAP(adxl362_interrupt_map_t* int_map, bool intmap_1) {
 
 	if (int_map->DATA_READY) {
 		data[0] |= 0x01;
-	} 
+	}
 	if (int_map->FIFO_READY) {
 		data[0] |= 0x02;
 	}
@@ -145,7 +145,7 @@ void adxl362_set_inactivity_threshold (uint16_t inact_threshold) {
 
 	uint8_t data[1] = {0x00FF & inact_threshold};
 	spi_write_reg(THRESH_INACT_L, data, 1);
-	
+
 	data[0] = (uint8_t) ((0x0700 & inact_threshold) >> 8);
 	spi_write_reg(THRESH_INACT_H, data, 1);
 }
@@ -310,7 +310,7 @@ void adxl362_accelerometer_reset () {
     spi_write_reg(SOFT_RESET, data, 1);
 
     //wait for device to be reset
-    for (volatile int i = 0; i < 100; i++);
+    for (volatile int i = 0; i < 10000; i++);
 }
 
 // If measure = 0 standby mode, if measure = 1, measurement mode
@@ -318,13 +318,11 @@ void adxl362_accelerometer_init (adxl362_noise_mode n_mode,
                                  bool measure,
                                  bool autosleep_en,
                                  bool wakeup_en) {
-    uint8_t data[1] = {RESET_CODE};
-    
-    spi_init();
 
+    uint8_t data[1] = {0};
+    spi_init();
     adxl362_accelerometer_reset();
 
-    
     if (measure) {
     	data[0] = MEASUREMENT_MODE;
     }
@@ -344,7 +342,7 @@ void adxl362_config_measurement_range (adxl362_measurement_range m_range) {
 
 	uint8_t data[1] = {0x00};
 
-	spi_read_reg(FILTER_CTL, data, 1);	
+	spi_read_reg(FILTER_CTL, data, 1);
 	data[0] = data[0] & 0x3F;
 	data[0] |= (m_range << 6);
 	spi_write_reg(FILTER_CTL, data, 1);

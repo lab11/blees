@@ -183,11 +183,6 @@ static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         led_on(BLEES_LED_PIN);
 
         m_sensor_info.acceleration = 0x11;
-
-        spi_enable();
-        adxl362_read_status_reg();
-        spi_disable();
-
         switch_acc = true;
 
         for (volatile int i = 0; i < 1000; i++);
@@ -598,18 +593,17 @@ void services_init (void) {
 
 void dfu_reset_prepare (void) {
 
-    
     // Disable the interrupts!
     app_gpiote_user_disable(gpiote_user_acc);
     app_gpiote_user_disable(gpiote_user_light);
     
-    // disable pressure 
-    lps331ap_power_off();
-  e 
     // reset accelerometer
     spi_enable();
     adxl362_accelerometer_reset();
     spi_disable();
+
+    // disable pressure
+    lps331ap_power_off();
    
     // disable lux
     tsl2561_off();
@@ -617,7 +611,6 @@ void dfu_reset_prepare (void) {
     // disable i2c 
     nrf_drv_twi_disable(&twi_instance);
 }
-
 
 /*******************************************************************************
  *   HELPER FUNCTIONS
