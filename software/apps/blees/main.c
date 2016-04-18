@@ -596,7 +596,7 @@ void dfu_reset_prepare (void) {
     // Disable the interrupts!
     app_gpiote_user_disable(gpiote_user_acc);
     app_gpiote_user_disable(gpiote_user_light);
-    
+
     // reset accelerometer
     spi_enable();
     adxl362_accelerometer_reset();
@@ -604,10 +604,10 @@ void dfu_reset_prepare (void) {
 
     // disable pressure
     lps331ap_power_off();
-   
+
     // disable lux
     tsl2561_off();
-    
+
     // disable i2c 
     nrf_drv_twi_disable(&twi_instance);
 }
@@ -756,6 +756,9 @@ int main(void) {
     gpio_init();
     led_init(BLEES_LED_PIN);
 
+    // enable internal DC-DC converter to save power
+    sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+
     // Need to init multi adv
     multi_adv_init(ADV_SWITCH_MS);
 
@@ -776,3 +779,4 @@ int main(void) {
         power_manage();
     }
 }
+
