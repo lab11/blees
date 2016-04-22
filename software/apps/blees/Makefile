@@ -33,7 +33,7 @@ APPLICATION_SRCS += spi_driver.c
 LIBRARY_PATHS += ./ ../../platform/ ../../chips
 SOURCE_PATHS += ../../platform/ ../../chips/
 
-USE_BOOTLOADER = 1
+ENABLE_WIRELESS_DFU = 1
 
 SOFTDEVICE_MODEL = s110
 
