@@ -136,7 +136,7 @@ int main(void) {
     led_off(LED);
 
     // Enable internal DC-DC converter to save power
-    sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+    // sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
 
     // Setup BLE
     simple_ble_init(&ble_config);
