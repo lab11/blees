@@ -521,7 +521,7 @@ static void sensors_init(void) {
 
     //initialize accelerometer
     adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
-    uint16_t act_thresh = 0x000F;
+    uint16_t act_thresh = 0x088F;
     adxl362_set_activity_threshold(act_thresh);
     uint16_t inact_thresh = 0x0096;
     adxl362_set_inactivity_threshold(inact_thresh);
@@ -608,7 +608,7 @@ void dfu_reset_prepare (void) {
     // disable lux
     tsl2561_off();
 
-    // disable i2c 
+    // disable i2c
     nrf_drv_twi_disable(&twi_instance);
 }
 
@@ -757,7 +757,8 @@ int main(void) {
     led_init(BLEES_LED_PIN);
 
     // enable internal DC-DC converter to save power
-    sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+    // BANISH THIS EVIL LINE
+    // sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
 
     // Need to init multi adv
     multi_adv_init(ADV_SWITCH_MS);
