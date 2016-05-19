@@ -61,7 +61,7 @@
  ******************************************************************************/
 
 #define UMICH_COMPANY_IDENTIFIER      0x02E0
-#define APP_BEACON_INFO_LENGTH        12
+#define APP_BEACON_INFO_LENGTH        16
 #define APP_BEACON_INFO_SERVICE_BLEES 0x12 // Registered to BLEES
 
 #define ACCELEROMETER_INTERRUPT_PIN 5
@@ -100,7 +100,7 @@
 #define INIT_ACC_DATA               789
 #define ACC_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
 
 
 // Maximum size is 17 characters, counting URLEND if used
@@ -134,7 +134,7 @@ APP_TIMER_DEF(m_acc_timer_id);      /**< ESS Accelerometer timer. */
 app_gpiote_user_id_t gpiote_user_acc;
 app_gpiote_user_id_t gpiote_user_light;
 
-static bool                         switch_acc = false;
+static bool data_updated = false;
 
 static struct {
     uint32_t pressure;
@@ -142,7 +142,8 @@ static struct {
     int16_t temp;
     uint16_t light;
     uint8_t acceleration;
-} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 0.0f};
+    uint32_t sequence_num;
+} m_sensor_info = {1.0f, 2.0f, 3.0f, 4.0f, 0.0f, 0};
 
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
@@ -183,15 +184,22 @@ static void acc_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
         led_on(BLEES_LED_PIN);
 
         m_sensor_info.acceleration = 0x11;
-        switch_acc = true;
 
         for (volatile int i = 0; i < 1000; i++);
         led_off(BLEES_LED_PIN);
 
+        // stop timer if running
+        app_timer_stop(m_acc_timer_id);
+
     } else if (pins_l2h & (1 << ACCELEROMETER_INTERRUPT_PIN)) {
         // Low to high transition
         m_sensor_info.acceleration = 0x01;
+
+        // Call a one-shot timer here to set accel to low if it ever fires
+        app_timer_start(m_acc_timer_id, (uint32_t) ACC_TRIGGER_VAL_TIME, NULL);
     }
+
+    data_updated = true;
 }
 
 static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
@@ -210,6 +218,7 @@ static void light_interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
 
         // Update our global state and update our advertisement.
         m_sensor_info.light = lux;
+        data_updated = true;
 /*
         //XXX: what is going on here?
         uint8_t lux_meas_val[2];
@@ -283,6 +292,7 @@ static void pres_take_measurement(void * p_context) {
 
     meas = (uint32_t)(pres * 1000);
     m_sensor_info.pressure = meas;
+    data_updated = true;
 
     memcpy(pres_meas_val, &meas, 4);
 
@@ -317,6 +327,7 @@ static void hum_take_measurement(void * p_context) {
 
     meas = (uint16_t)(hum * 100);
     m_sensor_info.humidity = meas;
+    data_updated = true;
 
     memcpy(hum_meas_val, &meas, 2);
 
@@ -351,6 +362,7 @@ static void temp_take_measurement(void * p_context) {
 
     meas = (int16_t)(temp * 100);
     m_sensor_info.temp = meas;
+    data_updated = true;
 
     memcpy(temp_meas_val, &meas, 2);
 
@@ -375,42 +387,20 @@ static void lux_take_measurement(void * p_context) {
     nrf_drv_twi_disable(&twi_instance);
 }
 
-static void acc_take_measurement(void * p_context) {
-
+static void acc_timeout_handler(void* p_context) {
     UNUSED_PARAMETER(p_context);
 
-    uint8_t  acc_meas_val[1];
+    m_sensor_info.acceleration = 0x00;
+    data_updated = true;
 
-    uint32_t meas;
-    memset(&meas, 0, sizeof(meas));
-
-    if (switch_acc || (m_sensor_info.acceleration & 0x10)) {
-        meas = m_sensor_info.acceleration & 0x11;
-        switch_acc = false;
-    } else {
-        meas = m_sensor_info.acceleration & 0x10;
-    }
-    m_sensor_info.acceleration = meas;
-
-    memcpy(acc_meas_val, &meas, 1);
-
-    uint32_t err_code = ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), acc_meas_val,
-            MAX_ACC_LEN, false, &(m_ess.acc_char_handles) );
-
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING) ) {
-
-        APP_ERROR_HANDLER(err_code);
-    }
+    ble_ess_char_value_update(&m_ess, &(m_ess.acceleration), &(m_sensor_info.acceleration),
+            MAX_ACC_LEN, false, &(m_ess.acc_char_handles));
 }
 
 /*******************************************************************************
  *   INIT FUNCTIONS
  ******************************************************************************/
 
-//Note: No timer for acceleration for now. Setting trigger condition 1 or 2 for acceleration will do the same as trigger_inactive
 static void timers_init(void) {
     uint32_t err_code;
 
@@ -440,8 +430,8 @@ static void timers_init(void) {
 
     // Initialize timer for Acc Trigger
     err_code = app_timer_create(&m_acc_timer_id,
-            APP_TIMER_MODE_REPEATED,
-            acc_take_measurement);
+            APP_TIMER_MODE_SINGLE_SHOT,
+            acc_timeout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -521,7 +511,7 @@ static void sensors_init(void) {
 
     //initialize accelerometer
     adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
-    uint16_t act_thresh = 0x088F;
+    uint16_t act_thresh = 0x004F;
     adxl362_set_activity_threshold(act_thresh);
     uint16_t inact_thresh = 0x0096;
     adxl362_set_inactivity_threshold(inact_thresh);
@@ -630,25 +620,18 @@ static void timers_start(void) {
 
     err_code = app_timer_start(m_lux_timer_id, (uint32_t) LUX_TRIGGER_VAL_TIME, NULL);
     APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_start(m_acc_timer_id, (uint32_t) ACC_TRIGGER_VAL_TIME, NULL);
-    APP_ERROR_CHECK(err_code);
 }
 
 static void update_timers( ble_evt_t * p_ble_evt ){
 
     ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-    uint32_t meas_interval;
-    memset(&meas_interval, 0 , sizeof(meas_interval));
-    meas_interval = 0;
-
+    uint32_t meas_interval = 0;
     uint32_t err_code;
 
     if (p_evt_write->handle == m_ess.pressure.trigger_handle) {
         if ( (m_ess.pressure.trigger_val_cond == 0x01) || (m_ess.pressure.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.pressure.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_pres_timer_id);
             err_code = app_timer_start(m_pres_timer_id, meas_interval, NULL);
@@ -657,7 +640,6 @@ static void update_timers( ble_evt_t * p_ble_evt ){
     } else if (p_evt_write->handle == m_ess.humidity.trigger_handle) {
         if ( (m_ess.humidity.trigger_val_cond == 0x01) || (m_ess.humidity.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.humidity.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_hum_timer_id);
             err_code = app_timer_start(m_hum_timer_id, meas_interval, NULL);
@@ -666,7 +648,6 @@ static void update_timers( ble_evt_t * p_ble_evt ){
     } else if (p_evt_write->handle == m_ess.temperature.trigger_handle) {
         if ( (m_ess.temperature.trigger_val_cond == 0x01) || (m_ess.temperature.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.temperature.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_temp_timer_id);
             err_code = app_timer_start(m_temp_timer_id, meas_interval, NULL);
@@ -675,7 +656,6 @@ static void update_timers( ble_evt_t * p_ble_evt ){
     } else if (p_evt_write->handle == m_ess.lux.trigger_handle) {
         if ( (m_ess.lux.trigger_val_cond == 0x01) || (m_ess.lux.trigger_val_cond == 0x02) ){
             memcpy(&meas_interval, m_ess.lux.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_lux_timer_id);
             err_code = app_timer_start(m_lux_timer_id, meas_interval, NULL);
@@ -683,12 +663,14 @@ static void update_timers( ble_evt_t * p_ble_evt ){
         }
     } else if (p_evt_write->handle == m_ess.acceleration.trigger_handle) {
         if ((m_ess.acceleration.trigger_val_cond == 0x01) || (m_ess.acceleration.trigger_val_cond == 0x02)) {
+            // we don't support changing accelerometer sample rate anymore
+            /*
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
-            meas_interval = (uint32_t)(meas_interval);
             meas_interval = (uint32_t)APP_TIMER_TICKS(meas_interval, APP_TIMER_PRESCALER);
             app_timer_stop(m_acc_timer_id);
             err_code = app_timer_start(m_acc_timer_id, meas_interval, NULL);
             APP_ERROR_CHECK(err_code);
+            */
         } else{
             memcpy(&meas_interval, m_ess.acceleration.trigger_val_buff + 1, 3);
             if (m_ess.acceleration.trigger_val_cond == 0x04) {
@@ -728,6 +710,12 @@ static void adv_config_eddystone () {
 static void adv_config_data () {
     ble_advdata_manuf_data_t manuf_specific_data;
 
+    // update sequence number only if data actually changed
+    if (data_updated) {
+        m_sensor_info.sequence_num++;
+        data_updated = false;
+    }
+
     // Register this manufacturer data specific data as the BLEES service
     m_beacon_info[0] = APP_BEACON_INFO_SERVICE_BLEES;
     memcpy(&m_beacon_info[1],  &m_sensor_info.pressure, 4);
@@ -735,6 +723,7 @@ static void adv_config_data () {
     memcpy(&m_beacon_info[7],  &m_sensor_info.temp, 2);
     memcpy(&m_beacon_info[9],  &m_sensor_info.light, 2);
     memcpy(&m_beacon_info[11], &m_sensor_info.acceleration, 1);
+    memcpy(&m_beacon_info[12], &m_sensor_info.sequence_num, 4);
 
     memset(&manuf_specific_data, 0, sizeof(manuf_specific_data));
     manuf_specific_data.company_identifier = UMICH_COMPANY_IDENTIFIER;
