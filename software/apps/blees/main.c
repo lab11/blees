@@ -511,7 +511,7 @@ static void sensors_init(void) {
 
     //initialize accelerometer
     adxl362_accelerometer_init(adxl362_NOISE_NORMAL, true, false, false);
-    uint16_t act_thresh = 0x004F;
+    uint16_t act_thresh = 0x0070;
     adxl362_set_activity_threshold(act_thresh);
     uint16_t inact_thresh = 0x0096;
     adxl362_set_inactivity_threshold(inact_thresh);
