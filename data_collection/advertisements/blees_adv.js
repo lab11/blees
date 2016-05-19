@@ -67,19 +67,27 @@ function parse_blees_data (peripheral, data) {
     var light    = data.readUIntLE(8,2);
     var accel    = data.readUIntLE(10,1);
 
+    var sequence_num = -1;
+    if (data.length >= 15) {
+        sequence_num = data.readUIntLE(11,4);
+    }
+
     var imm_accel = ((accel & 0xF0) != 0);
     var min_accel = ((accel & 0x0F) != 0);
 
     console.log("BLEES (" + address + ")");
+    if (sequence_num != -1) {
+        console.log('  Sequence Num: ' + sequence_num);
+    }
     console.log('  Temperature:  ' + temp.toFixed(1) + ' °C');
     console.log('  Humidity:     ' + humidity.toFixed(1) + '%');
     console.log('  Light:        ' + light.toFixed(1) + ' lx');
     console.log('  Pressure:     ' + pressure.toFixed(1) + ' pascals');
     if (imm_accel) {
-        console.log('  Acceleration since last advertisement');
+        console.log('  Acceleration currently active');
     }
     if (min_accel) {
-        console.log('  Acceleration in last sampling interval');
+        console.log('  Acceleration in last minute');
     }
     console.log('');
 }
