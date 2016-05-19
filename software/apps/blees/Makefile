@@ -29,13 +29,17 @@ APPLICATION_SRCS += si7021.c
 APPLICATION_SRCS += tsl2561.c
 APPLICATION_SRCS += spi_driver.c
 
-
 LIBRARY_PATHS += ./ ../../platform/ ../../chips
 SOURCE_PATHS += ../../platform/ ../../chips/
 
 ENABLE_WIRELESS_DFU = 1
 
 SOFTDEVICE_MODEL = s110
+RAM_KB = 32
+FLASH_KB = 256
+
+HW_REVISION = 2.1.0
+FW_REVISION = 2.0.0
 
 NRF_BASE_PATH ?= ../../nrf5x-base/
 include $(NRF_BASE_PATH)/make/Makefile
