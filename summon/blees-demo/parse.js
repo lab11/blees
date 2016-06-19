@@ -17,7 +17,14 @@ var parse_advertisement = function (advertisement, cb) {
 
                         var pressure = sensor_data.readUIntLE(0,4)/10;
                         var humidity = sensor_data.readUIntLE(4,2)/100;
-                        var temp     = sensor_data.readUIntLE(6,2)/100;
+                        var temp;
+                        var temp_raw = sensor_data.readUIntLE(6,2);
+                        if (temp_raw > 32767) { // Handle negative temperatures
+                            temp = temp_raw - 65536;
+                        } else {
+                            temp = temp_raw;
+                        }
+                        temp = temp/100;
                         var light    = sensor_data.readUIntLE(8,2);
                         var accel    = sensor_data.readUIntLE(10,1);
 
