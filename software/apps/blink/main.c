@@ -28,7 +28,7 @@
 #define PIR_MOTION_SERVICE 0x13
 
 // https://rawgit.com/lab11/blees/master/summon/squall-pir/index.html
-#define PHYSWEB_URL "goo.gl/sbMMHT"
+#define PHYSWEB_URL "j2x.us/sbMMHT"
 
 // Need this for one minute timer
 #define ONE_MINUTE APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
