@@ -47,3 +47,8 @@ Services
 
 Standard environmental sensing service [ESS](https://www.bluetooth.org/en-us/specification/assigned-numbers/environmental-sensing-service-characteristics)
 
+How To Change Acceleration
+--------------------------
+main.c:510 - change variable act_thresh to set the activity threshold
+main.c:514 - change variable a_time to set the amount of samples required to be above threshold for a trigger
+

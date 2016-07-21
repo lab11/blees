@@ -25,8 +25,8 @@ the Eagle design files.
 Software
 --------
 The [Squall](https://github.com/helena-project/squall) uses the software
-located in the `software` directory. Follow the directions at [Lab11's
-Wiki](http://lab11.eecs.umich.edu/wiki/doku.php?id=eecs582w15:setup:start) to
+located in the `software` directory. Follow the directions in the [nrf5x-base Readme]
+(http://github.com/lab11/nrf5x-base#program-a-nrf51822) to
 get your machine set up to build and flash the Squall.
 
 The primary application is
