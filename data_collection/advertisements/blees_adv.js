@@ -76,6 +76,7 @@ function parse_blees_data (peripheral, data) {
     var min_accel = ((accel & 0x0F) != 0);
 
     console.log("BLEES (" + address + ")");
+    console.log('  Timestamp:    ' + Date.now()/1000)
     if (sequence_num != -1) {
         console.log('  Sequence Num: ' + sequence_num);
     }
