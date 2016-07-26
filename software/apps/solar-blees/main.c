@@ -75,6 +75,9 @@
  *   STATIC AND GLOBAL VARIABLES
  ******************************************************************************/
 
+APP_TIMER_DEF(startup_timer);
+#define STARTUP_DELAY APP_TIMER_TICKS(10, APP_TIMER_PRESCALER)
+
 static app_twi_t twi_instance = APP_TWI_INSTANCE(1);
 
 static ble_uuid_t ESS_SERVICE_UUID[] = {{ESS_UUID_SERVICE, BLE_UUID_TYPE_BLE}};
@@ -117,6 +120,8 @@ static simple_ble_config_t ble_config = {
 static void temp_finish_measurement (uint16_t, int16_t);
 static void check_if_adv_ready (void);
 static void adv_sensor_data (void);
+static void i2c_init (void);
+static void sensors_init_and_start (void);
 
 
 /*******************************************************************************
@@ -127,6 +132,12 @@ void ble_error(uint32_t error_code) {
     led_init(SQUALL_LED_PIN);
     led_on(SQUALL_LED_PIN);
     while(1);
+}
+
+static void start_sensing () {
+    // setup the sensor configurations and start sampling
+    i2c_init();
+    sensors_init_and_start();
 }
 
 static void temp_start_measurement (void) {
@@ -224,9 +235,9 @@ int main (void) {
     // Setup BLE
     simple_ble_init(&ble_config);
 
-    // setup the sensor configurations and start sampling
-    i2c_init();
-    sensors_init_and_start();
+    // Delay until hardware is ready
+    app_timer_create(&startup_timer, APP_TIMER_MODE_SINGLE_SHOT, start_sensing);
+    app_timer_start(startup_timer, STARTUP_DELAY, NULL);
 
     while (1) {
         power_manage();
