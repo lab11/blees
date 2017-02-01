@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.5.0">
+<eagle version="6.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -2604,7 +2604,9 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="D1" library="SparkFun-LED" deviceset="LED" device="0603" value="BLUE"/>
 <part name="R1" library="passives" deviceset="RESISTOR" device="0402_RES" value="1kΩ"/>
 <part name="P+9" library="supply1" deviceset="VCC" device=""/>
-<part name="U1" library="chips" deviceset="AMN" device="41121"/>
+<part name="U1" library="chips" deviceset="AMN" device="41121">
+<attribute name="DIGIKEY" value="255-3065-ND"/>
+</part>
 <part name="P+6" library="supply1" deviceset="VCC" device=""/>
 <part name="GND7" library="umich" deviceset="GND" device=""/>
 <part name="J5" library="connector" deviceset="TC2030-JLINK" device="-NL"/>

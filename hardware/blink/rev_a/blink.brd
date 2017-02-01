@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.5.0">
+<eagle version="6.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -544,7 +544,7 @@ This Sunstone Circuits 2 Layer .DRU has been set to cover our minimum requiremen
 </element>
 <element name="U$1" library="logos" package="UMICH_SOLID_50MIL" value="" x="3.556" y="-7.874"/>
 <element name="U1" library="chips" package="AMN2" value="AMN41121" x="0" y="0" smashed="yes">
-<attribute name="DIGIKEY" value="255-2651-ND" x="0" y="0" size="1.778" layer="27" display="off"/>
+<attribute name="DIGIKEY" value="255-3065-ND" x="0" y="0" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="0" y="4.095" size="1.016" layer="25" font="vector" ratio="12" align="bottom-center"/>
 </element>
 <element name="J5" library="connector" package="TC2030-IDC-NL" value="TC2030-JLINK-NL" x="7.3914" y="-5.5626" smashed="yes" rot="R320">
