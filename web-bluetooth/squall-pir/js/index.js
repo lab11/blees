@@ -1,8 +1,16 @@
 
-document.getElementById("find").onclick = function () { 
-    console.log("Button clicked!");
-    let filters = [];
+function applog(text) {
+    console.log(text);
+    var node = document.createElement("p");
+    var t = document.createTextNode(text);
+    node.appendChild(t);
+    document.getElementById("console").appendChild(node);
+}
 
+
+document.getElementById("find").onclick = function () { 
+    applog("Button Clicked - Searching for devices!");
+    let filters = [];
     navigator.bluetooth.requestDevice({ 
         filters: [{
             services: ['c098e5c0-0000-0000-0000-001300000000']
