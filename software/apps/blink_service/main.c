@@ -40,14 +40,20 @@ app_gpiote_user_id_t gpiote_user;
 APP_TIMER_DEF(one_minute_timer);
 
 //PIR Service
-simple_ble_service_t pir_service = {
+/*simple_ble_service_t pir_service = {
     .uuid128 = {{0xC0, 0x98, 0xE5, 0xC0, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x13, 0x00, 0x00, 0x00}}
+};*/
+//static ble_uuid_t pir_uuid = {0x1300, BLE_UUID_TYPE_BLE};
+static simple_ble_service_t pir_service = {
+    .uuid128 = {{0xc0,0xa6,0x3b,0xbe,0x4e,0xd0,0x48,0xda,
+                0xab,0x96,0x8c,0xbb,0x0f,0x56,0x05,0xc3}},
+    .uuid_handle = {0x0f56,BLE_UUID_TYPE_BLE}
 };
 
-simple_ble_char_t current_motion_char = {.uuid16 = 0x1301};
-simple_ble_char_t motion_since_last_adv_char = {.uuid16 = 0x1302};
-simple_ble_char_t motion_last_minute_char = {.uuid16 = 0x1303};
+simple_ble_char_t current_motion_char = {.uuid16 = 0x0f57};
+simple_ble_char_t motion_since_last_adv_char = {.uuid16 = 0x0f58};
+simple_ble_char_t motion_last_minute_char = {.uuid16 = 0x0f59};
 
 
 typedef struct {
@@ -97,7 +103,7 @@ static void adv_config_data () {
     mandata.data.p_data = mdata;
     mandata.data.size   = 1 + sizeof(pir_data_t);
 
-    simple_adv_manuf_data(&mandata);
+    simple_adv_service_manuf_data(&pir_service.uuid_handle, &mandata);
 }
 
 void interrupt_handler (uint32_t pins_l2h, uint32_t pins_h2l) {
