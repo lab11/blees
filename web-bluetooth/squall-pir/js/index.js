@@ -1,5 +1,6 @@
 
 document.getElementById("find").onclick = function () { 
+    console.log("Button clicked!");
     let filters = [];
 
     navigator.bluetooth.requestDevice({ 
