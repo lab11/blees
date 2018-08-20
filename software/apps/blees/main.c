@@ -70,43 +70,43 @@
 /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 #define DEAD_BEEF                   0xDEADBEEF
 
-#define UPDATE_RATE                 APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define UPDATE_RATE                 APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)
 
 //Initial Pressure Parameters
 #define INIT_PRES_DATA              456
 #define PRES_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define PRES_TRIGGER_VAL_OPERAND    470
-#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define PRES_TRIGGER_VAL_TIME       APP_TIMER_TICKS(100000, APP_TIMER_PRESCALER)
 
 //Initial Humidity Parameters
 #define INIT_HUM_DATA               789
 #define HUM_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define HUM_TRIGGER_VAL_OPERAND     799
-#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define HUM_TRIGGER_VAL_TIME        APP_TIMER_TICKS(100000, APP_TIMER_PRESCALER)
 
 //Initial Temperature Parameters
 #define INIT_TEMP_DATA              123
 #define TEMP_TRIGGER_CONDITION      TRIG_FIXED_INTERVAL
 #define TEMP_TRIGGER_VAL_OPERAND    156
-#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define TEMP_TRIGGER_VAL_TIME       APP_TIMER_TICKS(100000, APP_TIMER_PRESCALER)
 
 //Initial Lux Parameters
 #define INIT_LUX_DATA               789
 #define LUX_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define LUX_TRIGGER_VAL_OPERAND     799
-#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(6000, APP_TIMER_PRESCALER)
+#define LUX_TRIGGER_VAL_TIME        APP_TIMER_TICKS(200, APP_TIMER_PRESCALER)
 
 //Initial Acceleration Parameters
 #define INIT_ACC_DATA               789
 #define ACC_TRIGGER_CONDITION       TRIG_FIXED_INTERVAL
 #define ACC_TRIGGER_VAL_OPERAND     799
-#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
+#define ACC_TRIGGER_VAL_TIME        APP_TIMER_TICKS(100000, APP_TIMER_PRESCALER)
 
 
 // Maximum size is 17 characters, counting URLEND if used
 // Demo App (using j2x and cdn.rawgit.com)
 #define PHYSWEB_URL     "j2x.us/2ImXWJ"
-#define ADV_SWITCH_MS 1000
+#define ADV_SWITCH_MS 200
 
 /*******************************************************************************
  *   STATIC AND GLOBAL VARIABLES
